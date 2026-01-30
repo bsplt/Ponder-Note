@@ -1,19 +1,30 @@
+mod commands;
 mod domain;
 mod services;
 mod storage;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use crate::commands::workspace::{
+    workspace_assign_slot, workspace_get_state, workspace_list_root_notes, workspace_switch_slot,
+};
+use crate::services::workspace_service::WorkspaceService;
+use crate::storage::app_config_repo::AppConfigRepo;
+use std::sync::Mutex;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let workspace_service = WorkspaceService::new(AppConfigRepo)
+        .expect("failed to initialize workspace service");
+
     tauri::Builder::default()
+        .manage(Mutex::new(workspace_service))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            workspace_get_state,
+            workspace_assign_slot,
+            workspace_switch_slot,
+            workspace_list_root_notes
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

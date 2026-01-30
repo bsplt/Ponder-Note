@@ -45,6 +45,12 @@ impl WorkspaceService {
             Some(p) => validate_workspace_dir(Path::new(&p)),
         };
 
+        let active_error_kind = match active_status {
+            WorkspaceFolderStatus::Missing => Some("missing".to_string()),
+            WorkspaceFolderStatus::Unreadable => Some("unreadable".to_string()),
+            _ => None,
+        };
+
         let slots = std::array::from_fn(|idx| {
             let slot = (idx as u8) + 1;
             let path = self.cfg.workspaces[idx].clone();
@@ -53,7 +59,17 @@ impl WorkspaceService {
             } else {
                 None
             };
-            WorkspaceSlotState { slot, path, status }
+            let error_kind = if slot == active_slot {
+                active_error_kind.clone()
+            } else {
+                None
+            };
+            WorkspaceSlotState {
+                slot,
+                path,
+                status,
+                error_kind,
+            }
         });
 
         Ok(WorkspaceState {
