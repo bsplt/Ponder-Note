@@ -24,6 +24,32 @@ pub fn slot_to_index(slot: u8) -> Option<usize> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkspaceFolderStatus {
+    Unassigned,
+    Ok,
+    Missing,
+    Unreadable,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceSlotState {
+    pub slot: u8,
+    pub path: Option<String>,
+    // Only populated for the active slot.
+    pub status: Option<WorkspaceFolderStatus>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceState {
+    pub active_slot: u8,
+    pub fallback_slot: Option<u8>,
+    pub slots: [WorkspaceSlotState; 9],
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
