@@ -120,7 +120,7 @@ Phases are derived from the v1 requirements and ordered by dependency (workspace
 
 | Phase | Name | Status |
 |------:|------|--------|
-| 1 | Workspaces | Pending |
+| 1 | Workspaces | Complete |
 | 2 | Note Identity & Sidecar Metadata | Pending |
 | 3 | Overview <-> Editor Loop | Pending |
 | 4 | Search & Tags | Pending |

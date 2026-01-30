@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Workspace
 
-- [ ] **WS-01**: User can assign a workspace folder to a number slot (1-9) via a folder picker when the slot is empty
-- [ ] **WS-02**: User can switch the active workspace from the overview using number keys 1-9
-- [ ] **WS-03**: App remembers the last active workspace slot and reopens it on next launch
-- [ ] **WS-04**: App indexes only `*.md` files in the workspace root (no recursion) and ignores `/.ponder/` and `/deleted/`
+- [x] **WS-01**: User can assign a workspace folder to a number slot (1-9) via a folder picker when the slot is empty
+- [x] **WS-02**: User can switch the active workspace from the overview using number keys 1-9
+- [x] **WS-03**: App remembers the last active workspace slot and reopens it on next launch
+- [x] **WS-04**: App indexes only `*.md` files in the workspace root (no recursion) and ignores `/.ponder/` and `/deleted/`
 - [ ] **WS-05**: When creating a new note, app creates `<workspace>/<unix_ms_timestamp>.md`
 - [ ] **WS-06**: App creates and uses `<workspace>/.ponder/meta/` for rebuildable per-note sidecar JSON metadata
 
@@ -107,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WS-01 | Phase 1 | Pending |
-| WS-02 | Phase 1 | Pending |
-| WS-03 | Phase 1 | Pending |
-| WS-04 | Phase 1 | Pending |
+| WS-01 | Phase 1 | Complete |
+| WS-02 | Phase 1 | Complete |
+| WS-03 | Phase 1 | Complete |
+| WS-04 | Phase 1 | Complete |
 | WS-05 | Phase 2 | Pending |
 | WS-06 | Phase 2 | Pending |
 | NOTE-01 | Phase 2 | Pending |
