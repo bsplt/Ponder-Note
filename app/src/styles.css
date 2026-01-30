@@ -107,6 +107,79 @@ body {
   gap: 10px;
 }
 
+.panelActionsInline {
+  margin-top: 0;
+}
+
+.overviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.overviewPath {
+  margin-top: 8px;
+}
+
+.notesHeader {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.notesTitle {
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.notesMeta {
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.mutedBlock {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.notesList {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.noteRow {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.noteName {
+  font-weight: 650;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 10, 12, 0.72);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
 .btn {
   appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.14);
