@@ -107,12 +107,49 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| WS-01 | Phase 1 | Pending |
+| WS-02 | Phase 1 | Pending |
+| WS-03 | Phase 1 | Pending |
+| WS-04 | Phase 1 | Pending |
+| WS-05 | Phase 2 | Pending |
+| WS-06 | Phase 2 | Pending |
+| NOTE-01 | Phase 2 | Pending |
+| NOTE-02 | Phase 2 | Pending |
+| NOTE-03 | Phase 2 | Pending |
+| NOTE-04 | Phase 2 | Pending |
+| OV-01 | Phase 3 | Pending |
+| OV-03 | Phase 3 | Pending |
+| ED-01 | Phase 3 | Pending |
+| ED-02 | Phase 3 | Pending |
+| ED-03 | Phase 3 | Pending |
+| ED-04 | Phase 3 | Pending |
+| ED-05 | Phase 3 | Pending |
+| SAFE-01 | Phase 3 | Pending |
+| OV-02 | Phase 4 | Pending |
+| OV-04 | Phase 4 | Pending |
+| OV-05 | Phase 4 | Pending |
+| TAG-01 | Phase 4 | Pending |
+| TAG-02 | Phase 4 | Pending |
+| TODO-01 | Phase 5 | Pending |
+| TODO-02 | Phase 5 | Pending |
+| TODO-03 | Phase 5 | Pending |
+| TODO-04 | Phase 5 | Pending |
+| TODO-05 | Phase 5 | Pending |
+| TODO-06 | Phase 5 | Pending |
+| SAFE-02 | Phase 5 | Pending |
+| DEL-01 | Phase 6 | Pending |
+| DEL-02 | Phase 6 | Pending |
+| DEL-03 | Phase 6 | Pending |
+| SAFE-03 | Phase 7 | Pending |
+| UI-01 | Phase 7 | Pending |
+| UI-02 | Phase 7 | Pending |
+| UI-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-30*
-*Last updated: 2026-01-30 after initial definition*
+*Last updated: 2026-01-30 after roadmap creation*
