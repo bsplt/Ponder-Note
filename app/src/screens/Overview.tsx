@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Toast } from '../components/Toast'
+import type { NoteSummary } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 
 type OverviewProps = {
@@ -14,6 +15,34 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return tag === 'input' || tag === 'textarea' || tag === 'select'
 }
 
+function formatNoteTimestamp(note: NoteSummary): string {
+  const date = new Date(note.createdAt)
+  const now = new Date()
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+
+  if (isToday) {
+    return new Intl.DateTimeFormat('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function displayNoteTitle(note: NoteSummary): string {
+  const title = note.title?.trim()
+  if (title) return title
+  return note.filename ?? note.stem
+}
+
 export function Overview(props: OverviewProps) {
   const onManageWorkspaces = props.onManageWorkspaces
 
@@ -21,7 +50,7 @@ export function Overview(props: OverviewProps) {
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
   const activeStatus = useWorkspaceStore((s) => s.activeStatus)
   const loading = useWorkspaceStore((s) => s.loading)
-  const rootNotes = useWorkspaceStore((s) => s.rootNotes)
+  const notes = useWorkspaceStore((s) => s.notes)
 
   const activePath = useMemo(
     () => slots.find((s) => s.slot === activeSlot)?.path ?? null,
@@ -32,6 +61,18 @@ export function Overview(props: OverviewProps) {
 
   const onCloseToast = useCallback(() => setToastMessage(null), [])
   const showToast = useCallback((message: string) => setToastMessage(message), [])
+
+  const onNewNote = useCallback(() => {
+    void (async () => {
+      const res = await workspaceActions.createNote()
+      if (res.ok) {
+        showToast('New note created')
+        return
+      }
+
+      showToast(res.message ?? 'Failed to create note')
+    })()
+  }, [showToast])
 
   useEffect(() => {
     if (activeStatus !== 'ok') return
@@ -123,17 +164,27 @@ export function Overview(props: OverviewProps) {
       </div>
 
       <div className="notesHeader">
-        <div className="notesTitle">Notes</div>
-        <div className="notesMeta">Root-level *.md only</div>
+        <div>
+          <div className="notesTitle">Notes</div>
+          <div className="notesMeta">Root-level *.md only</div>
+        </div>
+        <div className="notesHeaderActions">
+          <button type="button" className="btn btnPrimary" onClick={onNewNote}>
+            New Note
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <div className="mutedBlock">Loading…</div>
-      ) : rootNotes.length ? (
+      ) : notes.length ? (
         <ul className="notesList">
-          {rootNotes.map((n) => (
-            <li key={n} className="noteRow">
-              <div className="noteName">{n}</div>
+          {notes.map((note) => (
+            <li key={note.stem} className="noteRow">
+              <div className="noteRowMain">
+                <div className="noteName">{displayNoteTitle(note)}</div>
+                <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
+              </div>
             </li>
           ))}
         </ul>

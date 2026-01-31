@@ -127,9 +127,15 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: baseline;
+  align-items: flex-start;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.notesHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .notesTitle {
@@ -162,8 +168,27 @@ body {
   background: rgba(0, 0, 0, 0.12);
 }
 
+.noteRowMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .noteName {
   font-weight: 650;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noteTimestamp {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .toast {
