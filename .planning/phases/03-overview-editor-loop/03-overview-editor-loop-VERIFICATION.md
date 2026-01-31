@@ -1,24 +1,27 @@
 ---
 phase: 03-overview-editor-loop
-verified: 2026-01-31T13:40:16Z
+verified: 2026-01-31T16:55:00Z
 status: human_needed
-score: 10/10 must-haves verified
+score: 10/13 must-haves verified
 human_verification:
-  - test: "Create a new note, edit, and return to overview"
-    expected: "New note opens in editor, autosave persists edits, ESC/Back returns to overview with changes preserved and focus/scroll restored"
-    why_human: "Requires UI interaction, timing, and persistence checks"
-  - test: "Exit rewrite of checklist shorthand"
-    expected: "Lines starting with `o ` or `O ` become `[ ] ` on exit; fenced code and blockquote lines remain unchanged"
-    why_human: "Needs end-to-end save + reopen to confirm on-disk rewrite"
+  - test: "Create/edit note and return to overview"
+    expected: "Autosave persists edits; ESC/Back returns to overview with edits retained and focus/scroll restored"
+    why_human: "UI interaction, timing, and persistence checks"
   - test: "Undo/redo in editor"
-    expected: "Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z revert and restore edits in the textarea"
-    why_human: "Browser/Tauri runtime behavior cannot be verified statically"
+    expected: "Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z undo and redo within the textarea"
+    why_human: "Runtime editor behavior is not verifiable statically"
+  - test: "Exit rewrite of checklist shorthand"
+    expected: "`o ` or `O ` lines rewrite to `[ ] ` on exit; fenced code and blockquotes remain unchanged"
+    why_human: "Requires save + reopen to confirm disk rewrite"
+  - test: "Exit save without warning"
+    expected: "Final save succeeds and no exit confirmation appears"
+    why_human: "Depends on runtime save completion"
 ---
 
 # Phase 3: Overview <-> Editor Loop Verification Report
 
 **Phase Goal:** Users can create/open/edit notes and reliably return to the overview without losing changes.
-**Verified:** 2026-01-31T13:40:16Z
+**Verified:** 2026-01-31T16:55:00Z
 **Status:** human_needed
 **Re-verification:** No — initial verification
 
@@ -28,33 +31,36 @@ human_verification:
 
 | # | Truth | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | On exit, lines beginning with `o ` or `O ` are rewritten to `[ ] ` with indentation preserved. | ✓ VERIFIED | `app/src-tauri/src/domain/note_rewrite.rs` rewrites `o ` and `O `, preserving indentation. |
-| 2 | Lines inside fenced code blocks or blockquotes remain unchanged. | ✓ VERIFIED | `app/src-tauri/src/domain/note_rewrite.rs` skips when in fence or blockquote; tests cover both. |
-| 3 | Only `o` + single space with trailing text is rewritten (no tabs or empty text). | ✓ VERIFIED | `app/src-tauri/src/domain/note_rewrite.rs` requires `o ` or `O ` and non-empty rest; tabs not matched. |
-| 4 | Note content can be read and saved via Tauri commands using atomic writes. | ✓ VERIFIED | `app/src-tauri/src/commands/notes.rs` calls `WorkspaceService`; `atomic_write_note` uses `NamedTempFile`. |
-| 5 | Exit saves can apply the `o ` rewrite before writing to disk. | ✓ VERIFIED | `app/src-tauri/src/services/workspace_service.rs` calls `rewrite_exit_checklists` when `rewrite_on_exit` is true. |
-| 6 | Discarding an empty new note removes its .md file and sidecar JSON. | ✓ VERIFIED | `app/src-tauri/src/services/workspace_service.rs` removes note + sidecar; `app/src/screens/Editor.tsx` calls `noteDiscard` for untouched new notes. |
-| 7 | Overview includes a first-row `+ New Note` that opens the editor. | ✓ VERIFIED | `app/src/screens/Overview.tsx` renders `+ New Note` row and triggers `onCreateNote`; `app/src/App.tsx` opens editor. |
-| 8 | Notes open from the overview via Enter or mouse double click and are editable as plain Markdown. | ✓ VERIFIED | `app/src/screens/Overview.tsx` handles Enter and double click; `app/src/screens/Editor.tsx` uses a textarea. |
-| 9 | Edits autosave, undo/redo works, and ESC/back returns to overview after exit rewrite. | ✓ VERIFIED | `app/src/screens/Editor.tsx` debounces `noteSave`, ESC triggers exit with `rewriteOnExit`. |
-| 10 | Exiting an untouched new note discards its file and sidecar. | ✓ VERIFIED | `app/src/screens/Editor.tsx` checks untouched body and calls `noteDiscard`; backend removes both files. |
+| 1 | On exit, lines beginning with `o ` or `O ` are rewritten to `[ ] ` with indentation preserved. | ✓ VERIFIED | `app/src-tauri/src/domain/note_rewrite.rs` rewrites with `split_indentation` and `[ ] ` prefix. |
+| 2 | Lines inside fenced code blocks or blockquotes remain unchanged. | ✓ VERIFIED | `app/src-tauri/src/domain/note_rewrite.rs` skips `in_fence` and `is_blockquote`, tests cover both. |
+| 3 | Only `o` + single space with trailing text is rewritten (no tabs or empty text). | ✓ VERIFIED | `checklist_rest` requires `o ` or `O ` and non-empty rest; tabbed markers unchanged. |
+| 4 | Note content can be read and saved via Tauri commands using atomic writes. | ✓ VERIFIED | `app/src-tauri/src/commands/notes.rs` calls `note_read`/`note_save`; `atomic_write_note` uses `NamedTempFile`. |
+| 5 | Exit saves can apply the `o ` rewrite before writing to disk. | ✓ VERIFIED | `app/src-tauri/src/services/workspace_service.rs` uses `rewrite_exit_checklists` when `rewrite_on_exit` is true. |
+| 6 | Discarding an empty new note removes its .md file and sidecar JSON. | ✓ VERIFIED | `app/src/screens/Editor.tsx` calls `noteDiscard` for untouched new notes; `note_discard` removes both files. |
+| 7 | Overview includes a first-row `+ New Note` that opens the editor. | ✓ VERIFIED | `app/src/screens/Overview.tsx` renders the row and calls `onCreateNote`; `app/src/App.tsx` opens editor. |
+| 8 | Notes open from the overview via Enter or mouse double click and are editable as plain Markdown. | ✓ VERIFIED | `app/src/screens/Overview.tsx` handles Enter/double click; `app/src/screens/Editor.tsx` is a textarea editor. |
+| 9 | Edits autosave, undo/redo works, and ESC/back returns to overview after exit rewrite. | ? UNCERTAIN | Autosave + ESC handler exist in `app/src/screens/Editor.tsx`; runtime verification needed. |
+| 10 | Exiting an untouched new note discards its file and sidecar. | ✓ VERIFIED | `app/src/screens/Editor.tsx` `isUntouchedNewNote` path calls `noteDiscard`; backend removes files. |
+| 11 | Autosave completes successfully and updates the last saved timestamp after edits. | ? UNCERTAIN | `setLastSavedAt(Date.now())` on successful `noteSave`; needs runtime confirmation. |
+| 12 | Save failures surface the underlying error message for troubleshooting. | ✓ VERIFIED | `NoteApiError` message/code surfaced in `app/src/screens/Editor.tsx` banner. |
+| 13 | Exit saves (with checklist rewrite) complete without showing the exit warning. | ? UNCERTAIN | Exit save uses `rewriteOnExit` and only warns on failure; runtime confirmation needed. |
 
-**Score:** 10/10 truths verified
+**Score:** 10/13 truths verified
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `app/src-tauri/src/domain/note_rewrite.rs` | rewrite function + tests | ✓ VERIFIED | 106 lines; implementation + tests present. |
-| `app/src-tauri/src/domain/mod.rs` | exports note_rewrite module | ✓ VERIFIED | 4 lines; contains `pub mod note_rewrite`. |
-| `app/src-tauri/src/commands/notes.rs` | note_read, note_save, note_discard commands | ✓ VERIFIED | 84 lines; commands exported with error mapping. |
-| `app/src-tauri/src/services/workspace_service.rs` | note read/save/discard + atomic write | ✓ VERIFIED | 512 lines; includes `atomic_write_note` + `note_*` methods. |
-| `app/src-tauri/Cargo.toml` | tempfile dependency | ✓ VERIFIED | 28 lines; includes `tempfile = "3"`. |
-| `app/src/api/notes.ts` | frontend invoke wrappers | ✓ VERIFIED | 54 lines; `noteRead`, `noteSave`, `noteDiscard`. |
-| `app/src/screens/Editor.tsx` | editor screen with autosave + exit handling | ✓ VERIFIED | 289 lines; autosave, retry banner, exit logic. |
-| `app/src/screens/Overview.tsx` | overview list selection + new note row | ✓ VERIFIED | 323 lines; new note row + keyboard/mouse open. |
-| `app/src/App.tsx` | screen routing between overview/editor/workspaces | ✓ VERIFIED | 136 lines; routes and editor state management. |
-| `app/src/styles.css` | editor + selection styling | ✓ VERIFIED | 474 lines; editor and row focus styles present. |
+| `app/src-tauri/src/domain/note_rewrite.rs` | rewrite function + tests | ✓ VERIFIED | 107 lines; implementation + tests present. |
+| `app/src-tauri/src/domain/mod.rs` | exports note_rewrite module | ✓ VERIFIED | 5 lines; contains `pub mod note_rewrite`. |
+| `app/src-tauri/src/commands/notes.rs` | note_read, note_save, note_discard commands | ✓ VERIFIED | 85 lines; command functions implemented. |
+| `app/src-tauri/src/services/workspace_service.rs` | note read/save/discard + atomic write | ✓ VERIFIED | 541 lines; includes `note_*` methods and `atomic_write_note`. |
+| `app/src-tauri/Cargo.toml` | tempfile dependency | ✓ VERIFIED | Contains `tempfile = "3"`. |
+| `app/src/api/notes.ts` | frontend invoke wrappers | ✓ VERIFIED | 55 lines; `noteRead`, `noteSave`, `noteDiscard`. |
+| `app/src/screens/Editor.tsx` | editor screen with autosave + exit handling | ✓ VERIFIED | 295 lines; autosave, error banner, exit flow. |
+| `app/src/screens/Overview.tsx` | overview list selection + new note row | ✓ VERIFIED | 324 lines; new note row + keyboard/mouse open. |
+| `app/src/App.tsx` | screen routing between overview/editor/workspaces | ✓ VERIFIED | 137 lines; routes and editor state management. |
+| `app/src/styles.css` | editor + selection styling | ✓ VERIFIED | Editor + list focus styles present. |
 
 ### Key Link Verification
 
@@ -67,51 +73,58 @@ human_verification:
 | `app/src/screens/Editor.tsx` | `app/src/api/notes.ts` | `noteRead`/`noteSave`/`noteDiscard` | ✓ VERIFIED | Note IO functions imported and used. |
 | `app/src/screens/Editor.tsx` | `app/src/stores/workspaceStore.ts` | `workspaceActions.refreshNotes` | ✓ VERIFIED | Refresh invoked on exit/discard. |
 | `app/src/screens/Overview.tsx` | `app/src/App.tsx` | `onOpenNote`/`onCreateNote` | ✓ VERIFIED | Callbacks invoked; App opens editor. |
+| `app/src/api/notes.ts` | `note_save` | `invoke('note_save')` | ✓ VERIFIED | `noteSave` uses Tauri invoke with `rewrite_on_exit`. |
 
 ### Requirements Coverage
 
 | Requirement | Status | Blocking Issue |
 | --- | --- | --- |
 | OV-01 | ✓ SATISFIED | |
-| OV-03 | ✓ SATISFIED | |
+| OV-03 | ? NEEDS HUMAN | Requires UI interaction verification. |
 | ED-01 | ✓ SATISFIED | |
-| ED-02 | ✓ SATISFIED | |
-| ED-03 | ✓ SATISFIED | |
-| ED-04 | ✓ SATISFIED | |
-| ED-05 | ✓ SATISFIED | |
+| ED-02 | ? NEEDS HUMAN | Autosave success and persistence require runtime check. |
+| ED-03 | ? NEEDS HUMAN | Undo/redo behavior is runtime-dependent. |
+| ED-04 | ? NEEDS HUMAN | ESC exit flow needs UI verification. |
+| ED-05 | ? NEEDS HUMAN | Exit rewrite must be confirmed on disk. |
 | SAFE-01 | ✓ SATISFIED | |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
-| — | — | — | — | None detected in phase files |
+| — | — | — | — | None detected in reviewed phase files |
 
 ### Human Verification Required
 
-### 1. Create a new note, edit, and return to overview
+### 1. Create/edit note and return to overview
 
-**Test:** Create a new note from the `+ New Note` row, type edits, wait for autosave, press ESC or click Back to overview.
-**Expected:** Editor saves changes, overview returns with the edited note selected and scroll restored.
+**Test:** Create a new note from `+ New Note`, type edits, wait for autosave, press ESC or click Back to overview.
+**Expected:** Edits persist, overview returns with focus/scroll restored, no data loss.
 **Why human:** Requires UI flow, timing, and persistence confirmation.
 
-### 2. Exit rewrite of checklist shorthand
-
-**Test:** In editor, add lines beginning with `o ` and `O ` plus lines inside fenced code and blockquotes, then exit and reopen.
-**Expected:** `o ` and `O ` lines become `[ ] `; fenced and blockquote lines unchanged.
-**Why human:** Needs end-to-end save and reopen to confirm file rewrite.
-
-### 3. Undo/redo in editor
+### 2. Undo/redo in editor
 
 **Test:** Type in the editor, use Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z.
 **Expected:** Text undo/redo works as expected.
 **Why human:** Depends on runtime/editor behavior.
 
+### 3. Exit rewrite of checklist shorthand
+
+**Test:** Add `o ` and `O ` lines plus fenced code and blockquote lines, exit, reopen note.
+**Expected:** `o ` and `O ` lines become `[ ] `; fenced and blockquote lines unchanged.
+**Why human:** Requires save + reopen to confirm on-disk rewrite.
+
+### 4. Exit save without warning
+
+**Test:** Edit a note, wait for autosave, press ESC/back.
+**Expected:** No exit confirmation appears and the note reflects latest changes.
+**Why human:** Depends on runtime save completion.
+
 ### Gaps Summary
 
-No structural gaps detected. All must-haves are implemented and wired; human verification is required for runtime behavior.
+No structural gaps detected. Human verification is required for runtime behaviors (autosave success, undo/redo, exit flow).
 
 ---
 
-_Verified: 2026-01-31T13:40:16Z_
+_Verified: 2026-01-31T16:55:00Z_
 _Verifier: Claude (gsd-verifier)_
