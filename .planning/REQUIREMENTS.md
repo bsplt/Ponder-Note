@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **OV-01**: Overview list always includes a first row `+ New Note` that creates a note and opens it in the editor
 - [ ] **OV-02**: Overview rows show: title, timestamp, and tags
-- [ ] **OV-03**: User can open the focused note from overview using keyboard (arrow keys + Enter) and by mouse click
+- [ ] **OV-03**: User can open the focused note from overview using keyboard (arrow keys + Enter) and by mouse double click (single click selects only)
 - [ ] **OV-04**: Search input filters the note list based on full-text matches in note title + body, while list rows still display only title/timestamp/tags
 - [ ] **OV-05**: User can filter the note list by selecting tags and can combine tag filters with search
 

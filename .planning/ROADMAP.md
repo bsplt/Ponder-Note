@@ -57,11 +57,18 @@ Plans:
 
 **Success Criteria (observable):**
 1. Overview always includes a first row `+ New Note` that creates a note and opens it in the editor.
-2. User can open the focused note from the overview via keyboard (arrow keys + Enter) and by mouse click.
+2. User can open the focused note from the overview via keyboard (arrow keys + Enter) and by mouse double click (single click selects only).
 3. User can edit plain Markdown text; changes autosave to disk without a manual save action.
 4. User can undo/redo text edits.
 5. User can press `ESC` to leave the editor and return to the overview; on leaving, any line starting with `o ` is rewritten to start with `[ ] `.
 6. A crash during a write does not leave a partially-written Markdown file on disk.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Exit checklist rewrite helper (TDD)
+- [ ] 03-02-PLAN.md — Atomic note IO commands + notes API
+- [ ] 03-03-PLAN.md — Overview/editor loop UX + autosave
 
 ### Phase 4 - Search & Tags
 
