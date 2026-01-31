@@ -39,6 +39,14 @@ Phases are derived from the v1 requirements and ordered by dependency (workspace
 4. The note timestamp shown in the app matches the filename UNIX-ms timestamp (created_at).
 5. Orphan sidecars (no corresponding `<stem>.md`) do not create visible “ghost” notes.
 
+**Plans:** 4 plans
+
+Plans:
+- [x] 02-01-PLAN.md — Title derivation utility + tests
+- [x] 02-02-PLAN.md — Backend note metadata + sidecar commands
+- [x] 02-03-PLAN.md — Overview list with titles/timestamps + New Note action
+- [x] 02-04-PLAN.md — Sidecar JSON snake_case compatibility
+
 ### Phase 3 - Overview <-> Editor Loop
 
 **Goal:** Users can create/open/edit notes and reliably return to the overview without losing changes.
@@ -121,7 +129,7 @@ Phases are derived from the v1 requirements and ordered by dependency (workspace
 | Phase | Name | Status |
 |------:|------|--------|
 | 1 | Workspaces | Complete |
-| 2 | Note Identity & Sidecar Metadata | Pending |
+| 2 | Note Identity & Sidecar Metadata | Complete |
 | 3 | Overview <-> Editor Loop | Pending |
 | 4 | Search & Tags | Pending |
 | 5 | Todos (Extract, Browse, Toggle) | Pending |
