@@ -1,7 +1,12 @@
+use crate::domain::note::{NoteSidecar, NoteSummary};
+use crate::domain::note_title::derive_note_title;
 use crate::domain::workspace::{
     slot_to_index, AppConfig, WorkspaceFolderStatus, WorkspaceSlotState, WorkspaceState,
 };
 use crate::storage::app_config_repo::{AppConfigRepo, AppConfigRepoError};
+use serde_json::Value;
+use std::collections::BTreeMap;
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -21,6 +26,12 @@ pub enum WorkspaceServiceError {
 
     #[error("invalid workspace for slot {slot}: {kind:?}")]
     InvalidWorkspace { slot: u8, kind: InvalidWorkspaceKind },
+
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
 
     #[error(transparent)]
     Config(#[from] AppConfigRepoError),
@@ -122,31 +133,112 @@ impl WorkspaceService {
     }
 
     pub fn list_root_notes(&self) -> Result<Vec<String>, WorkspaceServiceError> {
-        let slot = self.cfg.active_slot;
-        let path = self
-            .slot_path(slot)?
-            .ok_or(WorkspaceServiceError::UnassignedSlot { slot })?;
-
-        match validate_workspace_dir(Path::new(&path)) {
-            WorkspaceFolderStatus::Ok => {
-                let mut notes = list_root_md_basenames(Path::new(&path))
-                    .map_err(|_| WorkspaceServiceError::InvalidWorkspace {
-                        slot,
-                        kind: InvalidWorkspaceKind::Unreadable,
-                    })?;
-                notes.sort();
-                Ok(notes)
-            }
-            WorkspaceFolderStatus::Missing => Err(WorkspaceServiceError::InvalidWorkspace {
-                slot,
-                kind: InvalidWorkspaceKind::Missing,
-            }),
-            WorkspaceFolderStatus::Unreadable => Err(WorkspaceServiceError::InvalidWorkspace {
+        let (slot, path) = self.active_workspace_path()?;
+        let mut notes = list_root_md_basenames(&path).map_err(|_| {
+            WorkspaceServiceError::InvalidWorkspace {
                 slot,
                 kind: InvalidWorkspaceKind::Unreadable,
-            }),
-            WorkspaceFolderStatus::Unassigned => Err(WorkspaceServiceError::UnassignedSlot { slot }),
+            }
+        })?;
+        notes.sort();
+        Ok(notes)
+    }
+
+    pub fn list_notes(&self) -> Result<Vec<NoteSummary>, WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let meta_dir = path.join(".ponder").join("meta");
+        std::fs::create_dir_all(&meta_dir)?;
+
+        let mut notes = Vec::new();
+        for entry in std::fs::read_dir(&path)? {
+            let entry = entry?;
+            if !entry.file_type()?.is_file() {
+                continue;
+            }
+
+            let note_path = entry.path();
+            if note_path.extension().and_then(|s| s.to_str()) != Some("md") {
+                continue;
+            }
+
+            let Some(stem) = note_path.file_stem().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            let Ok(created_at) = stem.parse::<i64>() else {
+                continue;
+            };
+
+            let first_line = read_first_line(&note_path)?;
+            let derived_title = derive_note_title(&first_line);
+
+            let sidecar_path = meta_dir.join(format!("{stem}.json"));
+            let (mut sidecar, mut should_write) = load_or_rebuild_sidecar(
+                &sidecar_path,
+                &derived_title,
+                created_at,
+            )?;
+
+            if sidecar.created_at != created_at {
+                sidecar.created_at = created_at;
+                should_write = true;
+            }
+
+            if sidecar.title != derived_title {
+                sidecar.title = derived_title.clone();
+                should_write = true;
+            }
+
+            if should_write {
+                write_sidecar(&sidecar_path, &sidecar)?;
+            }
+
+            let summary = NoteSummary {
+                stem: stem.to_string(),
+                title: sidecar.title.clone(),
+                created_at: sidecar.created_at,
+                updated_at: sidecar.updated_at,
+                tags: sidecar.tags.clone().unwrap_or_default(),
+                filename: format!("{stem}.md"),
+            };
+            notes.push(summary);
         }
+
+        notes.sort_by_key(|note| note.created_at);
+        Ok(notes)
+    }
+
+    pub fn create_note(&self) -> Result<NoteSummary, WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let meta_dir = path.join(".ponder").join("meta");
+        std::fs::create_dir_all(&meta_dir)?;
+
+        let mut created_at = current_unix_ms()?;
+        let mut note_path = path.join(format!("{created_at}.md"));
+        while note_path.exists() {
+            created_at += 1;
+            note_path = path.join(format!("{created_at}.md"));
+        }
+
+        std::fs::write(&note_path, "")?;
+
+        let sidecar = NoteSidecar {
+            title: "Untitled".to_string(),
+            created_at,
+            updated_at: None,
+            tags: None,
+            extra: BTreeMap::new(),
+        };
+        let sidecar_path = meta_dir.join(format!("{created_at}.json"));
+        write_sidecar(&sidecar_path, &sidecar)?;
+
+        Ok(NoteSummary {
+            stem: created_at.to_string(),
+            title: sidecar.title,
+            created_at,
+            updated_at: None,
+            tags: Vec::new(),
+            filename: format!("{created_at}.md"),
+        })
     }
 
     fn slot_path(&self, slot: u8) -> Result<Option<String>, WorkspaceServiceError> {
@@ -165,6 +257,26 @@ impl WorkspaceService {
             }
         }
         Ok(None)
+    }
+
+    fn active_workspace_path(&self) -> Result<(u8, PathBuf), WorkspaceServiceError> {
+        let slot = self.cfg.active_slot;
+        let path = self
+            .slot_path(slot)?
+            .ok_or(WorkspaceServiceError::UnassignedSlot { slot })?;
+
+        match validate_workspace_dir(Path::new(&path)) {
+            WorkspaceFolderStatus::Ok => Ok((slot, PathBuf::from(path))),
+            WorkspaceFolderStatus::Missing => Err(WorkspaceServiceError::InvalidWorkspace {
+                slot,
+                kind: InvalidWorkspaceKind::Missing,
+            }),
+            WorkspaceFolderStatus::Unreadable => Err(WorkspaceServiceError::InvalidWorkspace {
+                slot,
+                kind: InvalidWorkspaceKind::Unreadable,
+            }),
+            WorkspaceFolderStatus::Unassigned => Err(WorkspaceServiceError::UnassignedSlot { slot }),
+        }
     }
 }
 
@@ -223,4 +335,94 @@ fn list_root_md_basenames(dir: &Path) -> std::io::Result<Vec<String>> {
         out.push(name.to_string());
     }
     Ok(out)
+}
+
+fn read_first_line(path: &Path) -> Result<String, WorkspaceServiceError> {
+    let file = std::fs::File::open(path)?;
+    let mut reader = std::io::BufReader::new(file);
+    let mut line = String::new();
+    reader.read_line(&mut line)?;
+    Ok(line.trim_end_matches(&['\r', '\n'][..]).to_string())
+}
+
+fn load_or_rebuild_sidecar(
+    path: &Path,
+    title: &str,
+    created_at: i64,
+) -> Result<(NoteSidecar, bool), WorkspaceServiceError> {
+    let mut should_write = false;
+    let mut preserved_extra = BTreeMap::new();
+
+    let sidecar = match std::fs::read_to_string(path) {
+        Ok(raw) => match serde_json::from_str::<Value>(&raw) {
+            Ok(value) => {
+                let (parsed, extra) = parse_sidecar_value(value);
+                preserved_extra = extra;
+                parsed
+            }
+            Err(_) => None,
+        },
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(e) => return Err(WorkspaceServiceError::Io(e)),
+    };
+
+    let sidecar = match sidecar {
+        Some(sidecar) => sidecar,
+        None => {
+            should_write = true;
+            NoteSidecar {
+                title: title.to_string(),
+                created_at,
+                updated_at: None,
+                tags: None,
+                extra: preserved_extra,
+            }
+        }
+    };
+
+    Ok((sidecar, should_write))
+}
+
+fn parse_sidecar_value(value: Value) -> (Option<NoteSidecar>, BTreeMap<String, Value>) {
+    match value {
+        Value::Object(map) => {
+            let extra = extract_extra(map.clone());
+            let parsed = serde_json::from_value::<NoteSidecar>(Value::Object(map)).ok();
+            (parsed, extra)
+        }
+        _ => (None, BTreeMap::new()),
+    }
+}
+
+fn extract_extra(map: serde_json::Map<String, Value>) -> BTreeMap<String, Value> {
+    let mut extra = BTreeMap::new();
+    for (key, value) in map {
+        if matches!(
+            key.as_str(),
+            "title"
+                | "createdAt"
+                | "created_at"
+                | "updatedAt"
+                | "updated_at"
+                | "tags"
+        ) {
+            continue;
+        }
+        extra.insert(key, value);
+    }
+    extra
+}
+
+fn write_sidecar(path: &Path, sidecar: &NoteSidecar) -> Result<(), WorkspaceServiceError> {
+    let json = serde_json::to_string_pretty(sidecar)?;
+    std::fs::write(path, json)?;
+    Ok(())
+}
+
+fn current_unix_ms() -> Result<i64, WorkspaceServiceError> {
+    let now = std::time::SystemTime::now();
+    let duration = now
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    Ok(duration.as_millis() as i64)
 }
