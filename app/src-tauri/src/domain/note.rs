@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct NoteSidecar {
     pub title: String,
+    #[serde(alias = "createdAt")]
     pub created_at: i64,
+    #[serde(alias = "updatedAt")]
     pub updated_at: Option<i64>,
     pub tags: Option<Vec<String>>,
     #[serde(flatten)]
