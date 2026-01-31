@@ -1,11 +1,13 @@
 import { useSyncExternalStore } from 'react'
 import {
   WorkspaceApiError,
+  type NoteSummary,
   type WorkspaceFolderStatus,
   type WorkspaceSlotState,
   workspaceAssignSlot,
+  workspaceCreateNote,
   workspaceGetState,
-  workspaceListRootNotes,
+  workspaceListNotes,
   workspaceSwitchSlot,
 } from '../api/workspace'
 
@@ -25,7 +27,7 @@ export type WorkspaceStoreState = {
   fallbackSlot: number | null
   loading: boolean
   errorMessage: string | null
-  rootNotes: string[]
+  notes: NoteSummary[]
 
   problemSlot: number | null
   problemKind: WorkspaceProblemKind | null
@@ -68,7 +70,7 @@ function createWorkspaceStore() {
     fallbackSlot: null,
     loading: false,
     errorMessage: null,
-    rootNotes: [],
+    notes: [],
     problemSlot: null,
     problemKind: null,
   }
@@ -97,14 +99,14 @@ function createWorkspaceStore() {
 
   const refreshNotes = async () => {
     try {
-      const notes = await workspaceListRootNotes()
-      setState({ rootNotes: notes, errorMessage: null })
+      const notes = await workspaceListNotes()
+      setState({ notes, errorMessage: null })
     } catch (err) {
       if (isWorkspaceApiError(err)) {
         const kind = problemKindFromErrorCode(err.code)
         if (kind) {
           setState({
-            rootNotes: [],
+            notes: [],
             activeStatus: kind,
             problemSlot: state.activeSlot,
             problemKind: kind,
@@ -113,7 +115,7 @@ function createWorkspaceStore() {
           return
         }
       }
-      setState({ rootNotes: [], errorMessage: err instanceof Error ? err.message : 'Unknown error' })
+      setState({ notes: [], errorMessage: err instanceof Error ? err.message : 'Unknown error' })
     }
   }
 
@@ -127,13 +129,13 @@ function createWorkspaceStore() {
       if (mapActiveStatus(ws.slots.find((s) => s.slot === ws.activeSlot)?.status) === 'ok') {
         await refreshNotes()
       } else {
-        setState({ rootNotes: [] })
+        setState({ notes: [] })
       }
     } catch (err) {
       setState({
         loading: false,
         errorMessage: err instanceof Error ? err.message : 'Unknown error',
-        rootNotes: [],
+        notes: [],
       })
     }
   }
@@ -185,13 +187,44 @@ function createWorkspaceStore() {
     }
   }
 
+  const createNote = async () => {
+    setState({ loading: true, errorMessage: null, problemSlot: null, problemKind: null })
+    try {
+      const note = await workspaceCreateNote()
+      setState({ loading: false })
+      await refreshNotes()
+      return { ok: true as const, note }
+    } catch (err) {
+      if (isWorkspaceApiError(err)) {
+        const kind = problemKindFromErrorCode(err.code)
+        if (kind) {
+          setState({
+            loading: false,
+            notes: [],
+            activeStatus: kind,
+            problemSlot: state.activeSlot,
+            problemKind: kind,
+            errorMessage: err.message,
+          })
+          return { ok: false as const, message: err.message }
+        }
+      }
+
+      setState({
+        loading: false,
+        errorMessage: err instanceof Error ? err.message : 'Unknown error',
+      })
+      return { ok: false as const, message: err instanceof Error ? err.message : 'Unknown error' }
+    }
+  }
+
   return {
     subscribe: (listener: Listener) => {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
     getSnapshot: () => state,
-    actions: { boot, refreshNotes, assignSlot, switchSlot },
+    actions: { boot, refreshNotes, assignSlot, switchSlot, createNote },
   }
 }
 

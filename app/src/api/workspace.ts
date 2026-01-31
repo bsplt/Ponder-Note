@@ -15,6 +15,15 @@ export type WorkspaceState = {
   slots: WorkspaceSlotState[]
 }
 
+export type NoteSummary = {
+  stem: string
+  title: string
+  createdAt: number
+  updatedAt: number | null
+  tags: string[]
+  filename?: string
+}
+
 export type CommandError = {
   code: string
   message: string
@@ -60,5 +69,15 @@ export async function workspaceSwitchSlot(slot: number): Promise<WorkspaceState>
 
 export async function workspaceListRootNotes(): Promise<string[]> {
   const res = await invoke<CommandResult<string[]>>('workspace_list_root_notes')
+  return unwrap(res)
+}
+
+export async function workspaceListNotes(): Promise<NoteSummary[]> {
+  const res = await invoke<CommandResult<NoteSummary[]>>('workspace_list_notes')
+  return unwrap(res)
+}
+
+export async function workspaceCreateNote(): Promise<NoteSummary> {
+  const res = await invoke<CommandResult<NoteSummary>>('workspace_create_note')
   return unwrap(res)
 }
