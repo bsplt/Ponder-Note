@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Toast } from '../components/Toast'
 import type { NoteSummary } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 
 type OverviewProps = {
   onManageWorkspaces: () => void
+  onOpenNote: (note: NoteSummary, scrollTop: number) => void
+  onCreateNote: (note: NoteSummary, scrollTop: number) => void
+  restoreScrollTop: number
+  restoreFocusStem: string | null
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -45,6 +49,10 @@ function displayNoteTitle(note: NoteSummary): string {
 
 export function Overview(props: OverviewProps) {
   const onManageWorkspaces = props.onManageWorkspaces
+  const onOpenNote = props.onOpenNote
+  const onCreateNote = props.onCreateNote
+  const restoreScrollTop = props.restoreScrollTop
+  const restoreFocusStem = props.restoreFocusStem
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -52,32 +60,89 @@ export function Overview(props: OverviewProps) {
   const loading = useWorkspaceStore((s) => s.loading)
   const notes = useWorkspaceStore((s) => s.notes)
 
+  const listRef = useRef<HTMLUListElement | null>(null)
+  const didAutoFocus = useRef(false)
+
   const activePath = useMemo(
     () => slots.find((s) => s.slot === activeSlot)?.path ?? null,
     [activeSlot, slots],
   )
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [focusedIndex, setFocusedIndex] = useState(0)
 
   const onCloseToast = useCallback(() => setToastMessage(null), [])
   const showToast = useCallback((message: string) => setToastMessage(message), [])
 
+  const scrollTop = useCallback(() => {
+    return window.scrollY || document.documentElement.scrollTop || 0
+  }, [])
+
   const onNewNote = useCallback(() => {
     void (async () => {
+      const currentScrollTop = scrollTop()
       const res = await workspaceActions.createNote()
       if (res.ok) {
         showToast('New note created')
+        onCreateNote(res.note, currentScrollTop)
         return
       }
 
       showToast(res.message ?? 'Failed to create note')
     })()
-  }, [showToast])
+  }, [onCreateNote, scrollTop, showToast])
+
+  const clampIndex = useCallback(
+    (index: number) => Math.max(0, Math.min(index, notes.length)),
+    [notes.length],
+  )
+
+  const openFocused = useCallback(() => {
+    if (focusedIndex === 0) {
+      onNewNote()
+      return
+    }
+
+    const note = notes[focusedIndex - 1]
+    if (!note) return
+    onOpenNote(note, scrollTop())
+  }, [focusedIndex, notes, onNewNote, onOpenNote, scrollTop])
 
   useEffect(() => {
     if (activeStatus !== 'ok') return
     void workspaceActions.refreshNotes()
   }, [activeSlot, activeStatus])
+
+  useEffect(() => {
+    if (!notes.length && restoreFocusStem) {
+      setFocusedIndex(0)
+      return
+    }
+
+    if (restoreFocusStem) {
+      const idx = notes.findIndex((note) => note.stem === restoreFocusStem)
+      if (idx >= 0) {
+        setFocusedIndex(idx + 1)
+        return
+      }
+    }
+
+    setFocusedIndex((prev) => clampIndex(prev))
+  }, [clampIndex, notes, restoreFocusStem])
+
+  useEffect(() => {
+    if (restoreScrollTop <= 0) return
+    window.scrollTo({ top: restoreScrollTop })
+  }, [restoreScrollTop])
+
+  useEffect(() => {
+    if (didAutoFocus.current) return
+    const list = listRef.current
+    if (!list) return
+    if (document.activeElement && document.activeElement !== document.body) return
+    list.focus()
+    didAutoFocus.current = true
+  }, [notes.length])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -118,6 +183,34 @@ export function Overview(props: OverviewProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [activeSlot, activeStatus, onManageWorkspaces, showToast])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat) return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (isTypingTarget(event.target)) return
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setFocusedIndex((prev) => clampIndex(prev + 1))
+        return
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setFocusedIndex((prev) => clampIndex(prev - 1))
+        return
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        openFocused()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [clampIndex, openFocused])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =
@@ -168,28 +261,60 @@ export function Overview(props: OverviewProps) {
           <div className="notesTitle">Notes</div>
           <div className="notesMeta">Root-level *.md only</div>
         </div>
-        <div className="notesHeaderActions">
-          <button type="button" className="btn btnPrimary" onClick={onNewNote}>
-            New Note
-          </button>
-        </div>
       </div>
 
       {loading ? (
         <div className="mutedBlock">Loading…</div>
       ) : notes.length ? (
-        <ul className="notesList">
-          {notes.map((note) => (
-            <li key={note.stem} className="noteRow">
-              <div className="noteRowMain">
-                <div className="noteName">{displayNoteTitle(note)}</div>
-                <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
-              </div>
-            </li>
-          ))}
+        <ul className="notesList" ref={listRef} tabIndex={0}>
+          <li
+            key="new-note"
+            className={`noteRow noteRowInteractive noteRowNew${
+              focusedIndex === 0 ? ' noteRowFocused' : ''
+            }`}
+            onClick={() => setFocusedIndex(0)}
+            onDoubleClick={onNewNote}
+          >
+            <div className="noteRowMain">
+              <div className="noteName">+ New Note</div>
+              <div className="noteTimestamp">Enter to create</div>
+            </div>
+          </li>
+          {notes.map((note, idx) => {
+            const rowIndex = idx + 1
+            const isFocused = rowIndex === focusedIndex
+            return (
+              <li
+                key={note.stem}
+                className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}`}
+                onClick={() => setFocusedIndex(rowIndex)}
+                onDoubleClick={() => onOpenNote(note, scrollTop())}
+              >
+                <div className="noteRowMain">
+                  <div className="noteName">{displayNoteTitle(note)}</div>
+                  <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       ) : (
-        <div className="mutedBlock">No notes found in the workspace root.</div>
+        <ul className="notesList" ref={listRef} tabIndex={0}>
+          <li
+            key="new-note"
+            className={`noteRow noteRowInteractive noteRowNew${
+              focusedIndex === 0 ? ' noteRowFocused' : ''
+            }`}
+            onClick={() => setFocusedIndex(0)}
+            onDoubleClick={onNewNote}
+          >
+            <div className="noteRowMain">
+              <div className="noteName">+ New Note</div>
+              <div className="noteTimestamp">Enter to create</div>
+            </div>
+          </li>
+          <li className="mutedBlock">No notes found in the workspace root.</li>
+        </ul>
       )}
 
       {toastMessage ? <Toast message={toastMessage} onClose={onCloseToast} /> : null}

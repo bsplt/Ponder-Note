@@ -168,6 +168,32 @@ body {
   background: rgba(0, 0, 0, 0.12);
 }
 
+.noteRowInteractive {
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.noteRowInteractive:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.noteRowFocused {
+  border-color: var(--primary-border);
+  background: rgba(121, 192, 255, 0.10);
+}
+
+.noteRowNew {
+  border-style: dashed;
+  background: rgba(121, 192, 255, 0.08);
+}
+
+.notesList:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
 
 .noteRowMain {
   display: flex;

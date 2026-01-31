@@ -1,18 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Overview } from './screens/Overview'
+import { Editor } from './screens/Editor'
 import { Workspaces } from './screens/Workspaces'
+import type { NoteSummary } from './api/workspace'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import './styles.css'
 
-type Screen = 'overview' | 'workspaces'
+type Screen = 'overview' | 'workspaces' | 'editor'
 
 function titleForScreen(screen: Screen): string {
   if (screen === 'overview') return 'Overview'
+  if (screen === 'editor') return 'Editor'
   return 'Workspaces'
 }
 
 function App() {
   const [screen, setScreen] = useState<Screen>('overview')
+  const [activeNoteStem, setActiveNoteStem] = useState<string | null>(null)
+  const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
+  const [overviewScrollTop, setOverviewScrollTop] = useState(0)
+  const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
   const didInitialRoute = useRef(false)
   const title = useMemo(() => titleForScreen(screen), [screen])
 
@@ -32,10 +39,42 @@ function App() {
       return
     }
 
-    if (activeStatus !== 'ok') {
+    if (activeStatus !== 'ok' && screen !== 'editor') {
       setScreen('workspaces')
     }
-  }, [activeStatus, loading])
+  }, [activeStatus, loading, screen])
+
+  const openEditor = useCallback(
+    (note: NoteSummary, isNew: boolean, scrollTop: number) => {
+      setActiveNoteStem(note.stem)
+      setActiveNoteIsNew(isNew)
+      setOverviewScrollTop(scrollTop)
+      setOverviewFocusStem(note.stem)
+      setScreen('editor')
+    },
+    [],
+  )
+
+  const handleOpenNote = useCallback(
+    (note: NoteSummary, scrollTop: number) => {
+      openEditor(note, false, scrollTop)
+    },
+    [openEditor],
+  )
+
+  const handleCreateNote = useCallback(
+    (note: NoteSummary, scrollTop: number) => {
+      openEditor(note, true, scrollTop)
+    },
+    [openEditor],
+  )
+
+  const handleExitEditor = useCallback((result: { stem: string; discarded: boolean }) => {
+    setScreen('overview')
+    setActiveNoteStem(null)
+    setActiveNoteIsNew(false)
+    setOverviewFocusStem(result.discarded ? null : result.stem)
+  }, [])
 
   return (
     <div className="appRoot">
@@ -45,27 +84,47 @@ function App() {
           <div className="appScreenTitle">{title}</div>
         </div>
 
-        <div className="appHeaderRight">
-          <button
-            type="button"
-            className={screen === 'overview' ? 'btn btnPrimary' : 'btn'}
-            onClick={() => setScreen('overview')}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={screen === 'workspaces' ? 'btn btnPrimary' : 'btn'}
-            onClick={() => setScreen('workspaces')}
-          >
-            Workspaces
-          </button>
-        </div>
+        {screen !== 'editor' ? (
+          <div className="appHeaderRight">
+            <button
+              type="button"
+              className={screen === 'overview' ? 'btn btnPrimary' : 'btn'}
+              onClick={() => setScreen('overview')}
+            >
+              Overview
+            </button>
+            <button
+              type="button"
+              className={screen === 'workspaces' ? 'btn btnPrimary' : 'btn'}
+              onClick={() => setScreen('workspaces')}
+            >
+              Workspaces
+            </button>
+          </div>
+        ) : null}
       </header>
 
       <main className="appMain">
         {screen === 'overview' ? (
-          <Overview onManageWorkspaces={() => setScreen('workspaces')} />
+          <Overview
+            onManageWorkspaces={() => setScreen('workspaces')}
+            onOpenNote={handleOpenNote}
+            onCreateNote={handleCreateNote}
+            restoreScrollTop={overviewScrollTop}
+            restoreFocusStem={overviewFocusStem}
+          />
+        ) : screen === 'editor' ? (
+          activeNoteStem ? (
+            <Editor stem={activeNoteStem} isNew={activeNoteIsNew} onExit={handleExitEditor} />
+          ) : (
+            <Overview
+              onManageWorkspaces={() => setScreen('workspaces')}
+              onOpenNote={handleOpenNote}
+              onCreateNote={handleCreateNote}
+              restoreScrollTop={overviewScrollTop}
+              restoreFocusStem={overviewFocusStem}
+            />
+          )
         ) : (
           <Workspaces />
         )}
