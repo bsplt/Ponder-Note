@@ -4,7 +4,8 @@ mod services;
 mod storage;
 
 use crate::commands::workspace::{
-    workspace_assign_slot, workspace_get_state, workspace_list_root_notes, workspace_switch_slot,
+    workspace_assign_slot, workspace_create_note, workspace_get_state, workspace_list_notes,
+    workspace_list_root_notes, workspace_switch_slot,
 };
 use crate::services::workspace_service::WorkspaceService;
 use crate::storage::app_config_repo::AppConfigRepo;
@@ -23,7 +24,9 @@ pub fn run() {
             workspace_get_state,
             workspace_assign_slot,
             workspace_switch_slot,
-            workspace_list_root_notes
+            workspace_list_root_notes,
+            workspace_list_notes,
+            workspace_create_note
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

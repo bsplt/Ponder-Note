@@ -1,3 +1,4 @@
+use crate::domain::note::NoteSummary;
 use crate::domain::workspace::{CommandResult, WorkspaceState};
 use crate::services::workspace_service::{InvalidWorkspaceKind, WorkspaceService, WorkspaceServiceError};
 use std::sync::Mutex;
@@ -85,6 +86,46 @@ pub fn workspace_list_root_notes(
     }
 }
 
+#[tauri::command]
+pub fn workspace_list_notes(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+) -> CommandResult<Vec<NoteSummary>> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.list_notes() {
+        Ok(notes) => CommandResult::ok(notes),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn workspace_create_note(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+) -> CommandResult<NoteSummary> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.create_note() {
+        Ok(note) => CommandResult::ok(note),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
 fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
     match err {
         WorkspaceServiceError::InvalidSlot { .. } => "invalid_slot",
@@ -93,6 +134,8 @@ fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
             InvalidWorkspaceKind::Missing => "workspace_missing",
             InvalidWorkspaceKind::Unreadable => "workspace_unreadable",
         },
+        WorkspaceServiceError::Io(_) => "io_error",
+        WorkspaceServiceError::Json(_) => "json_error",
         WorkspaceServiceError::Config(_) => "config_error",
     }
 }
