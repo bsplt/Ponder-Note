@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
-import { noteDiscard, noteRead, noteSave } from '../api/notes'
+import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { workspaceActions } from '../stores/workspaceStore'
 
 type EditorProps = {
@@ -109,7 +109,12 @@ export function Editor(props: EditorProps) {
           setSaveError(null)
           return true
         } catch (err) {
-          const message = err instanceof Error ? err.message : 'Save failed'
+          const message =
+            err instanceof NoteApiError
+              ? `${err.code}: ${err.message}`
+              : err instanceof Error
+                ? err.message
+                : 'Save failed'
           setSaveError(message)
           return false
         }
@@ -262,7 +267,7 @@ export function Editor(props: EditorProps) {
       {saveError ? (
         <div className="editorBanner" role="status">
           <div className="editorBannerMessage">
-            Autosave failed. Last saved: {saveStatus}
+            Autosave failed: {saveError}. Last saved: {saveStatus}
           </div>
           <button type="button" className="btn btnPrimary" onClick={handleRetrySave}>
             Retry save
