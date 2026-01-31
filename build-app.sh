@@ -15,4 +15,4 @@ if [ ! -d "$APP_DIR" ]; then
 fi
 
 nix --extra-experimental-features "nix-command flakes" develop "$ROOT_DIR" -c bash -c \
-  'cd "$1" && pnpm install && pnpm tauri build "${@:2}"' bash "$APP_DIR" "$@"
+  'cd "$1" && pnpm install && pnpm tauri build --debug "${@:2}"' bash "$APP_DIR" "$@"
