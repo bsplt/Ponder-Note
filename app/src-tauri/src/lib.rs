@@ -3,6 +3,7 @@ mod domain;
 mod services;
 mod storage;
 
+use crate::commands::notes::{note_discard, note_read, note_save};
 use crate::commands::workspace::{
     workspace_assign_slot, workspace_create_note, workspace_get_state, workspace_list_notes,
     workspace_list_root_notes, workspace_switch_slot,
@@ -26,7 +27,10 @@ pub fn run() {
             workspace_switch_slot,
             workspace_list_root_notes,
             workspace_list_notes,
-            workspace_create_note
+            workspace_create_note,
+            note_read,
+            note_save,
+            note_discard
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

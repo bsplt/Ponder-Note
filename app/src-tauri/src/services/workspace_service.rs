@@ -1,4 +1,5 @@
 use crate::domain::note::{NoteSidecar, NoteSummary};
+use crate::domain::note_rewrite::rewrite_exit_checklists;
 use crate::domain::note_title::derive_note_title;
 use crate::domain::workspace::{
     slot_to_index, AppConfig, WorkspaceFolderStatus, WorkspaceSlotState, WorkspaceState,
@@ -6,8 +7,9 @@ use crate::domain::workspace::{
 use crate::storage::app_config_repo::{AppConfigRepo, AppConfigRepoError};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
+use tempfile::NamedTempFile;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -241,6 +243,50 @@ impl WorkspaceService {
         })
     }
 
+    pub fn note_read(&self, stem: &str) -> Result<String, WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let note_path = self.note_path_from_stem(&path, stem)?;
+        Ok(std::fs::read_to_string(&note_path)?)
+    }
+
+    pub fn note_save(
+        &self,
+        stem: &str,
+        body: &str,
+        rewrite_on_exit: bool,
+    ) -> Result<(), WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let note_path = self.note_path_from_stem(&path, stem)?;
+        let payload = if rewrite_on_exit {
+            rewrite_exit_checklists(body)
+        } else {
+            body.to_string()
+        };
+        atomic_write_note(&path, &note_path, &payload)
+    }
+
+    pub fn note_discard(&self, stem: &str) -> Result<(), WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let note_path = self.note_path_from_stem(&path, stem)?;
+        remove_file_if_exists(&note_path)?;
+
+        let sidecar_path = path
+            .join(".ponder")
+            .join("meta")
+            .join(format!("{stem}.json"));
+        remove_file_if_exists(&sidecar_path)?;
+        Ok(())
+    }
+
+    fn note_path_from_stem(
+        &self,
+        workspace_path: &Path,
+        stem: &str,
+    ) -> Result<PathBuf, WorkspaceServiceError> {
+        validate_note_stem(stem)?;
+        Ok(workspace_path.join(format!("{stem}.md")))
+    }
+
     fn slot_path(&self, slot: u8) -> Result<Option<String>, WorkspaceServiceError> {
         let idx = slot_index(slot)?;
         Ok(self.cfg.workspaces[idx].clone())
@@ -417,6 +463,44 @@ fn write_sidecar(path: &Path, sidecar: &NoteSidecar) -> Result<(), WorkspaceServ
     let json = serde_json::to_string_pretty(sidecar)?;
     std::fs::write(path, json)?;
     Ok(())
+}
+
+fn validate_note_stem(stem: &str) -> Result<(), WorkspaceServiceError> {
+    if stem.is_empty() || stem == "." || stem == ".." {
+        return Err(WorkspaceServiceError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "invalid note stem",
+        )));
+    }
+
+    if stem.contains('/') || stem.contains('\\') {
+        return Err(WorkspaceServiceError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "invalid note stem",
+        )));
+    }
+
+    Ok(())
+}
+
+fn atomic_write_note(
+    workspace_dir: &Path,
+    target_path: &Path,
+    body: &str,
+) -> Result<(), WorkspaceServiceError> {
+    let mut tmp = NamedTempFile::new_in(workspace_dir)?;
+    tmp.write_all(body.as_bytes())?;
+    tmp.as_file().sync_all()?;
+    tmp.persist(target_path).map_err(|e| e.error)?;
+    Ok(())
+}
+
+fn remove_file_if_exists(path: &Path) -> Result<(), WorkspaceServiceError> {
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(WorkspaceServiceError::Io(e)),
+    }
 }
 
 fn current_unix_ms() -> Result<i64, WorkspaceServiceError> {
