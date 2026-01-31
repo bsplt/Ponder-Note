@@ -156,3 +156,34 @@ fn strip_inline_formatting(input: &str) -> String {
 
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::derive_note_title;
+
+    #[test]
+    fn derive_note_title_normalizes_markdown_first_lines() {
+        let cases = [
+            ("# Title", "Title"),
+            ("  ### Title", "Title"),
+            ("#", "Untitled"),
+            ("###", "Untitled"),
+            ("---", "Untitled"),
+            ("- Item", "Item"),
+            ("1. Item", "Item"),
+            ("> Quote", "Quote"),
+            ("- [ ] Task", "Task"),
+            ("- [x] Done", "Done"),
+            ("**Bold**", "Bold"),
+            ("`Code`", "Code"),
+            ("_Em_", "Em"),
+            ("[Link](https://example.com)", "Link"),
+            ("\t\t Title  ", "Title"),
+            ("Title ###", "Title ###"),
+        ];
+
+        for (input, expected) in cases {
+            assert_eq!(derive_note_title(input), expected, "input: {input}");
+        }
+    }
+}
