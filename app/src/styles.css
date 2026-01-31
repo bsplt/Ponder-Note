@@ -168,6 +168,7 @@ body {
   background: rgba(0, 0, 0, 0.12);
 }
 
+
 .noteRowMain {
   display: flex;
   align-items: center;
@@ -189,6 +190,72 @@ body {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.editorPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editorMeta {
+  margin-top: 6px;
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.editorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--danger-border);
+  background: var(--danger);
+}
+
+.editorBannerMessage {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.editorBody {
+  margin-top: 6px;
+}
+
+.editorTextarea {
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 10, 12, 0.5);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.editorTextarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.editorFooter {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-2);
+  font-size: 12px;
 }
 
 .toast {
@@ -219,6 +286,11 @@ body {
 .btn:hover {
   border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .btn:focus-visible {
