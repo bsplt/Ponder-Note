@@ -256,13 +256,16 @@ impl WorkspaceService {
         rewrite_on_exit: bool,
     ) -> Result<(), WorkspaceServiceError> {
         let (_slot, path) = self.active_workspace_path()?;
-        let note_path = self.note_path_from_stem(&path, stem)?;
+        let note_path = self
+            .note_path_from_stem(&path, stem)
+            .map_err(|err| note_save_error_with_context(err, stem, &path))?;
         let payload = if rewrite_on_exit {
             rewrite_exit_checklists(body)
         } else {
             body.to_string()
         };
         atomic_write_note(&path, &note_path, &payload)
+            .map_err(|err| note_save_error_with_context(err, stem, &path))
     }
 
     pub fn note_discard(&self, stem: &str) -> Result<(), WorkspaceServiceError> {
@@ -491,8 +494,33 @@ fn atomic_write_note(
     let mut tmp = NamedTempFile::new_in(workspace_dir)?;
     tmp.write_all(body.as_bytes())?;
     tmp.as_file().sync_all()?;
-    tmp.persist(target_path).map_err(|e| e.error)?;
-    Ok(())
+    match tmp.persist(target_path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+                std::fs::rename(err.file.path(), target_path)?;
+                return Ok(());
+            }
+            Err(WorkspaceServiceError::Io(err.error))
+        }
+    }
+}
+
+fn note_save_error_with_context(
+    err: WorkspaceServiceError,
+    stem: &str,
+    workspace_path: &Path,
+) -> WorkspaceServiceError {
+    match err {
+        WorkspaceServiceError::Io(source) => WorkspaceServiceError::Io(std::io::Error::new(
+            source.kind(),
+            format!(
+                "note_save failed for stem '{stem}' in workspace '{}': {source}",
+                workspace_path.display()
+            ),
+        )),
+        other => other,
+    }
 }
 
 fn remove_file_if_exists(path: &Path) -> Result<(), WorkspaceServiceError> {
