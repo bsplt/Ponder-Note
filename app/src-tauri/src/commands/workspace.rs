@@ -148,6 +148,26 @@ pub fn workspace_update_note_tags(
     }
 }
 
+#[tauri::command]
+pub fn workspace_get_all_tags(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+) -> CommandResult<Vec<String>> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.get_all_tags() {
+        Ok(tags) => CommandResult::ok(tags),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
 fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
     match err {
         WorkspaceServiceError::InvalidSlot { .. } => "invalid_slot",

@@ -86,3 +86,8 @@ export async function workspaceUpdateNoteTags(stem: string, tags: string[]): Pro
   const res = await invoke<CommandResult<void>>('workspace_update_note_tags', { stem, tags })
   return unwrap(res)
 }
+
+export async function workspaceGetAllTags(): Promise<string[]> {
+  const res = await invoke<CommandResult<string[]>>('workspace_get_all_tags')
+  return unwrap(res)
+}

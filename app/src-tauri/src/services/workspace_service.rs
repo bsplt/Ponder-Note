@@ -301,6 +301,50 @@ impl WorkspaceService {
         Ok(())
     }
 
+    pub fn get_all_tags(&self) -> Result<Vec<String>, WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        let meta_dir = path.join(".ponder").join("meta");
+
+        // If meta dir doesn't exist yet, return empty list
+        if !meta_dir.exists() {
+            return Ok(Vec::new());
+        }
+
+        let mut all_tags = std::collections::HashSet::new();
+
+        // Read all sidecar files and collect tags
+        for entry in std::fs::read_dir(&meta_dir)? {
+            let entry = entry?;
+            if !entry.file_type()?.is_file() {
+                continue;
+            }
+
+            let sidecar_path = entry.path();
+            if sidecar_path.extension().and_then(|s| s.to_str()) != Some("json") {
+                continue;
+            }
+
+            // Try to read and parse the sidecar
+            if let Ok(raw) = std::fs::read_to_string(&sidecar_path) {
+                if let Ok(sidecar) = serde_json::from_str::<NoteSidecar>(&raw) {
+                    // Collect tags if present
+                    if let Some(tags) = sidecar.tags {
+                        for tag in tags {
+                            all_tags.insert(tag);
+                        }
+                    }
+                }
+                // Skip sidecars with missing or invalid tags fields (don't fail)
+            }
+        }
+
+        // Convert to Vec and sort alphabetically (case-insensitive)
+        let mut tags_vec: Vec<String> = all_tags.into_iter().collect();
+        tags_vec.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+
+        Ok(tags_vec)
+    }
+
     pub fn update_note_tags(&self, stem: &str, tags: Vec<String>) -> Result<(), WorkspaceServiceError> {
         let (_slot, path) = self.active_workspace_path()?;
         
