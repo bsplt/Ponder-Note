@@ -18,65 +18,65 @@ The common, maintainable shape for a “local files as source-of-truth” deskto
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                               Web UI (TS)                               │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  │
-│  │ Overview    │  │ Editor      │  │ Todo List   │  │ Workspace UI  │  │
-│  │ (list+search│  │ (autosave)  │  │ (toggle)    │  │ (slots/picker)│  │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬────────┘  │
-│         │                 │                 │                 │         │
+│  ┌──────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  │
+│  │ Overview     │  │ Editor      │  │ Todo List   │  │ Workspace UI  │  │
+│  │ (list+search)│  │ (autosave)  │  │ (toggle)    │  │ (slots/picker)│  │
+│  └──────┬───────┘  └──────┬──────┘  └──────┬──────┘  └──────┬────────┘  │
+│         │                 │                │                │           │
 │     Stores/ViewModels (notes, filters, selection, todos, tags, status)  │
 └─────────┬─────────────────┬─────────────────┬─────────────────┬─────────┘
-          │ invoke(cmd)      │ invoke(cmd)      │ invoke(cmd)      │
-          │ listen(events)   │ listen(events)   │ listen(events)   │
+          │ invoke(cmd)     │ invoke(cmd)     │ invoke(cmd)     │
+          │ listen(events)  │ listen(events)  │ listen(events)  │
 ┌─────────┴───────────────────────────────────────────────────────────────┐
-│                         Tauri Bridge (commands/events)                   │
+│                         Tauri Bridge (commands/events)                  │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  Commands: request/response for UI actions                                │
-│  Events: push progress + invalidations + changed entities                 │
+│  Commands: request/response for UI actions                              │
+│  Events: push progress + invalidations + changed entities               │
 └─────────┬───────────────────────────────────────────────────────────────┘
           │
 ┌─────────┴───────────────────────────────────────────────────────────────┐
-│                               Core (Rust)                                │
+│                               Core (Rust)                               │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │
-│  │ WorkspaceSvc │  │ NotesSvc     │  │ TodosSvc     │  │ SearchSvc   │ │
-│  │ (slots/open) │  │ (read/write) │  │ (extract/edit│  │ (query)     │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬──────┘ │
-│         │                 │                 │                 │        │
-│         └──────────────┬──┴──────────────┬──┴──────────────┬──┘        │
-│                        │                 │                 │           │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  ┌─────────────┐ │
+│  │ WorkspaceSvc │  │ NotesSvc     │  │ TodosSvc      │  │ SearchSvc   │ │
+│  │ (slots/open) │  │ (read/write) │  │ (extract/edit)│  │ (query)     │ │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬────────┘  └──────┬──────┘ │
+│         │                 │                 │                  │        │
+│         └──────────────┬──┴──────────────┬──┴───────────────┬──┘        │
+│                        │                 │                  │           │
 │                Indexing Pipeline     File Watcher      Caches/Version   │
 │               (scan->parse->upsert)  (debounced)      (rebuild triggers)│
 └─────────┬───────────────────────────────────────────────────────────────┘
           │
 ┌─────────┴───────────────────────────────────────────────────────────────┐
-│                           Storage (source/derived)                        │
+│                           Storage (source/derived)                      │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  Source of truth:                                                        │
-│   - <workspace>/*.md                                                     │
-│   - <workspace>/.ponder/meta/<stem>.json                                 │
-│  Derived/rebuildable:                                                    │
-│   - <workspace>/.ponder/index/* (FTS index, inventories, etc.)           │
-│  Soft delete:                                                            │
-│   - <workspace>/deleted/*.md                                             │
+│  Source of truth:                                                       │
+│   - <workspace>/*.md                                                    │
+│   - <workspace>/.ponder/meta/<stem>.json                                │
+│  Derived/rebuildable:                                                   │
+│   - <workspace>/.ponder/index/* (FTS index, inventories, etc.)          │
+│  Soft delete:                                                           │
+│   - <workspace>/deleted/*.md                                            │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Web UI Screens | Overview/editor/todos flows + keyboard-first UX | Router + components; minimal logic per screen |
-| UI Stores / ViewModels | Local state: selection, filters, optimistic UI | Small reactive stores; updates driven by commands/events |
-| Tauri Commands | Deterministic “do X” entry points | `#[tauri::command]` functions calling services |
-| Tauri Events | Push invalidations + progress from background work | `emit`/`listen` event channel |
-| WorkspaceService | Active workspace slot, open/switch, path validation | Reads/writes global config; canonicalize paths |
-| NotesService | Read note summaries, load note text, write note (atomic) | FS repository + parser + meta updates |
-| MetadataService | Read/write `.ponder/meta/*.json` sidecars | JSON schema versioning; safe concurrent writes |
-| IndexingPipeline | Scan workspace, parse notes, update derived stores | Change detector + background worker |
-| SearchService | Full-text queries + tag filter combination | Derived index (recommended: SQLite FTS5) |
-| TodosService | Extract todos, group, toggle checkbox in-source | Parser + patcher + post-write reindex |
-| FileWatcher | Detect external edits/moves/deletes and trigger reindex | Debounced watcher (e.g., notify crate) |
-| Derived Stores | Inventory + search index + (optional) todo cache | `.ponder/index/*` versioned artifacts |
+| Component              | Responsibility                                           | Typical Implementation                                   |
+| ---------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| Web UI Screens         | Overview/editor/todos flows + keyboard-first UX          | Router + components; minimal logic per screen            |
+| UI Stores / ViewModels | Local state: selection, filters, optimistic UI           | Small reactive stores; updates driven by commands/events |
+| Tauri Commands         | Deterministic “do X” entry points                        | `#[tauri::command]` functions calling services           |
+| Tauri Events           | Push invalidations + progress from background work       | `emit`/`listen` event channel                            |
+| WorkspaceService       | Active workspace slot, open/switch, path validation      | Reads/writes global config; canonicalize paths           |
+| NotesService           | Read note summaries, load note text, write note (atomic) | FS repository + parser + meta updates                    |
+| MetadataService        | Read/write `.ponder/meta/*.json` sidecars                | JSON schema versioning; safe concurrent writes           |
+| IndexingPipeline       | Scan workspace, parse notes, update derived stores       | Change detector + background worker                      |
+| SearchService          | Full-text queries + tag filter combination               | Derived index (recommended: SQLite FTS5)                 |
+| TodosService           | Extract todos, group, toggle checkbox in-source          | Parser + patcher + post-write reindex                    |
+| FileWatcher            | Detect external edits/moves/deletes and trigger reindex  | Debounced watcher (e.g., notify crate)                   |
+| Derived Stores         | Inventory + search index + (optional) todo cache         | `.ponder/index/*` versioned artifacts                    |
 
 ## Recommended Project Structure
 
@@ -128,17 +128,20 @@ src/
 **Trade-offs:** Events require careful payload/versioning; commands can become chatty if too granular.
 
 **Example:**
+
 ```typescript
 // ui/api/notes.ts
-import { invoke } from '@tauri-apps/api/tauri'
-import { listen } from '@tauri-apps/api/event'
+import { invoke } from "@tauri-apps/api/tauri";
+import { listen } from "@tauri-apps/api/event";
 
 export async function openNote(noteId: string) {
-  return invoke<string>('notes_open', { noteId })
+  return invoke<string>("notes_open", { noteId });
 }
 
-export async function onIndexProgress(cb: (p: { done: number; total: number }) => void) {
-  return listen('index/progress', (event) => cb(event.payload as any))
+export async function onIndexProgress(
+  cb: (p: { done: number; total: number }) => void,
+) {
+  return listen("index/progress", (event) => cb(event.payload as any));
 }
 ```
 
@@ -210,6 +213,7 @@ Screens derive view state (filters + selection)
 ### Key Data Flows
 
 1. **Workspace open / startup index**
+
 ```
 UI: select slot/open workspace
   ↓ invoke(workspace_open)
@@ -221,6 +225,7 @@ UI: render overview from NoteSummary list
 ```
 
 2. **Editor autosave**
+
 ```
 UI: editor debounce fires
   ↓ invoke(notes_save{noteId, content})
@@ -234,6 +239,7 @@ UI: overview + todo list reflect changes
 ```
 
 3. **Todo toggle (single source of truth = markdown)**
+
 ```
 UI: click todo
   ↓ invoke(todos_toggle{noteId, todoKey})
@@ -246,6 +252,7 @@ Core: update todo cache + FTS index for that note
 ```
 
 4. **Soft delete (move to deleted/)**
+
 ```
 UI: press d then d
   ↓ invoke(notes_soft_delete{noteId})
@@ -328,11 +335,11 @@ This is ordered to reduce rewrites: establish identities + IO rules first, then 
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k notes | Full startup scan + rebuild-on-change is fine; keep UI responsive via background tasks + progress events |
-| 1k-20k notes | Persistent FTS + inventory diff; debounce watcher; avoid reading full file for list view |
-| 20k+ notes | Strongly prefer incremental indexing + paging/virtualized UI list; consider more advanced index engine if SQLite becomes limiting |
+| Scale        | Architecture Adjustments                                                                                                          |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 0-1k notes   | Full startup scan + rebuild-on-change is fine; keep UI responsive via background tasks + progress events                          |
+| 1k-20k notes | Persistent FTS + inventory diff; debounce watcher; avoid reading full file for list view                                          |
+| 20k+ notes   | Strongly prefer incremental indexing + paging/virtualized UI list; consider more advanced index engine if SQLite becomes limiting |
 
 ### Scaling Priorities
 
@@ -363,18 +370,18 @@ This is ordered to reduce rewrites: establish identities + IO rules first, then 
 
 ### External Services
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| OS folder picker | Tauri dialog plugin / API | Drives workspace slot selection |
+| Service            | Integration Pattern            | Notes                                 |
+| ------------------ | ------------------------------ | ------------------------------------- |
+| OS folder picker   | Tauri dialog plugin / API      | Drives workspace slot selection       |
 | Global config path | PlatformDirs / Tauri path APIs | Store `config.json` outside workspace |
 
 ### Internal Boundaries
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| UI ↔ Core | Tauri commands + events | Commands for actions; events for progress/invalidation |
-| Services ↔ Storage | Trait-based repos | Enables tests; prevents leaking FS concerns |
-| Indexing ↔ UI | Events + idempotent “get latest state” commands | UI should tolerate missing/out-of-order events |
+| Boundary           | Communication                                   | Notes                                                  |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------ |
+| UI ↔ Core          | Tauri commands + events                         | Commands for actions; events for progress/invalidation |
+| Services ↔ Storage | Trait-based repos                               | Enables tests; prevents leaking FS concerns            |
+| Indexing ↔ UI      | Events + idempotent “get latest state” commands | UI should tolerate missing/out-of-order events         |
 
 ## Sources
 
@@ -386,5 +393,6 @@ This is ordered to reduce rewrites: establish identities + IO rules first, then 
 - notify (Rust filesystem watching; macOS via FSEvents/kqueue): https://github.com/notify-rs/notify
 
 ---
-*Architecture research for: Tauri desktop app managing local Markdown notes*
-*Researched: 2026-01-30*
+
+_Architecture research for: Tauri desktop app managing local Markdown notes_
+_Researched: 2026-01-30_
