@@ -10,13 +10,13 @@
 
 **Current phase:** 4 of 7 - Search & Tags
 
-**Plan:** 03 of 05
+**Plan:** 04 of 05
 
 **Status:** In progress
 
-**Last activity:** 2026-02-01 - Completed 04-03-PLAN.md
+**Last activity:** 2026-02-01 - Completed 04-04-PLAN.md
 
-**Progress:** [████████████████████░░░░]
+**Progress:** [█████████████████████░░░]
 
 ## Performance Metrics (v1)
 
@@ -35,6 +35,8 @@
 - Exit confirmation is allowed if the final save fails.
 - Title-only search for Phase 4 (body search deferred until NoteSummary includes body field).
 - Search state lives in App component for persistence across navigation (Overview ↔ Editor).
+- Tag editor uses blur-based autosave (not debounced) to batch tag changes before backend write.
+- Workspace store refresh pattern preferred over custom events for reactive UI updates.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -42,8 +44,8 @@
 
 ## Session Continuity
 
-**Next action:** Begin 04-04-PLAN.md
+**Next action:** Begin 04-05-PLAN.md
 
-**Last session:** 2026-02-01T22:15:43Z
-**Stopped at:** Completed 04-03-PLAN.md
+**Last session:** 2026-02-01T22:24:39Z
+**Stopped at:** Completed 04-04-PLAN.md
 **Resume file:** None
