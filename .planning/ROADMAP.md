@@ -80,11 +80,20 @@ Plans:
 **Requirements:** OV-02, OV-04, OV-05, TAG-01, TAG-02
 
 **Success Criteria (observable):**
-1. Overview rows show each note’s title, timestamp, and tags.
+1. Overview rows show each note's title, timestamp, and tags.
 2. In the editor, user can add/edit tags via a dedicated comma-separated input; tags are trimmed, empty values are dropped, and saved.
 3. Tag input suggests existing tags from other notes in the active workspace.
 4. Search input filters the note list based on matches in note title + body.
 5. User can filter the note list by selecting tags and can combine tag filters with search.
+
+**Plans:** 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Backend tag save and get-all-tags commands
+- [ ] 04-02-PLAN.md — Search utilities and tag pill badges in Overview
+- [ ] 04-03-PLAN.md — SearchBar component and filtering integration
+- [ ] 04-04-PLAN.md — Tag editing in Editor with autocomplete
+- [ ] 04-05-PLAN.md — Human verification of search and tags
 
 ### Phase 5 - Todos (Extract, Browse, Toggle)
 
