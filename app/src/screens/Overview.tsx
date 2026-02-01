@@ -294,6 +294,15 @@ export function Overview(props: OverviewProps) {
                   <div className="noteName">{displayNoteTitle(note)}</div>
                   <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
                 </div>
+                {note.tags && note.tags.length > 0 && (
+                  <div className="noteTags">
+                    {[...note.tags].sort().map((tag) => (
+                      <span key={tag} className="noteTag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </li>
             )
           })}

@@ -218,6 +218,29 @@ body {
   white-space: nowrap;
 }
 
+.noteTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.noteTag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.noteTag:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .editorPanel {
   display: flex;
   flex-direction: column;
