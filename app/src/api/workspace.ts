@@ -81,3 +81,8 @@ export async function workspaceCreateNote(): Promise<NoteSummary> {
   const res = await invoke<CommandResult<NoteSummary>>('workspace_create_note')
   return unwrap(res)
 }
+
+export async function workspaceUpdateNoteTags(stem: string, tags: string[]): Promise<void> {
+  const res = await invoke<CommandResult<void>>('workspace_update_note_tags', { stem, tags })
+  return unwrap(res)
+}

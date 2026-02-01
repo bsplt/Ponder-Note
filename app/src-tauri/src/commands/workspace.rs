@@ -126,6 +126,28 @@ pub fn workspace_create_note(
     }
 }
 
+#[tauri::command]
+pub fn workspace_update_note_tags(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+    stem: String,
+    tags: Vec<String>,
+) -> CommandResult<()> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.update_note_tags(&stem, tags) {
+        Ok(()) => CommandResult::ok(()),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
 fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
     match err {
         WorkspaceServiceError::InvalidSlot { .. } => "invalid_slot",
@@ -134,7 +156,14 @@ fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
             InvalidWorkspaceKind::Missing => "workspace_missing",
             InvalidWorkspaceKind::Unreadable => "workspace_unreadable",
         },
-        WorkspaceServiceError::Io(_) => "io_error",
+        WorkspaceServiceError::Io(e) => {
+            // Check for note_not_found in the error message
+            if e.to_string().contains("note_not_found") {
+                "note_not_found"
+            } else {
+                "io_error"
+            }
+        }
         WorkspaceServiceError::Json(_) => "json_error",
         WorkspaceServiceError::Config(_) => "config_error",
     }

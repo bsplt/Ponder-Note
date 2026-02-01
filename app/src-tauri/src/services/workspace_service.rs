@@ -301,6 +301,56 @@ impl WorkspaceService {
         Ok(())
     }
 
+    pub fn update_note_tags(&self, stem: &str, tags: Vec<String>) -> Result<(), WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        
+        // Verify the note Markdown file exists
+        let note_path = self.note_path_from_stem(&path, stem)?;
+        if !note_path.exists() {
+            return Err(WorkspaceServiceError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "note_not_found",
+            )));
+        }
+
+        let sidecar_path = path
+            .join(".ponder")
+            .join("meta")
+            .join(format!("{stem}.json"));
+
+        // Verify the sidecar exists
+        if !sidecar_path.exists() {
+            return Err(WorkspaceServiceError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "note_not_found",
+            )));
+        }
+
+        // Load existing sidecar
+        let raw = std::fs::read_to_string(&sidecar_path)?;
+        let mut sidecar: NoteSidecar = serde_json::from_str(&raw)?;
+
+        // Process tags: trim whitespace, filter empty, sort alphabetically
+        let mut processed_tags: Vec<String> = tags
+            .into_iter()
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty())
+            .collect();
+        processed_tags.sort();
+
+        // Update tags (use None if empty to match existing pattern)
+        sidecar.tags = if processed_tags.is_empty() {
+            None
+        } else {
+            Some(processed_tags)
+        };
+
+        // Write atomically: write to temp file, then rename
+        atomic_write_sidecar(&sidecar_path, &sidecar)?;
+
+        Ok(())
+    }
+
     fn note_path_from_stem(
         &self,
         workspace_path: &Path,
@@ -486,6 +536,37 @@ fn write_sidecar(path: &Path, sidecar: &NoteSidecar) -> Result<(), WorkspaceServ
     let json = serde_json::to_string_pretty(sidecar)?;
     std::fs::write(path, json)?;
     Ok(())
+}
+
+fn atomic_write_sidecar(path: &Path, sidecar: &NoteSidecar) -> Result<(), WorkspaceServiceError> {
+    let json = serde_json::to_string_pretty(sidecar)?;
+    
+    // Get parent directory for temp file
+    let parent = path.parent().ok_or_else(|| {
+        WorkspaceServiceError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "invalid sidecar path",
+        ))
+    })?;
+
+    // Write to temp file first
+    let mut tmp = NamedTempFile::new_in(parent)?;
+    tmp.write_all(json.as_bytes())?;
+    tmp.as_file().sync_all()?;
+
+    // Rename to target (atomic on same filesystem)
+    match tmp.persist(path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            // Fallback: if persist fails (e.g., cross-filesystem), try direct write
+            if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+                std::fs::write(path, json)?;
+                Ok(())
+            } else {
+                Err(WorkspaceServiceError::Io(err.error))
+            }
+        }
+    }
 }
 
 fn validate_note_stem(stem: &str) -> Result<(), WorkspaceServiceError> {
