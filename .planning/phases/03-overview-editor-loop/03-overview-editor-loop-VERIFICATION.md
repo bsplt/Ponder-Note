@@ -1,8 +1,8 @@
 ---
 phase: 03-overview-editor-loop
-verified: 2026-01-31T16:55:00Z
-status: human_needed
-score: 10/13 must-haves verified
+verified: 2026-02-01T08:23:09Z
+status: passed
+score: 13/13 must-haves verified
 human_verification:
   - test: "Create/edit note and return to overview"
     expected: "Autosave persists edits; ESC/Back returns to overview with edits retained and focus/scroll restored"
@@ -21,9 +21,9 @@ human_verification:
 # Phase 3: Overview <-> Editor Loop Verification Report
 
 **Phase Goal:** Users can create/open/edit notes and reliably return to the overview without losing changes.
-**Verified:** 2026-01-31T16:55:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Verified:** 2026-02-01T08:23:09Z
+**Status:** passed
+**Re-verification:** Yes — human verification completed
 
 ## Goal Achievement
 
@@ -39,13 +39,13 @@ human_verification:
 | 6 | Discarding an empty new note removes its .md file and sidecar JSON. | ✓ VERIFIED | `app/src/screens/Editor.tsx` calls `noteDiscard` for untouched new notes; `note_discard` removes both files. |
 | 7 | Overview includes a first-row `+ New Note` that opens the editor. | ✓ VERIFIED | `app/src/screens/Overview.tsx` renders the row and calls `onCreateNote`; `app/src/App.tsx` opens editor. |
 | 8 | Notes open from the overview via Enter or mouse double click and are editable as plain Markdown. | ✓ VERIFIED | `app/src/screens/Overview.tsx` handles Enter/double click; `app/src/screens/Editor.tsx` is a textarea editor. |
-| 9 | Edits autosave, undo/redo works, and ESC/back returns to overview after exit rewrite. | ? UNCERTAIN | Autosave + ESC handler exist in `app/src/screens/Editor.tsx`; runtime verification needed. |
+| 9 | Edits autosave, undo/redo works, and ESC/back returns to overview after exit rewrite. | ✓ VERIFIED | Human verification completed 2026-02-01. |
 | 10 | Exiting an untouched new note discards its file and sidecar. | ✓ VERIFIED | `app/src/screens/Editor.tsx` `isUntouchedNewNote` path calls `noteDiscard`; backend removes files. |
-| 11 | Autosave completes successfully and updates the last saved timestamp after edits. | ? UNCERTAIN | `setLastSavedAt(Date.now())` on successful `noteSave`; needs runtime confirmation. |
+| 11 | Autosave completes successfully and updates the last saved timestamp after edits. | ✓ VERIFIED | Human verification completed 2026-02-01. |
 | 12 | Save failures surface the underlying error message for troubleshooting. | ✓ VERIFIED | `NoteApiError` message/code surfaced in `app/src/screens/Editor.tsx` banner. |
-| 13 | Exit saves (with checklist rewrite) complete without showing the exit warning. | ? UNCERTAIN | Exit save uses `rewriteOnExit` and only warns on failure; runtime confirmation needed. |
+| 13 | Exit saves (with checklist rewrite) complete without showing the exit warning. | ✓ VERIFIED | Human verification completed 2026-02-01. |
 
-**Score:** 10/13 truths verified
+**Score:** 13/13 truths verified
 
 ### Required Artifacts
 
@@ -80,12 +80,12 @@ human_verification:
 | Requirement | Status | Blocking Issue |
 | --- | --- | --- |
 | OV-01 | ✓ SATISFIED | |
-| OV-03 | ? NEEDS HUMAN | Requires UI interaction verification. |
+| OV-03 | ✓ SATISFIED | Human verification completed 2026-02-01. |
 | ED-01 | ✓ SATISFIED | |
-| ED-02 | ? NEEDS HUMAN | Autosave success and persistence require runtime check. |
-| ED-03 | ? NEEDS HUMAN | Undo/redo behavior is runtime-dependent. |
-| ED-04 | ? NEEDS HUMAN | ESC exit flow needs UI verification. |
-| ED-05 | ? NEEDS HUMAN | Exit rewrite must be confirmed on disk. |
+| ED-02 | ✓ SATISFIED | Human verification completed 2026-02-01. |
+| ED-03 | ✓ SATISFIED | Human verification completed 2026-02-01. |
+| ED-04 | ✓ SATISFIED | Human verification completed 2026-02-01. |
+| ED-05 | ✓ SATISFIED | Human verification completed 2026-02-01. |
 | SAFE-01 | ✓ SATISFIED | |
 
 ### Anti-Patterns Found
@@ -94,7 +94,9 @@ human_verification:
 | --- | --- | --- | --- | --- |
 | — | — | — | — | None detected in reviewed phase files |
 
-### Human Verification Required
+### Human Verification Completed
+
+Approved: 2026-02-01T08:23:09Z
 
 ### 1. Create/edit note and return to overview
 
@@ -122,7 +124,7 @@ human_verification:
 
 ### Gaps Summary
 
-No structural gaps detected. Human verification is required for runtime behaviors (autosave success, undo/redo, exit flow).
+No gaps detected. Human verification completed for runtime behaviors.
 
 ---
 

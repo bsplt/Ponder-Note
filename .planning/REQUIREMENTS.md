@@ -25,19 +25,19 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Overview & Navigation
 
-- [ ] **OV-01**: Overview list always includes a first row `+ New Note` that creates a note and opens it in the editor
+- [x] **OV-01**: Overview list always includes a first row `+ New Note` that creates a note and opens it in the editor
 - [ ] **OV-02**: Overview rows show: title, timestamp, and tags
-- [ ] **OV-03**: User can open the focused note from overview using keyboard (arrow keys + Enter) and by mouse double click (single click selects only)
+- [x] **OV-03**: User can open the focused note from overview using keyboard (arrow keys + Enter) and by mouse double click (single click selects only)
 - [ ] **OV-04**: Search input filters the note list based on full-text matches in note title + body, while list rows still display only title/timestamp/tags
 - [ ] **OV-05**: User can filter the note list by selecting tags and can combine tag filters with search
 
 ### Editor
 
-- [ ] **ED-01**: User can edit a note as plain markdown text (edit-only; no markdown preview in v1)
-- [ ] **ED-02**: Editor autosaves changes to disk (debounced) without requiring a manual save action
-- [ ] **ED-03**: Editor supports undo/redo for text edits
-- [ ] **ED-04**: User can leave the editor by pressing `ESC` and return to the overview
-- [ ] **ED-05**: On leaving a note, any line that begins with `o ` is rewritten to begin with `[ ] ` (preserving the rest of the line)
+- [x] **ED-01**: User can edit a note as plain markdown text (edit-only; no markdown preview in v1)
+- [x] **ED-02**: Editor autosaves changes to disk (debounced) without requiring a manual save action
+- [x] **ED-03**: Editor supports undo/redo for text edits
+- [x] **ED-04**: User can leave the editor by pressing `ESC` and return to the overview
+- [x] **ED-05**: On leaving a note, any line that begins with `o ` is rewritten to begin with `[ ] ` (preserving the rest of the line)
 
 ### Tags
 
@@ -61,7 +61,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Reliability & Rebuildability
 
-- [ ] **SAFE-01**: App writes note files using an atomic write strategy so a crash cannot leave a partially-written markdown file
+- [x] **SAFE-01**: App writes note files using an atomic write strategy so a crash cannot leave a partially-written markdown file
 - [ ] **SAFE-02**: Todo toggling never corrupts note content; if a safe toggle cannot be applied (e.g., file changed unexpectedly), the app does not write and surfaces an error
 - [ ] **SAFE-03**: App can rebuild derived workspace state from scratch (sidecars + index under `.ponder/`) without losing the user's markdown note contents
 
@@ -117,14 +117,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTE-02 | Phase 2 | Pending |
 | NOTE-03 | Phase 2 | Pending |
 | NOTE-04 | Phase 2 | Pending |
-| OV-01 | Phase 3 | Pending |
-| OV-03 | Phase 3 | Pending |
-| ED-01 | Phase 3 | Pending |
-| ED-02 | Phase 3 | Pending |
-| ED-03 | Phase 3 | Pending |
-| ED-04 | Phase 3 | Pending |
-| ED-05 | Phase 3 | Pending |
-| SAFE-01 | Phase 3 | Pending |
+| OV-01 | Phase 3 | Complete |
+| OV-03 | Phase 3 | Complete |
+| ED-01 | Phase 3 | Complete |
+| ED-02 | Phase 3 | Complete |
+| ED-03 | Phase 3 | Complete |
+| ED-04 | Phase 3 | Complete |
+| ED-05 | Phase 3 | Complete |
+| SAFE-01 | Phase 3 | Complete |
 | OV-02 | Phase 4 | Pending |
 | OV-04 | Phase 4 | Pending |
 | OV-05 | Phase 4 | Pending |

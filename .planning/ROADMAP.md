@@ -63,12 +63,13 @@ Plans:
 5. User can press `ESC` to leave the editor and return to the overview; on leaving, any line starting with `o ` is rewritten to start with `[ ] `.
 6. A crash during a write does not leave a partially-written Markdown file on disk.
 
-**Plans:** 3 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Exit checklist rewrite helper (TDD)
-- [ ] 03-02-PLAN.md — Atomic note IO commands + notes API
-- [ ] 03-03-PLAN.md — Overview/editor loop UX + autosave
+- [x] 03-01-PLAN.md — Exit checklist rewrite helper (TDD)
+- [x] 03-02-PLAN.md — Atomic note IO commands + notes API
+- [x] 03-03-PLAN.md — Overview/editor loop UX + autosave
+- [x] 03-04-PLAN.md — Autosave/exit save error handling fixes
 
 ### Phase 4 - Search & Tags
 
@@ -137,7 +138,7 @@ Plans:
 |------:|------|--------|
 | 1 | Workspaces | Complete |
 | 2 | Note Identity & Sidecar Metadata | Complete |
-| 3 | Overview <-> Editor Loop | Pending |
+| 3 | Overview <-> Editor Loop | Complete |
 | 4 | Search & Tags | Pending |
 | 5 | Todos (Extract, Browse, Toggle) | Pending |
 | 6 | Soft Delete | Pending |
