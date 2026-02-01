@@ -44,7 +44,19 @@ pub fn note_save(
 
     match svc.note_save(&stem, &body, rewrite_on_exit) {
         Ok(()) => CommandResult::ok(()),
-        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+        Err(e) => {
+            #[cfg(debug_assertions)]
+            eprintln!(
+                "[ponder][note_save] command failed code={} stem='{}' rewrite_on_exit={} bytes={} msg={}",
+                map_error_code(&e),
+                stem,
+                rewrite_on_exit,
+                body.as_bytes().len(),
+                e
+            );
+
+            CommandResult::err(map_error_code(&e), e.to_string())
+        }
     }
 }
 

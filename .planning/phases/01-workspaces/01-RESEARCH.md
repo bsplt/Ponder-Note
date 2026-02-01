@@ -161,6 +161,8 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
 
 **Warning signs:** Works for dev builds but fails for packaged builds; only some directories fail (e.g., Desktop/Documents restrictions).
 
+**Related gotcha:** In sandboxed environments, “atomic replace” strategies (tempfile + rename over existing file) can fail even when creating new files works. A practical workaround is falling back to an in-place write (`truncate + write + sync`) or remove-then-persist when overwriting existing notes.
+
 **Confidence:** LOW (needs validation against the intended distribution model).
 
 ### Pitfall 2: Slot paths drift (duplicates, symlinks, casing)

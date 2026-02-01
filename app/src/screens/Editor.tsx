@@ -115,6 +115,12 @@ export function Editor(props: EditorProps) {
               : err instanceof Error
                 ? err.message
                 : 'Save failed'
+          console.error('[ponder][note_save] failed', {
+            stem,
+            rewriteOnExit,
+            bytes: currentBody.length,
+            error: err,
+          })
           setSaveError(message)
           return false
         }

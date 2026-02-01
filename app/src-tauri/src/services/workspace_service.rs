@@ -12,6 +12,26 @@ use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;
 use thiserror::Error;
 
+macro_rules! dev_log {
+    ($($arg:tt)*) => {
+        {
+            if cfg!(debug_assertions) {
+                eprintln!($($arg)*);
+            }
+        }
+    };
+}
+
+fn dev_log_io(op: &str, err: &std::io::Error) {
+    dev_log!(
+        "[ponder][note_save] {} failed: kind={:?} raw_os_error={:?} msg={}",
+        op,
+        err.kind(),
+        err.raw_os_error(),
+        err
+    );
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InvalidWorkspaceKind {
     Missing,
@@ -491,19 +511,141 @@ fn atomic_write_note(
     target_path: &Path,
     body: &str,
 ) -> Result<(), WorkspaceServiceError> {
-    let mut tmp = NamedTempFile::new_in(workspace_dir)?;
-    tmp.write_all(body.as_bytes())?;
-    tmp.as_file().sync_all()?;
+    dev_log!(
+        "[ponder][note_save] atomic_write_note start workspace_dir='{}' target_path='{}' bytes={} target_exists={}",
+        workspace_dir.display(),
+        target_path.display(),
+        body.as_bytes().len(),
+        target_path.exists()
+    );
+
+    match std::fs::symlink_metadata(target_path) {
+        Ok(meta) => dev_log!(
+            "[ponder][note_save] target metadata: is_file={} is_symlink={} readonly={}",
+            meta.is_file(),
+            meta.file_type().is_symlink(),
+            meta.permissions().readonly()
+        ),
+        Err(e) => dev_log!(
+            "[ponder][note_save] target metadata error: kind={:?} raw_os_error={:?} msg={}",
+            e.kind(),
+            e.raw_os_error(),
+            e
+        ),
+    }
+
+    let mut tmp = match NamedTempFile::new_in(workspace_dir) {
+        Ok(t) => t,
+        Err(e) => {
+            dev_log_io("create temp file (NamedTempFile::new_in)", &e);
+            return Err(WorkspaceServiceError::Io(e));
+        }
+    };
+    dev_log!(
+        "[ponder][note_save] tmp created path='{}'",
+        tmp.path().display()
+    );
+
+    if let Err(e) = tmp.write_all(body.as_bytes()) {
+        dev_log_io("write temp file (write_all)", &e);
+        return Err(WorkspaceServiceError::Io(e));
+    }
+    if let Err(e) = tmp.as_file().sync_all() {
+        dev_log_io("sync temp file (sync_all)", &e);
+        return Err(WorkspaceServiceError::Io(e));
+    }
+
     match tmp.persist(target_path) {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            dev_log!("[ponder][note_save] persist ok");
+            Ok(())
+        }
         Err(err) => {
+            dev_log!(
+                "[ponder][note_save] persist failed: kind={:?} raw_os_error={:?} msg={} tmp='{}' target='{}'",
+                err.error.kind(),
+                err.error.raw_os_error(),
+                err.error,
+                err.file.path().display(),
+                target_path.display()
+            );
+
+            // `persist` refuses to clobber existing targets. Historically we tried a rename-overwrite,
+            // but on some systems (notably sandboxed environments) "replace existing file" can fail
+            // even though creating a new file in the directory works. Fall back to an in-place write
+            // (truncate + write) when necessary.
             if err.error.kind() == std::io::ErrorKind::AlreadyExists {
-                std::fs::rename(err.file.path(), target_path)?;
-                return Ok(());
+                dev_log!("[ponder][note_save] fallback: in-place overwrite (truncate + write)");
+                match write_note_in_place(target_path, body) {
+                    Ok(()) => {
+                        dev_log!("[ponder][note_save] in-place overwrite ok");
+                        return Ok(());
+                    }
+                    Err(e) => dev_log_io("in-place overwrite (OpenOptions+truncate)", &e),
+                }
+
+                // If in-place write is denied, try a remove-then-persist strategy so the final step
+                // is creating the target path, not replacing it.
+                dev_log!("[ponder][note_save] fallback: remove-then-persist");
+                if let Err(e) = std::fs::remove_file(target_path) {
+                    dev_log_io("remove target before persist (remove_file)", &e);
+                }
+                match err.file.persist(target_path) {
+                    Ok(_) => {
+                        dev_log!("[ponder][note_save] remove-then-persist ok");
+                        Ok(())
+                    }
+                    Err(err2) => {
+                        dev_log!(
+                            "[ponder][note_save] remove-then-persist failed: kind={:?} raw_os_error={:?} msg={}",
+                            err2.error.kind(),
+                            err2.error.raw_os_error(),
+                            err2.error
+                        );
+                        match write_note_in_place(target_path, body) {
+                            Ok(()) => {
+                                dev_log!("[ponder][note_save] in-place overwrite ok (after remove-then-persist)");
+                                return Ok(());
+                            }
+                            Err(e) => dev_log_io(
+                                "in-place overwrite after remove-then-persist (OpenOptions+truncate)",
+                                &e,
+                            ),
+                        }
+                        Err(WorkspaceServiceError::Io(err2.error))
+                    }
+                }
+            } else if err.error.kind() == std::io::ErrorKind::PermissionDenied {
+                // Best-effort: if atomic persist fails due to permission semantics, try the simpler
+                // write path before surfacing the error.
+                dev_log!("[ponder][note_save] persist PermissionDenied; fallback: in-place overwrite (truncate + write)");
+                match write_note_in_place(target_path, body) {
+                    Ok(()) => {
+                        dev_log!("[ponder][note_save] in-place overwrite ok");
+                        return Ok(());
+                    }
+                    Err(e) => dev_log_io(
+                        "in-place overwrite after persist PermissionDenied (OpenOptions+truncate)",
+                        &e,
+                    ),
+                }
+                Err(WorkspaceServiceError::Io(err.error))
+            } else {
+                Err(WorkspaceServiceError::Io(err.error))
             }
-            Err(WorkspaceServiceError::Io(err.error))
         }
     }
+}
+
+fn write_note_in_place(target_path: &Path, body: &str) -> std::io::Result<()> {
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(target_path)?;
+    file.write_all(body.as_bytes())?;
+    file.sync_all()?;
+    Ok(())
 }
 
 fn note_save_error_with_context(
@@ -512,13 +654,16 @@ fn note_save_error_with_context(
     workspace_path: &Path,
 ) -> WorkspaceServiceError {
     match err {
-        WorkspaceServiceError::Io(source) => WorkspaceServiceError::Io(std::io::Error::new(
-            source.kind(),
-            format!(
-                "note_save failed for stem '{stem}' in workspace '{}': {source}",
-                workspace_path.display()
-            ),
-        )),
+        WorkspaceServiceError::Io(source) => {
+            let raw_os_error = source.raw_os_error();
+            WorkspaceServiceError::Io(std::io::Error::new(
+                source.kind(),
+                format!(
+                    "note_save failed for stem '{stem}' in workspace '{}': (raw_os_error={raw_os_error:?}) {source}",
+                    workspace_path.display()
+                ),
+            ))
+        }
         other => other,
     }
 }
@@ -537,4 +682,32 @@ fn current_unix_ms() -> Result<i64, WorkspaceServiceError> {
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     Ok(duration.as_millis() as i64)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn atomic_write_note_creates_new_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("new.md");
+
+        atomic_write_note(dir.path(), &target, "hello").unwrap();
+
+        let body = std::fs::read_to_string(&target).unwrap();
+        assert_eq!(body, "hello");
+    }
+
+    #[test]
+    fn atomic_write_note_overwrites_existing_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("existing.md");
+
+        std::fs::write(&target, "old").unwrap();
+        atomic_write_note(dir.path(), &target, "new").unwrap();
+
+        let body = std::fs::read_to_string(&target).unwrap();
+        assert_eq!(body, "new");
+    }
 }

@@ -43,7 +43,7 @@ export async function noteSave({ stem, body, rewriteOnExit }: NoteSaveInput): Pr
   const res = await invoke<CommandResult<null>>('note_save', {
     stem,
     body,
-    rewrite_on_exit: rewriteOnExit,
+    rewriteOnExit,
   })
   unwrap(res)
 }
