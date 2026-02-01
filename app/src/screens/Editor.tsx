@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
-import { workspaceActions } from '../stores/workspaceStore'
+import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
+import { PillInput } from '../components/PillInput'
+import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
 
 type EditorProps = {
   stem: string
@@ -36,6 +38,7 @@ function cursorStartPosition(body: string, isNew: boolean): number {
 export function Editor(props: EditorProps) {
   const { stem, isNew, onExit } = props
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const notes = useWorkspaceStore((s) => s.notes)
   const saveTimerRef = useRef<number | null>(null)
   const saveInFlightRef = useRef<Promise<boolean> | null>(null)
   const pendingSaveRef = useRef(false)
@@ -49,6 +52,9 @@ export function Editor(props: EditorProps) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
   const [isExiting, setIsExiting] = useState(false)
+  const [tags, setTags] = useState<string[]>([])
+  const [workspaceTags, setWorkspaceTags] = useState<string[]>([])
+  const [tagSaveError, setTagSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     bodyRef.current = body
@@ -57,6 +63,19 @@ export function Editor(props: EditorProps) {
   useEffect(() => {
     saveErrorRef.current = saveError
   }, [saveError])
+
+  // Load workspace tags on mount
+  useEffect(() => {
+    void (async () => {
+      try {
+        const allTags = await workspaceGetAllTags()
+        setWorkspaceTags(allTags)
+      } catch (err) {
+        // Silent fail - autocomplete just won't work
+        console.error('Failed to load workspace tags:', err)
+      }
+    })()
+  }, [])
 
   const loadNote = useCallback(async () => {
     setLoading(true)
@@ -67,6 +86,11 @@ export function Editor(props: EditorProps) {
       setBody(initialBody)
       lastSavedBodyRef.current = initialBody
       bodyRef.current = initialBody
+      
+      // Load note tags from workspace notes list
+      const note = notes.find((n) => n.stem === stem)
+      setTags(note?.tags || [])
+      
       setLoading(false)
       requestAnimationFrame(() => {
         const textarea = textareaRef.current
@@ -79,7 +103,7 @@ export function Editor(props: EditorProps) {
       setLoading(false)
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load note')
     }
-  }, [isNew, stem])
+  }, [isNew, notes, stem])
 
   useEffect(() => {
     void loadNote()
@@ -235,6 +259,22 @@ export function Editor(props: EditorProps) {
     void performSave({ force: true })
   }, [performSave])
 
+  const handleTagBlur = useCallback(() => {
+    void (async () => {
+      if (!stem) return
+      try {
+        await workspaceUpdateNoteTags(stem, tags)
+        setTagSaveError(null)
+        
+        // Trigger workspace refresh so tags appear in overview immediately
+        await workspaceActions.refreshNotes()
+      } catch (err) {
+        setTagSaveError('Failed to save tags')
+        console.error('Tag save error:', err)
+      }
+    })()
+  }, [stem, tags])
+
   if (loading) {
     return (
       <section className="panel">
@@ -280,6 +320,17 @@ export function Editor(props: EditorProps) {
           </button>
         </div>
       ) : null}
+
+      <div className="editorTagSection">
+        <PillInput
+          values={tags}
+          onChange={setTags}
+          onBlur={handleTagBlur}
+          suggestions={workspaceTags}
+          placeholder="Add tags"
+        />
+        {tagSaveError && <div className="editorTagError">{tagSaveError}</div>}
+      </div>
 
       <div className="editorBody">
         <textarea

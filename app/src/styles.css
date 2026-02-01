@@ -418,6 +418,16 @@ body {
   font-size: 12px;
 }
 
+.editorTagSection {
+  margin-top: 12px;
+}
+
+.editorTagError {
+  margin-top: 6px;
+  color: rgba(255, 98, 98, 0.95);
+  font-size: 13px;
+}
+
 .editorBanner {
   display: flex;
   align-items: center;
