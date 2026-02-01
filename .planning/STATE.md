@@ -10,11 +10,11 @@
 
 **Current phase:** 4 of 7 - Search & Tags
 
-**Plan:** 02 of 05
+**Plan:** 03 of 05
 
 **Status:** In progress
 
-**Last activity:** 2026-02-01 - Completed 04-02-PLAN.md
+**Last activity:** 2026-02-01 - Completed 04-03-PLAN.md
 
 **Progress:** [████████████████████░░░░]
 
@@ -34,6 +34,7 @@
 - Exit checklist rewrite treats leading tabs as non-indentation for matching.
 - Exit confirmation is allowed if the final save fails.
 - Title-only search for Phase 4 (body search deferred until NoteSummary includes body field).
+- Search state lives in App component for persistence across navigation (Overview ↔ Editor).
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -41,8 +42,8 @@
 
 ## Session Continuity
 
-**Next action:** Begin 04-03-PLAN.md
+**Next action:** Begin 04-04-PLAN.md
 
-**Last session:** 2026-02-01T17:02:52Z
-**Stopped at:** Completed 04-02-PLAN.md
+**Last session:** 2026-02-01T22:15:43Z
+**Stopped at:** Completed 04-03-PLAN.md
 **Resume file:** None
