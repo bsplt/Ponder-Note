@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Toast } from '../components/Toast'
+import { SearchBar } from '../components/SearchBar'
 import type { NoteSummary } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
+import { filterNotes } from '../utils/search'
 
 type OverviewProps = {
   onManageWorkspaces: () => void
@@ -62,6 +64,17 @@ export function Overview(props: OverviewProps) {
 
   const listRef = useRef<HTMLUListElement | null>(null)
   const didAutoFocus = useRef(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Search state (local for now, will be lifted to App in Task 3)
+  const [searchText, setSearchText] = useState('')
+  const [includeTags, setIncludeTags] = useState<string[]>([])
+  const [excludeTags, setExcludeTags] = useState<string[]>([])
+
+  // Filter notes based on search state
+  const filteredNotes = useMemo(() => {
+    return filterNotes(notes, searchText, includeTags, excludeTags)
+  }, [notes, searchText, includeTags, excludeTags])
 
   const activePath = useMemo(
     () => slots.find((s) => s.slot === activeSlot)?.path ?? null,
@@ -93,8 +106,8 @@ export function Overview(props: OverviewProps) {
   }, [onCreateNote, scrollTop, showToast])
 
   const clampIndex = useCallback(
-    (index: number) => Math.max(0, Math.min(index, notes.length)),
-    [notes.length],
+    (index: number) => Math.max(0, Math.min(index, filteredNotes.length)),
+    [filteredNotes.length],
   )
 
   const openFocused = useCallback(() => {
@@ -103,10 +116,10 @@ export function Overview(props: OverviewProps) {
       return
     }
 
-    const note = notes[focusedIndex - 1]
+    const note = filteredNotes[focusedIndex - 1]
     if (!note) return
     onOpenNote(note, scrollTop())
-  }, [focusedIndex, notes, onNewNote, onOpenNote, scrollTop])
+  }, [focusedIndex, filteredNotes, onNewNote, onOpenNote, scrollTop])
 
   useEffect(() => {
     if (activeStatus !== 'ok') return
@@ -114,13 +127,13 @@ export function Overview(props: OverviewProps) {
   }, [activeSlot, activeStatus])
 
   useEffect(() => {
-    if (!notes.length && restoreFocusStem) {
+    if (!filteredNotes.length && restoreFocusStem) {
       setFocusedIndex(0)
       return
     }
 
     if (restoreFocusStem) {
-      const idx = notes.findIndex((note) => note.stem === restoreFocusStem)
+      const idx = filteredNotes.findIndex((note) => note.stem === restoreFocusStem)
       if (idx >= 0) {
         setFocusedIndex(idx + 1)
         return
@@ -128,7 +141,7 @@ export function Overview(props: OverviewProps) {
     }
 
     setFocusedIndex((prev) => clampIndex(prev))
-  }, [clampIndex, notes, restoreFocusStem])
+  }, [clampIndex, filteredNotes, restoreFocusStem])
 
   useEffect(() => {
     if (restoreScrollTop <= 0) return
@@ -183,6 +196,18 @@ export function Overview(props: OverviewProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [activeSlot, activeStatus, onManageWorkspaces, showToast])
+
+  // Cmd+F shortcut to focus search input
+  useEffect(() => {
+    const handleCmdF = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleCmdF)
+    return () => window.removeEventListener('keydown', handleCmdF)
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -263,24 +288,36 @@ export function Overview(props: OverviewProps) {
         </div>
       </div>
 
+      <SearchBar
+        searchText={searchText}
+        onSearchTextChange={setSearchText}
+        includeTags={includeTags}
+        onIncludeTagsChange={setIncludeTags}
+        excludeTags={excludeTags}
+        onExcludeTagsChange={setExcludeTags}
+        placeholder="Search notes (Cmd+F)"
+        inputRef={searchInputRef}
+      />
+
       {loading ? (
         <div className="mutedBlock">Loading…</div>
       ) : notes.length ? (
-        <ul className="notesList" ref={listRef} tabIndex={0}>
-          <li
-            key="new-note"
-            className={`noteRow noteRowInteractive noteRowNew${
-              focusedIndex === 0 ? ' noteRowFocused' : ''
-            }`}
-            onClick={() => setFocusedIndex(0)}
-            onDoubleClick={onNewNote}
-          >
-            <div className="noteRowMain">
-              <div className="noteName">+ New Note</div>
-              <div className="noteTimestamp">Enter to create</div>
-            </div>
-          </li>
-          {notes.map((note, idx) => {
+        <>
+          <ul className="notesList" ref={listRef} tabIndex={0}>
+            <li
+              key="new-note"
+              className={`noteRow noteRowInteractive noteRowNew${
+                focusedIndex === 0 ? ' noteRowFocused' : ''
+              }`}
+              onClick={() => setFocusedIndex(0)}
+              onDoubleClick={onNewNote}
+            >
+              <div className="noteRowMain">
+                <div className="noteName">+ New Note</div>
+                <div className="noteTimestamp">Enter to create</div>
+              </div>
+            </li>
+            {filteredNotes.map((note, idx) => {
             const rowIndex = idx + 1
             const isFocused = rowIndex === focusedIndex
             return (
@@ -297,7 +334,20 @@ export function Overview(props: OverviewProps) {
                 {note.tags && note.tags.length > 0 && (
                   <div className="noteTags">
                     {[...note.tags].sort().map((tag) => (
-                      <span key={tag} className="noteTag">
+                      <span
+                        key={tag}
+                        className="noteTag"
+                        onClick={(e) => {
+                          e.stopPropagation() // Don't trigger row click
+                          if (e.metaKey || e.ctrlKey) {
+                            // Exclude tag
+                            setExcludeTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
+                          } else {
+                            // Include tag
+                            setIncludeTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
+                          }
+                        }}
+                      >
                         {tag}
                       </span>
                     ))}
@@ -306,7 +356,11 @@ export function Overview(props: OverviewProps) {
               </li>
             )
           })}
-        </ul>
+          </ul>
+          {filteredNotes.length === 0 && notes.length > 0 && (
+            <div className="mutedBlock">No notes match your search.</div>
+          )}
+        </>
       ) : (
         <ul className="notesList" ref={listRef} tabIndex={0}>
           <li
