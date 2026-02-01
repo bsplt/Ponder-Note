@@ -20,6 +20,12 @@ function App() {
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
+  
+  // Search state (persists when navigating to editor and back)
+  const [searchText, setSearchText] = useState('')
+  const [includeTags, setIncludeTags] = useState<string[]>([])
+  const [excludeTags, setExcludeTags] = useState<string[]>([])
+  
   const didInitialRoute = useRef(false)
   const title = useMemo(() => titleForScreen(screen), [screen])
 
@@ -112,6 +118,12 @@ function App() {
             onCreateNote={handleCreateNote}
             restoreScrollTop={overviewScrollTop}
             restoreFocusStem={overviewFocusStem}
+            searchText={searchText}
+            onSearchTextChange={setSearchText}
+            includeTags={includeTags}
+            onIncludeTagsChange={setIncludeTags}
+            excludeTags={excludeTags}
+            onExcludeTagsChange={setExcludeTags}
           />
         ) : screen === 'editor' ? (
           activeNoteStem ? (
@@ -123,6 +135,12 @@ function App() {
               onCreateNote={handleCreateNote}
               restoreScrollTop={overviewScrollTop}
               restoreFocusStem={overviewFocusStem}
+              searchText={searchText}
+              onSearchTextChange={setSearchText}
+              includeTags={includeTags}
+              onIncludeTagsChange={setIncludeTags}
+              excludeTags={excludeTags}
+              onExcludeTagsChange={setExcludeTags}
             />
           )
         ) : (

@@ -11,6 +11,12 @@ type OverviewProps = {
   onCreateNote: (note: NoteSummary, scrollTop: number) => void
   restoreScrollTop: number
   restoreFocusStem: string | null
+  searchText: string
+  onSearchTextChange: (text: string) => void
+  includeTags: string[]
+  onIncludeTagsChange: (tags: string[]) => void
+  excludeTags: string[]
+  onExcludeTagsChange: (tags: string[]) => void
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -55,6 +61,12 @@ export function Overview(props: OverviewProps) {
   const onCreateNote = props.onCreateNote
   const restoreScrollTop = props.restoreScrollTop
   const restoreFocusStem = props.restoreFocusStem
+  const searchText = props.searchText
+  const onSearchTextChange = props.onSearchTextChange
+  const includeTags = props.includeTags
+  const onIncludeTagsChange = props.onIncludeTagsChange
+  const excludeTags = props.excludeTags
+  const onExcludeTagsChange = props.onExcludeTagsChange
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -65,11 +77,6 @@ export function Overview(props: OverviewProps) {
   const listRef = useRef<HTMLUListElement | null>(null)
   const didAutoFocus = useRef(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
-
-  // Search state (local for now, will be lifted to App in Task 3)
-  const [searchText, setSearchText] = useState('')
-  const [includeTags, setIncludeTags] = useState<string[]>([])
-  const [excludeTags, setExcludeTags] = useState<string[]>([])
 
   // Filter notes based on search state
   const filteredNotes = useMemo(() => {
@@ -290,11 +297,11 @@ export function Overview(props: OverviewProps) {
 
       <SearchBar
         searchText={searchText}
-        onSearchTextChange={setSearchText}
+        onSearchTextChange={onSearchTextChange}
         includeTags={includeTags}
-        onIncludeTagsChange={setIncludeTags}
+        onIncludeTagsChange={onIncludeTagsChange}
         excludeTags={excludeTags}
-        onExcludeTagsChange={setExcludeTags}
+        onExcludeTagsChange={onExcludeTagsChange}
         placeholder="Search notes (Cmd+F)"
         inputRef={searchInputRef}
       />
@@ -341,10 +348,10 @@ export function Overview(props: OverviewProps) {
                           e.stopPropagation() // Don't trigger row click
                           if (e.metaKey || e.ctrlKey) {
                             // Exclude tag
-                            setExcludeTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
+                            onExcludeTagsChange(excludeTags.includes(tag) ? excludeTags : [...excludeTags, tag])
                           } else {
                             // Include tag
-                            setIncludeTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]))
+                            onIncludeTagsChange(includeTags.includes(tag) ? includeTags : [...includeTags, tag])
                           }
                         }}
                       >
