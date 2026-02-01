@@ -8,15 +8,15 @@
 
 ## Current Position
 
-**Current phase:** 3 of 7 - Overview <-> Editor Loop
+**Current phase:** 4 of 7 - Search & Tags
 
-**Plan:** 04 of 04
+**Plan:** 02 of 05
 
-**Status:** Phase complete
+**Status:** In progress
 
-**Last activity:** 2026-02-01 - Completed 03-04-PLAN.md
+**Last activity:** 2026-02-01 - Completed 04-02-PLAN.md
 
-**Progress:** [████████████████████]
+**Progress:** [████████████████████░░░░]
 
 ## Performance Metrics (v1)
 
@@ -33,6 +33,7 @@
 - Todo list toggles checkboxes by editing the source Markdown.
 - Exit checklist rewrite treats leading tabs as non-indentation for matching.
 - Exit confirmation is allowed if the final save fails.
+- Title-only search for Phase 4 (body search deferred until NoteSummary includes body field).
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -40,8 +41,8 @@
 
 ## Session Continuity
 
-**Next action:** Begin 04-01-PLAN.md
+**Next action:** Begin 04-03-PLAN.md
 
-**Last session:** 2026-02-01T08:23:09Z
-**Stopped at:** Completed 03-04-PLAN.md
+**Last session:** 2026-02-01T17:02:52Z
+**Stopped at:** Completed 04-02-PLAN.md
 **Resume file:** None
