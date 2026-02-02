@@ -10,13 +10,13 @@
 
 **Current phase:** 5 of 7 - Todos (Extract, Browse, Toggle)
 
-**Plan:** 04 of 06
+**Plan:** 05 of 06
 
 **Status:** In progress
 
-**Last activity:** 2026-02-02 - Completed 05-04-PLAN.md
+**Last activity:** 2026-02-02 - Completed 05-05-PLAN.md
 
-**Progress:** [█████████████████████████░]
+**Progress:** [██████████████████████████]
 
 ## Performance Metrics (v1)
 
@@ -44,6 +44,10 @@
 - list_todos filters to open todos only (checked=false) by default.
 - toggle_todo uses atomic_write_note for safe concurrent file modification.
 - DTO pattern with camelCase serialization for frontend compatibility.
+- T key from Overview opens TodoList (not from Editor - keeps Editor focused).
+- Optimistic updates apply to ALL instances across groups (cross-group sync).
+- Arrow keys navigate flattened list; groups are for display only.
+- Auto-refresh on toggle error to restore correct state.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -51,8 +55,8 @@
 
 ## Session Continuity
 
-**Next action:** Continue Phase 5 - Plan 05-05 (Todo List UI)
+**Next action:** Continue Phase 5 - Plan 05-06 (Visual verification)
 
-**Last session:** 2026-02-02T17:06:26Z
-**Stopped at:** Completed 05-04-PLAN.md  
+**Last session:** 2026-02-02T17:13:02Z
+**Stopped at:** Completed 05-05-PLAN.md  
 **Resume file:** None
