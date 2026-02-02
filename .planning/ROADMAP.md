@@ -106,11 +106,21 @@ Plans:
 **Success Criteria (observable):**
 1. From overview, user can open the Todo List screen via `T`.
 2. The Todo List shows todos extracted from Markdown checkbox patterns and shows only open todos by default.
-3. Todos are grouped by the parent note’s tags and ordered within groups by recency.
+3. Todos are grouped by the parent note's tags and ordered within groups by recency.
 4. Clicking a todo toggles its checked state in the source Markdown file and the Todo List reflects the new state.
 5. A toggled todo remains visible in the Todo List until the user leaves the Todo List screen.
 6. From a todo row, user can open the originating note in the editor.
 7. If a safe toggle cannot be applied, the app does not write and surfaces an error; note contents remain uncorrupted.
+
+**Plans:** 6 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — TDD: Markdown checkbox extraction with location tracking
+- [ ] 05-02-PLAN.md — TDD: Safe checkbox toggle with verification
+- [ ] 05-03-PLAN.md — TDD: Todo grouping by tags with recency ordering
+- [ ] 05-04-PLAN.md — Backend commands and frontend API wrappers
+- [ ] 05-05-PLAN.md — TodoList screen with keyboard navigation and App integration
+- [ ] 05-06-PLAN.md — Human verification of complete todo workflow
 
 ### Phase 6 - Soft Delete
 
