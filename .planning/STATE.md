@@ -10,13 +10,13 @@
 
 **Current phase:** 5 of 7 - Todos (Extract, Browse, Toggle)
 
-**Plan:** 01 of 06
+**Plan:** 04 of 06
 
 **Status:** In progress
 
-**Last activity:** 2026-02-02 - Completed 05-01-PLAN.md
+**Last activity:** 2026-02-02 - Completed 05-04-PLAN.md
 
-**Progress:** [████████████████████████░░]
+**Progress:** [█████████████████████████░]
 
 ## Performance Metrics (v1)
 
@@ -41,6 +41,9 @@
 - Groups ordered by most recent activity; within groups, todos ordered by note recency then title.
 - Use regex for GFM checkbox parsing (simpler than full markdown parser).
 - LazyLock for expensive regex compilation (compile once at startup).
+- list_todos filters to open todos only (checked=false) by default.
+- toggle_todo uses atomic_write_note for safe concurrent file modification.
+- DTO pattern with camelCase serialization for frontend compatibility.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -48,8 +51,8 @@
 
 ## Session Continuity
 
-**Next action:** Continue Phase 5 - Plan 05-02 (Safe checkbox toggle with verification)
+**Next action:** Continue Phase 5 - Plan 05-05 (Todo List UI)
 
-**Last session:** 2026-02-02T17:00:12Z
-**Stopped at:** Completed 05-01-PLAN.md  
+**Last session:** 2026-02-02T17:06:26Z
+**Stopped at:** Completed 05-04-PLAN.md  
 **Resume file:** None
