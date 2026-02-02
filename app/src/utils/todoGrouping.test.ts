@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupTodosByTags, type TodoItem, type NoteSummary, type TodoGroup } from './todoGrouping'
+import { groupTodosByTags, type TodoItem, type NoteSummary } from './todoGrouping'
 
 describe('groupTodosByTags', () => {
   it('groups todos from a single-tag note', () => {
