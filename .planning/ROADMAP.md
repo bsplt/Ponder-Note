@@ -135,6 +135,12 @@ Plans:
 2. Deleting a note moves the Markdown file to `<workspace>/deleted/` and removes it from the overview.
 3. Deleted notes do not appear in search results and do not contribute todos.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Backend delete command with file move and conflict handling
+- [ ] 06-02-PLAN.md — Frontend delete confirmation UX and verification
+
 ### Phase 7 - Rebuildability & UI Fidelity
 
 **Goal:** The app is themable, readable across window sizes, matches the provided Figma, and can rebuild derived state without risking note contents.
