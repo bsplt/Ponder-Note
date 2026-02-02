@@ -77,31 +77,42 @@ pub fn toggle_checkbox_in_memory(
         return Err(ToggleError::CheckboxNotFound);
     }
     
-    // Extract 3-char substring at offset
+    // Extract 3-char substring at offset and toggle it
     let checkbox = &line[char_offset..char_offset + 3];
-    
-    // Match against valid checkbox patterns and determine new state
-    let new_checkbox = match checkbox {
-        "[ ]" => "[x]",
-        "[x]" | "[X]" => "[ ]",
-        _ => return Err(ToggleError::CheckboxNotFound),
-    };
-    
-    // Determine new checked state
+    let new_checkbox = match_and_toggle_checkbox(checkbox)?;
     let new_checked = new_checkbox == "[x]";
     
     // Build new line with replaced checkbox
-    let mut new_line = String::with_capacity(line.len());
-    new_line.push_str(&line[..char_offset]);
-    new_line.push_str(new_checkbox);
-    new_line.push_str(&line[char_offset + 3..]);
+    let new_line = format!(
+        "{}{}{}",
+        &line[..char_offset],
+        new_checkbox,
+        &line[char_offset + 3..]
+    );
     
     // Rebuild body with modified line
-    let mut new_lines = lines;
-    new_lines[line_number] = &new_line;
-    let new_body = new_lines.join("\n");
+    let new_body: String = lines
+        .iter()
+        .enumerate()
+        .map(|(i, &l)| {
+            if i == line_number {
+                new_line.as_str()
+            } else {
+                l
+            }
+        })
+        .collect::<Vec<&str>>()
+        .join("\n");
     
     Ok((new_body, new_checked))
+}
+
+fn match_and_toggle_checkbox(checkbox: &str) -> Result<&'static str, ToggleError> {
+    match checkbox {
+        "[ ]" => Ok("[x]"),
+        "[x]" | "[X]" => Ok("[ ]"),
+        _ => Err(ToggleError::CheckboxNotFound),
+    }
 }
 
 #[cfg(test)]
