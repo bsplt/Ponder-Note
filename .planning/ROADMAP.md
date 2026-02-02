@@ -89,11 +89,11 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Backend tag save and get-all-tags commands
-- [ ] 04-02-PLAN.md — Search utilities and tag pill badges in Overview
-- [ ] 04-03-PLAN.md — SearchBar component and filtering integration
-- [ ] 04-04-PLAN.md — Tag editing in Editor with autocomplete
-- [ ] 04-05-PLAN.md — Human verification of search and tags
+- [x] 04-01-PLAN.md — Backend tag save and get-all-tags commands
+- [x] 04-02-PLAN.md — Search utilities and tag pill badges in Overview
+- [x] 04-03-PLAN.md — SearchBar component and filtering integration
+- [x] 04-04-PLAN.md — Tag editing in Editor with autocomplete
+- [x] 04-05-PLAN.md — Human verification of search and tags
 
 ### Phase 5 - Todos (Extract, Browse, Toggle)
 
@@ -148,7 +148,7 @@ Plans:
 | 1 | Workspaces | Complete |
 | 2 | Note Identity & Sidecar Metadata | Complete |
 | 3 | Overview <-> Editor Loop | Complete |
-| 4 | Search & Tags | Pending |
+| 4 | Search & Tags | Complete |
 | 5 | Todos (Extract, Browse, Toggle) | Pending |
 | 6 | Soft Delete | Pending |
 | 7 | Rebuildability & UI Fidelity | Pending |

@@ -26,10 +26,10 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Overview & Navigation
 
 - [x] **OV-01**: Overview list always includes a first row `+ New Note` that creates a note and opens it in the editor
-- [ ] **OV-02**: Overview rows show: title, timestamp, and tags
-- [x] **OV-03**: User can open the focused note from overview using keyboard (arrow keys + Enter) and by mouse double click (single click selects only)
-- [ ] **OV-04**: Search input filters the note list based on full-text matches in note title + body, while list rows still display only title/timestamp/tags
-- [ ] **OV-05**: User can filter the note list by selecting tags and can combine tag filters with search
+- [x] **OV-02**: Overview rows show: title, timestamp, and tags
+- [x] **OV-03**: User can open the focused note from the overview list via keyboard (arrow keys for focus + Enter to open) and also by double click (single click selects only)
+- [x] **OV-04**: Search input filters the note list based on full-text matches in note title + body, while list rows still display only title/timestamp/tags
+- [x] **OV-05**: User can filter the note list by selecting tags and can combine tag filters with search
 
 ### Editor
 
@@ -41,8 +41,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tags
 
-- [ ] **TAG-01**: Editor provides a dedicated tag input (comma-separated values); app trims whitespace, drops empty values, and stores tags into the note sidecar `tags` list
-- [ ] **TAG-02**: Tag input provides suggestions/autocomplete from tags that exist in other notes within the active workspace
+- [x] **TAG-01**: Editor provides a dedicated tag input (comma-separated values); app trims whitespace, drops empty values, and stores tags into the note sidecar `tags` list
+- [x] **TAG-02**: Tag input provides suggestions/autocomplete from tags that exist in other notes within the active workspace
 
 ### Todos
 
@@ -125,11 +125,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ED-04 | Phase 3 | Complete |
 | ED-05 | Phase 3 | Complete |
 | SAFE-01 | Phase 3 | Complete |
-| OV-02 | Phase 4 | Pending |
-| OV-04 | Phase 4 | Pending |
-| OV-05 | Phase 4 | Pending |
-| TAG-01 | Phase 4 | Pending |
-| TAG-02 | Phase 4 | Pending |
+| OV-02 | Phase 4 | Complete |
+| OV-04 | Phase 4 | Complete |
+| OV-05 | Phase 4 | Complete |
+| TAG-01 | Phase 4 | Complete |
+| TAG-02 | Phase 4 | Complete |
 | TODO-01 | Phase 5 | Pending |
 | TODO-02 | Phase 5 | Pending |
 | TODO-03 | Phase 5 | Pending |
