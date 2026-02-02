@@ -663,3 +663,80 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Todo List */
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.todoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.todoGroupHeader {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+}
+
+.todoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.todoRow:hover {
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.todoRowFocused {
+  background: rgba(121, 192, 255, 0.10);
+  border-color: var(--primary-border);
+}
+
+.todoCheckbox {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.todoText {
+  flex: 1;
+  color: var(--text);
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.todoTextChecked {
+  color: var(--muted);
+}
+
+.todoOpenBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  transition: color 0.15s ease;
+}
+
+.todoOpenBtn:hover {
+  color: var(--focus);
+}
