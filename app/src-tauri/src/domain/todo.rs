@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::sync::LazyLock;
 use thiserror::Error;
 
 pub struct TodoItem {
@@ -17,29 +18,29 @@ pub enum ToggleError {
     IoError(#[from] std::io::Error),
 }
 
+// Compile regex once at startup for performance
+static CHECKBOX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(?P<indent>\s*)(?:[-*+]\s+)?(?P<checkbox>\[(?P<state>[ xX])\])\s+(?P<text>.+)$")
+        .unwrap()
+});
+
 pub fn extract_todos(stem: &str, body: &str) -> Vec<TodoItem> {
-    // GFM task list: optional spaces, optional list marker, [ ] or [x]/[X]
-    let checkbox_re = Regex::new(
-        r"^(?P<indent>\s*)(?:[-*+]\s+)?(?P<checkbox>\[(?P<state>[ xX])\])\s+(?P<text>.+)$"
-    ).unwrap();
-    
     let mut todos = Vec::new();
     let mut in_fence = false;
     
     for (line_num, line) in body.lines().enumerate() {
-        // Skip fenced code blocks (like rewrite_exit_checklists does)
         let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+        
+        if is_fence_toggle(trimmed) {
             in_fence = !in_fence;
             continue;
         }
         
-        // Skip content inside fences or blockquotes
-        if in_fence || trimmed.starts_with('>') {
+        if in_fence || is_blockquote(trimmed) {
             continue;
         }
         
-        if let Some(caps) = checkbox_re.captures(line) {
+        if let Some(caps) = CHECKBOX_REGEX.captures(line) {
             let state = caps.name("state").unwrap().as_str();
             let checkbox_start = caps.name("checkbox").unwrap().start();
             let text = caps.name("text").unwrap().as_str();
@@ -55,6 +56,14 @@ pub fn extract_todos(stem: &str, body: &str) -> Vec<TodoItem> {
     }
     
     todos
+}
+
+fn is_fence_toggle(content: &str) -> bool {
+    content.starts_with("```") || content.starts_with("~~~")
+}
+
+fn is_blockquote(content: &str) -> bool {
+    content.starts_with('>')
 }
 
 pub fn toggle_checkbox_in_memory(
