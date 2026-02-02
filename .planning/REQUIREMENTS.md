@@ -46,12 +46,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Todos
 
-- [ ] **TODO-01**: App extracts todos from notes by recognizing markdown checkbox patterns (`[ ]` and `[x]`, with or without a leading list marker) and shows only open todos by default
-- [ ] **TODO-02**: From overview, user can open the Todo List screen via `T`
-- [ ] **TODO-03**: Todo List groups todos by the parent note's tags and orders within groups by recency (based on note updated_at)
-- [ ] **TODO-04**: Clicking a todo in the Todo List toggles its checked state in the source markdown file and reflects the new state in the Todo List UI
-- [ ] **TODO-05**: A toggled todo remains visible in the Todo List until the user leaves the Todo List screen
-- [ ] **TODO-06**: From a todo row, user can open the originating note in the editor
+- [x] **TODO-01**: App extracts todos from notes by recognizing markdown checkbox patterns (`[ ]` and `[x]`, with or without a leading list marker) and shows only open todos by default
+- [x] **TODO-02**: From overview, user can open the Todo List screen via `T`
+- [x] **TODO-03**: Todo List groups todos by the parent note's tags and orders within groups by recency (based on note updated_at)
+- [x] **TODO-04**: Clicking a todo in the Todo List toggles its checked state in the source markdown file and reflects the new state in the Todo List UI
+- [x] **TODO-05**: A toggled todo remains visible in the Todo List until the user leaves the Todo List screen
+- [x] **TODO-06**: From a todo row, user can open the originating note in the editor
 
 ### Deletion
 
@@ -62,7 +62,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Reliability & Rebuildability
 
 - [x] **SAFE-01**: App writes note files using an atomic write strategy so a crash cannot leave a partially-written markdown file
-- [ ] **SAFE-02**: Todo toggling never corrupts note content; if a safe toggle cannot be applied (e.g., file changed unexpectedly), the app does not write and surfaces an error
+- [x] **SAFE-02**: Todo toggling never corrupts note content; if a safe toggle cannot be applied (e.g., file changed unexpectedly), the app does not write and surfaces an error
 - [ ] **SAFE-03**: App can rebuild derived workspace state from scratch (sidecars + index under `.ponder/`) without losing the user's markdown note contents
 
 ### UI & Styling
@@ -130,13 +130,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OV-05 | Phase 4 | Complete |
 | TAG-01 | Phase 4 | Complete |
 | TAG-02 | Phase 4 | Complete |
-| TODO-01 | Phase 5 | Pending |
-| TODO-02 | Phase 5 | Pending |
-| TODO-03 | Phase 5 | Pending |
-| TODO-04 | Phase 5 | Pending |
-| TODO-05 | Phase 5 | Pending |
-| TODO-06 | Phase 5 | Pending |
-| SAFE-02 | Phase 5 | Pending |
+| TODO-01 | Phase 5 | Complete |
+| TODO-02 | Phase 5 | Complete |
+| TODO-03 | Phase 5 | Complete |
+| TODO-04 | Phase 5 | Complete |
+| TODO-05 | Phase 5 | Complete |
+| TODO-06 | Phase 5 | Complete |
+| SAFE-02 | Phase 5 | Complete |
 | DEL-01 | Phase 6 | Pending |
 | DEL-02 | Phase 6 | Pending |
 | DEL-03 | Phase 6 | Pending |

@@ -159,6 +159,6 @@ Plans:
 | 2 | Note Identity & Sidecar Metadata | Complete |
 | 3 | Overview <-> Editor Loop | Complete |
 | 4 | Search & Tags | Complete |
-| 5 | Todos (Extract, Browse, Toggle) | Pending |
+| 5 | Todos (Extract, Browse, Toggle) | Complete |
 | 6 | Soft Delete | Pending |
 | 7 | Rebuildability & UI Fidelity | Pending |
