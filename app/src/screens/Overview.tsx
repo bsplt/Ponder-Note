@@ -17,6 +17,7 @@ type OverviewProps = {
   onIncludeTagsChange: (tags: string[]) => void
   excludeTags: string[]
   onExcludeTagsChange: (tags: string[]) => void
+  onOpenTodoList: () => void
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -67,6 +68,7 @@ export function Overview(props: OverviewProps) {
   const onIncludeTagsChange = props.onIncludeTagsChange
   const excludeTags = props.excludeTags
   const onExcludeTagsChange = props.onExcludeTagsChange
+  const onOpenTodoList = props.onOpenTodoList
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -237,12 +239,18 @@ export function Overview(props: OverviewProps) {
       if (event.key === 'Enter') {
         event.preventDefault()
         openFocused()
+        return
+      }
+
+      if (event.key === 'T' || event.key === 't') {
+        event.preventDefault()
+        onOpenTodoList()
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused])
+  }, [clampIndex, openFocused, onOpenTodoList])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =

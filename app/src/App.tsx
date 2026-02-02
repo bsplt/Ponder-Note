@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Overview } from './screens/Overview'
 import { Editor } from './screens/Editor'
 import { Workspaces } from './screens/Workspaces'
+import { TodoList } from './screens/TodoList'
 import type { NoteSummary } from './api/workspace'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import './styles.css'
 
-type Screen = 'overview' | 'workspaces' | 'editor'
+type Screen = 'overview' | 'workspaces' | 'editor' | 'todolist'
 
 function titleForScreen(screen: Screen): string {
   if (screen === 'overview') return 'Overview'
   if (screen === 'editor') return 'Editor'
+  if (screen === 'todolist') return 'Todos'
   return 'Workspaces'
 }
 
@@ -31,6 +33,7 @@ function App() {
 
   const loading = useWorkspaceStore((s) => s.loading)
   const activeStatus = useWorkspaceStore((s) => s.activeStatus)
+  const notes = useWorkspaceStore((s) => s.notes)
 
   useEffect(() => {
     void workspaceActions.boot()
@@ -82,6 +85,19 @@ function App() {
     setOverviewFocusStem(result.discarded ? null : result.stem)
   }, [])
 
+  const handleOpenTodoList = useCallback(() => {
+    setScreen('todolist')
+  }, [])
+
+  const handleExitTodoList = useCallback(() => {
+    setScreen('overview')
+  }, [])
+
+  const handleOpenNoteFromTodoList = useCallback((stem: string) => {
+    const note = notes.find(n => n.stem === stem)
+    if (note) handleOpenNote(note, 0)
+  }, [notes, handleOpenNote])
+
   return (
     <div className="appRoot">
       <header className="appHeader">
@@ -124,6 +140,7 @@ function App() {
             onIncludeTagsChange={setIncludeTags}
             excludeTags={excludeTags}
             onExcludeTagsChange={setExcludeTags}
+            onOpenTodoList={handleOpenTodoList}
           />
         ) : screen === 'editor' ? (
           activeNoteStem ? (
@@ -141,8 +158,14 @@ function App() {
               onIncludeTagsChange={setIncludeTags}
               excludeTags={excludeTags}
               onExcludeTagsChange={setExcludeTags}
+              onOpenTodoList={handleOpenTodoList}
             />
           )
+        ) : screen === 'todolist' ? (
+          <TodoList
+            onExit={handleExitTodoList}
+            onOpenNote={handleOpenNoteFromTodoList}
+          />
         ) : (
           <Workspaces />
         )}
