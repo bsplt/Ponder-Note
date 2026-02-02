@@ -92,5 +92,7 @@ fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
         WorkspaceServiceError::Io(_) => "io_error",
         WorkspaceServiceError::Json(_) => "json_error",
         WorkspaceServiceError::Config(_) => "config_error",
+        WorkspaceServiceError::InvalidTodoToggle(_) => "invalid_todo_toggle",
+        WorkspaceServiceError::NoteNotFound => "note_not_found",
     }
 }

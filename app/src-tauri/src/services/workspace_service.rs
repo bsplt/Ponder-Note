@@ -1,6 +1,7 @@
 use crate::domain::note::{NoteSidecar, NoteSummary};
 use crate::domain::note_rewrite::rewrite_exit_checklists;
 use crate::domain::note_title::derive_note_title;
+use crate::domain::todo::{extract_todos, toggle_checkbox_in_memory, TodoItem};
 use crate::domain::workspace::{
     slot_to_index, AppConfig, WorkspaceFolderStatus, WorkspaceSlotState, WorkspaceState,
 };
@@ -57,6 +58,12 @@ pub enum WorkspaceServiceError {
 
     #[error(transparent)]
     Config(#[from] AppConfigRepoError),
+
+    #[error("invalid todo toggle: {0}")]
+    InvalidTodoToggle(String),
+
+    #[error("note not found")]
+    NoteNotFound,
 }
 
 pub struct WorkspaceService {
@@ -393,6 +400,63 @@ impl WorkspaceService {
         atomic_write_sidecar(&sidecar_path, &sidecar)?;
 
         Ok(())
+    }
+
+    pub fn list_todos(&self) -> Result<Vec<TodoItem>, WorkspaceServiceError> {
+        let notes = self.list_notes()?;
+        let mut all_todos = Vec::new();
+        
+        for note in notes {
+            let note_path = self.workspace_dir()?.join(&note.filename);
+            match std::fs::read_to_string(&note_path) {
+                Ok(body) => {
+                    let todos = extract_todos(&note.stem, &body);
+                    all_todos.extend(todos);
+                }
+                Err(err) => {
+                    dev_log!("[list_todos] Failed to read {}: {}", note.stem, err);
+                    // Continue with other notes
+                }
+            }
+        }
+        
+        // Filter to show only open todos by default (TODO-01 requirement)
+        let open_todos: Vec<TodoItem> = all_todos.into_iter()
+            .filter(|todo| !todo.checked)
+            .collect();
+        
+        Ok(open_todos)
+    }
+
+    pub fn toggle_todo(
+        &self,
+        stem: &str,
+        line_number: usize,
+        char_offset: usize,
+    ) -> Result<bool, WorkspaceServiceError> {
+        let workspace_dir = self.workspace_dir()?;
+        let note_path = workspace_dir.join(format!("{}.md", stem));
+        
+        if !note_path.exists() {
+            return Err(WorkspaceServiceError::NoteNotFound);
+        }
+        
+        let body = std::fs::read_to_string(&note_path)?;
+        
+        match toggle_checkbox_in_memory(&body, line_number, char_offset) {
+            Ok((new_body, new_state)) => {
+                atomic_write_note(&workspace_dir, &note_path, &new_body)?;
+                Ok(new_state)
+            }
+            Err(toggle_err) => {
+                Err(WorkspaceServiceError::InvalidTodoToggle(format!("{:?}", toggle_err)))
+            }
+        }
+    }
+
+    fn workspace_dir(&self) -> Result<PathBuf, WorkspaceServiceError> {
+        let (_slot, path) = self.active_workspace_path()?;
+        Ok(path)
     }
 
     fn note_path_from_stem(
