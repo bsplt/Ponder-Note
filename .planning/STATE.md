@@ -8,15 +8,15 @@
 
 ## Current Position
 
-**Current phase:** 4 of 7 - Search & Tags
+**Current phase:** 5 of 7 - Todos (Extract, Browse, Toggle)
 
-**Plan:** 05 of 05
+**Plan:** 03 of 06
 
-**Status:** Phase complete
+**Status:** In progress
 
-**Last activity:** 2026-02-02 - Completed 04-05-PLAN.md (Phase 4 complete)
+**Last activity:** 2026-02-02 - Completed 05-03-PLAN.md
 
-**Progress:** [█████████████████████████]
+**Progress:** [████████████████████████░░]
 
 ## Performance Metrics (v1)
 
@@ -37,6 +37,8 @@
 - Search state lives in App component for persistence across navigation (Overview ↔ Editor).
 - Tag editor uses blur-based autosave (not debounced) to batch tag changes before backend write.
 - Workspace store refresh pattern preferred over custom events for reactive UI updates.
+- Todos from multi-tag notes appear in ALL matching tag groups (cross-group appearance).
+- Groups ordered by most recent activity; within groups, todos ordered by note recency then title.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
@@ -44,8 +46,8 @@
 
 ## Session Continuity
 
-**Next action:** Begin Phase 5 - Todos (Extract, Browse, Toggle)
+**Next action:** Continue Phase 5 - Plan 05-04 (Backend commands and frontend API wrappers)
 
-**Last session:** 2026-02-02T07:16:07Z
-**Stopped at:** Completed Phase 4 (04-05-PLAN.md)
+**Last session:** 2026-02-02T12:55:43Z
+**Stopped at:** Completed 05-03-PLAN.md
 **Resume file:** None
