@@ -115,12 +115,12 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — TDD: Markdown checkbox extraction with location tracking
-- [ ] 05-02-PLAN.md — TDD: Safe checkbox toggle with verification
-- [ ] 05-03-PLAN.md — TDD: Todo grouping by tags with recency ordering
-- [ ] 05-04-PLAN.md — Backend commands and frontend API wrappers
-- [ ] 05-05-PLAN.md — TodoList screen with keyboard navigation and App integration
-- [ ] 05-06-PLAN.md — Human verification of complete todo workflow
+- [x] 05-01-PLAN.md — TDD: Markdown checkbox extraction with location tracking
+- [x] 05-02-PLAN.md — TDD: Safe checkbox toggle with verification
+- [x] 05-03-PLAN.md — TDD: Todo grouping by tags with recency ordering
+- [x] 05-04-PLAN.md — Backend commands and frontend API wrappers
+- [x] 05-05-PLAN.md — TodoList screen with keyboard navigation and App integration
+- [x] 05-06-PLAN.md — Human verification of complete todo workflow
 
 ### Phase 6 - Soft Delete
 
