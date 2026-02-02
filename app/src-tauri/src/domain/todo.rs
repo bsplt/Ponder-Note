@@ -1,3 +1,4 @@
+use regex::Regex;
 use thiserror::Error;
 
 pub struct TodoItem {
@@ -16,9 +17,44 @@ pub enum ToggleError {
     IoError(#[from] std::io::Error),
 }
 
-pub fn extract_todos(_stem: &str, _body: &str) -> Vec<TodoItem> {
-    // Placeholder implementation - tests will fail
-    Vec::new()
+pub fn extract_todos(stem: &str, body: &str) -> Vec<TodoItem> {
+    // GFM task list: optional spaces, optional list marker, [ ] or [x]/[X]
+    let checkbox_re = Regex::new(
+        r"^(?P<indent>\s*)(?:[-*+]\s+)?(?P<checkbox>\[(?P<state>[ xX])\])\s+(?P<text>.+)$"
+    ).unwrap();
+    
+    let mut todos = Vec::new();
+    let mut in_fence = false;
+    
+    for (line_num, line) in body.lines().enumerate() {
+        // Skip fenced code blocks (like rewrite_exit_checklists does)
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            in_fence = !in_fence;
+            continue;
+        }
+        
+        // Skip content inside fences or blockquotes
+        if in_fence || trimmed.starts_with('>') {
+            continue;
+        }
+        
+        if let Some(caps) = checkbox_re.captures(line) {
+            let state = caps.name("state").unwrap().as_str();
+            let checkbox_start = caps.name("checkbox").unwrap().start();
+            let text = caps.name("text").unwrap().as_str();
+            
+            todos.push(TodoItem {
+                text: text.to_string(),
+                checked: state != " ",
+                note_stem: stem.to_string(),
+                line_number: line_num,
+                char_offset: checkbox_start,
+            });
+        }
+    }
+    
+    todos
 }
 
 pub fn toggle_checkbox_in_memory(
