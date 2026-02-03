@@ -8,15 +8,15 @@
 
 ## Current Position
 
-**Current phase:** 5 of 7 - Todos (Extract, Browse, Toggle)
+**Current phase:** 6 of 7 - Soft Delete
 
-**Plan:** 06 of 06
+**Plan:** 1 of 2 in current phase
 
-**Status:** Phase complete
+**Status:** In progress
 
-**Last activity:** 2026-02-02 - Completed 05-06-PLAN.md
+**Last activity:** 2026-02-03 - Completed 06-01-PLAN.md
 
-**Progress:** [████████████████████████████]
+**Progress:** [█████████████████████████████░░]
 
 ## Performance Metrics (v1)
 
@@ -48,14 +48,16 @@
 - Optimistic updates apply to ALL instances across groups (cross-group sync).
 - Arrow keys navigate flattened list; groups are for display only.
 - Auto-refresh on toggle error to restore correct state.
+- Soft delete moves note to deleted/ via fs::rename; sidecar stays orphaned in .ponder/meta/; list_notes naturally ignores it.
+- Conflict handling in deleted/ uses numeric suffix _1, _2, etc.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
 
 ## Session Continuity
 
-**Next action:** Ready for Phase 6 - Soft Delete
+**Next action:** Execute 06-02-PLAN.md (frontend delete confirmation UX)
 
-**Last session:** 2026-02-02T20:12:50Z
-**Stopped at:** Completed 05-06-PLAN.md (Phase 5 complete)
+**Last session:** 2026-02-03T06:29:01Z
+**Stopped at:** Completed 06-01-PLAN.md (backend delete command)
 **Resume file:** None
