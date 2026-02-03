@@ -10,13 +10,15 @@
 
 **Current phase:** 6 of 7 - Soft Delete
 
-**Plan:** 1 of 2 in current phase
+**Plan:** 02 of 02 in current phase
 
-**Status:** In progress
+**Status:** Phase complete
 
-**Last activity:** 2026-02-03 - Completed 06-01-PLAN.md
+**Last activity:** 2026-02-03 - Completed 06-02-PLAN.md
 
-**Progress:** [█████████████████████████████░░]
+**Next action:** Ready for Phase 7 - Rebuildability & UI Fidelity
+
+**Progress:** [██████████████████████████████░]
 
 ## Performance Metrics (v1)
 
@@ -50,14 +52,15 @@
 - Auto-refresh on toggle error to restore correct state.
 - Soft delete moves note to deleted/ via fs::rename; sidecar stays orphaned in .ponder/meta/; list_notes naturally ignores it.
 - Conflict handling in deleted/ uses numeric suffix _1, _2, etc.
+- Soft delete uses two-press 'd' confirmation with auto-cancel; notes move to deleted/ folder; sidecars remain orphaned.
 
 **Open questions (defer until needed):**
 - Exact rebuild semantics for sidecars (what is regenerated vs preserved) when `.ponder/` is wiped.
 
 ## Session Continuity
 
-**Next action:** Execute 06-02-PLAN.md (frontend delete confirmation UX)
+**Next action:** Execute Phase 7 - Rebuildability & UI Fidelity
 
-**Last session:** 2026-02-03T06:29:01Z
-**Stopped at:** Completed 06-01-PLAN.md (backend delete command)
+**Last session:** 2026-02-03
+**Stopped at:** Completed 06-02-PLAN.md (Phase 6 complete)
 **Resume file:** None
