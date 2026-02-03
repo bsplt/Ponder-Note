@@ -333,13 +333,15 @@ export function Editor(props: EditorProps) {
       </div>
 
       <div className="editorBody">
-        <textarea
-          ref={textareaRef}
-          className="editorTextarea"
-          value={body}
-          onChange={handleChange}
-          spellCheck={false}
-        />
+        <div className="editorContent">
+          <textarea
+            ref={textareaRef}
+            className="editorTextarea"
+            value={body}
+            onChange={handleChange}
+            spellCheck={false}
+          />
+        </div>
       </div>
 
       <div className="editorFooter">

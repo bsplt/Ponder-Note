@@ -103,6 +103,14 @@
   --size-glow-primary: 1200px 800px;
   --size-glow-warn: 1000px 700px;
 
+  --editor-font-min: 14px;
+  --editor-font-max: 18px;
+  --editor-line-height: 1.6;
+  --editor-column-min: 60ch;
+  --editor-column-max: 72ch;
+  --editor-column-width: clamp(var(--editor-column-min), 72vw, var(--editor-column-max));
+  --editor-font-fluid: clamp(var(--editor-font-min), calc(1.2vw + var(--space-6)), var(--editor-font-max));
+
 
   --app-bg:
     radial-gradient(var(--size-glow-primary) at 20% -10%, var(--color-glow-primary), transparent 55%),
@@ -551,6 +559,15 @@ body {
   margin-top: var(--space-3);
 }
 
+.editorContent {
+  width: 100%;
+  max-width: var(--editor-column-width);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  font-size: var(--editor-font-fluid);
+  line-height: var(--editor-line-height);
+}
+
 .editorTextarea {
   width: 100%;
   min-height: var(--size-editor-min-height);
@@ -561,8 +578,8 @@ body {
   background: var(--color-surface-strong);
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .editorTextarea:focus-visible {
@@ -745,6 +762,10 @@ body {
   .slotGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .editorContent {
+    padding: 0 var(--space-6);
+  }
 }
 
 @media (max-width: 440px) {
@@ -763,6 +784,10 @@ body {
 
   .slotGrid {
     grid-template-columns: 1fr;
+  }
+
+  .editorContent {
+    padding: 0 var(--space-4);
   }
 }
 
