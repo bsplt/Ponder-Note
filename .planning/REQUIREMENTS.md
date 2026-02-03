@@ -55,9 +55,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Deletion
 
-- [ ] **DEL-01**: In overview, pressing `d` on the focused note prompts for confirmation and requires pressing `d` again to delete
-- [ ] **DEL-02**: Deleting a note moves the markdown file to `<workspace>/deleted/` and removes it from the overview
-- [ ] **DEL-03**: Deleted notes do not appear in search results and do not contribute todos
+- [x] **DEL-01**: In overview, pressing `d` on the focused note prompts for confirmation and requires pressing `d` again to delete
+- [x] **DEL-02**: Deleting a note moves the markdown file to `<workspace>/deleted/` and removes it from the overview
+- [x] **DEL-03**: Deleted notes do not appear in search results and do not contribute todos
 
 ### Reliability & Rebuildability
 
@@ -137,9 +137,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TODO-05 | Phase 5 | Complete |
 | TODO-06 | Phase 5 | Complete |
 | SAFE-02 | Phase 5 | Complete |
-| DEL-01 | Phase 6 | Pending |
-| DEL-02 | Phase 6 | Pending |
-| DEL-03 | Phase 6 | Pending |
+| DEL-01 | Phase 6 | Complete |
+| DEL-02 | Phase 6 | Complete |
+| DEL-03 | Phase 6 | Complete |
 | SAFE-03 | Phase 7 | Pending |
 | UI-01 | Phase 7 | Pending |
 | UI-02 | Phase 7 | Pending |

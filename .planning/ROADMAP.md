@@ -139,7 +139,7 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Backend delete command with file move and conflict handling
-- [ ] 06-02-PLAN.md — Frontend delete confirmation UX and verification
+- [x] 06-02-PLAN.md — Frontend delete confirmation UX and verification
 
 ### Phase 7 - Rebuildability & UI Fidelity
 
@@ -166,5 +166,5 @@ Plans:
 | 3 | Overview <-> Editor Loop | Complete |
 | 4 | Search & Tags | Complete |
 | 5 | Todos (Extract, Browse, Toggle) | Complete |
-| 6 | Soft Delete | In progress |
+| 6 | Soft Delete | Complete |
 | 7 | Rebuildability & UI Fidelity | Pending |
