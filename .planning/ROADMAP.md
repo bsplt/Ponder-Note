@@ -155,6 +155,14 @@ Plans:
 3. UI matches the provided Figma layouts/components closely; any intentional deviations are documented.
 4. If the user deletes derived workspace state under `.ponder/`, the app can rebuild it and still shows correct notes/search/todos without modifying Markdown note contents.
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Rebuild routine, logging, and command wiring
+- [ ] 07-02-PLAN.md — Rebuild log UI action and modal
+- [ ] 07-03-PLAN.md — Tokenized styles, responsive editor, Figma alignment
+- [ ] 07-04-PLAN.md — Human verification for rebuild + UI fidelity
+
 ---
 
 ## Progress
