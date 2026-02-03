@@ -188,6 +188,16 @@ body {
   background: rgba(121, 192, 255, 0.08);
 }
 
+.noteRowDeleteWarning {
+  border-color: var(--warn-border);
+  background: var(--warn);
+}
+
+.noteRowDeleteWarning .noteName {
+  color: rgba(255, 196, 121, 0.95);
+  font-weight: 600;
+}
+
 .notesList:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 4px;

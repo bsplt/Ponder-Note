@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Toast } from '../components/Toast'
 import { SearchBar } from '../components/SearchBar'
 import type { NoteSummary } from '../api/workspace'
+import { deleteNote } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 import { filterNotes } from '../utils/search'
 
@@ -92,6 +93,8 @@ export function Overview(props: OverviewProps) {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
+  const [deleteConfirmStem, setDeleteConfirmStem] = useState<string | null>(null)
+  const deleteConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onCloseToast = useCallback(() => setToastMessage(null), [])
   const showToast = useCallback((message: string) => setToastMessage(message), [])
@@ -99,6 +102,40 @@ export function Overview(props: OverviewProps) {
   const scrollTop = useCallback(() => {
     return window.scrollY || document.documentElement.scrollTop || 0
   }, [])
+
+  // Auto-cancel delete confirmation after 4 seconds
+  useEffect(() => {
+    if (!deleteConfirmStem) return
+
+    deleteConfirmTimerRef.current = setTimeout(() => {
+      setDeleteConfirmStem(null)
+    }, 4000)
+
+    return () => {
+      if (deleteConfirmTimerRef.current) {
+        clearTimeout(deleteConfirmTimerRef.current)
+      }
+    }
+  }, [deleteConfirmStem])
+
+  // Cancel delete confirmation on list changes
+  useEffect(() => {
+    setDeleteConfirmStem(null)
+  }, [searchText, includeTags, excludeTags, notes.length])
+
+  const onDeleteNote = useCallback(async (stem: string) => {
+    const res = await deleteNote(stem)
+
+    if (res.ok) {
+      await workspaceActions.refreshNotes()
+      showToast('Note deleted')
+    } else {
+      showToast(res.error?.message ?? 'Failed to delete note')
+      await workspaceActions.refreshNotes()
+    }
+
+    setDeleteConfirmStem(null)
+  }, [showToast])
 
   const onNewNote = useCallback(() => {
     void (async () => {
@@ -224,6 +261,11 @@ export function Overview(props: OverviewProps) {
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (isTypingTarget(event.target)) return
 
+      // Any key other than 'd' cancels delete confirmation
+      if (deleteConfirmStem && event.key !== 'd' && event.key !== 'D') {
+        setDeleteConfirmStem(null)
+      }
+
       if (event.key === 'ArrowDown') {
         event.preventDefault()
         setFocusedIndex((prev) => clampIndex(prev + 1))
@@ -245,12 +287,32 @@ export function Overview(props: OverviewProps) {
       if (event.key === 'T' || event.key === 't') {
         event.preventDefault()
         onOpenTodoList()
+        return
+      }
+
+      if (event.key === 'd' || event.key === 'D') {
+        event.preventDefault()
+
+        // Can't delete from "New Note" row
+        if (focusedIndex === 0) return
+
+        const note = filteredNotes[focusedIndex - 1]
+        if (!note) return
+
+        // First press: enter confirmation state
+        if (deleteConfirmStem !== note.stem) {
+          setDeleteConfirmStem(note.stem)
+          return
+        }
+
+        // Second press: execute delete
+        void onDeleteNote(note.stem)
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, onOpenTodoList])
+  }, [clampIndex, openFocused, onOpenTodoList, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =
@@ -335,15 +397,19 @@ export function Overview(props: OverviewProps) {
             {filteredNotes.map((note, idx) => {
             const rowIndex = idx + 1
             const isFocused = rowIndex === focusedIndex
+            const isDeleteWarning = note.stem === deleteConfirmStem
             return (
               <li
                 key={note.stem}
-                className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}`}
-                onClick={() => setFocusedIndex(rowIndex)}
+                className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}${isDeleteWarning ? ' noteRowDeleteWarning' : ''}`}
+                onClick={() => {
+                  setFocusedIndex(rowIndex)
+                  setDeleteConfirmStem(null)
+                }}
                 onDoubleClick={() => onOpenNote(note, scrollTop())}
               >
                 <div className="noteRowMain">
-                  <div className="noteName">{displayNoteTitle(note)}</div>
+                  <div className="noteName">{isDeleteWarning ? 'Press d again to delete' : displayNoteTitle(note)}</div>
                   <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
                 </div>
                 {note.tags && note.tags.length > 0 && (
