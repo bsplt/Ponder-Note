@@ -91,3 +91,7 @@ export async function workspaceGetAllTags(): Promise<string[]> {
   const res = await invoke<CommandResult<string[]>>('workspace_get_all_tags')
   return unwrap(res)
 }
+
+export async function deleteNote(stem: string): Promise<CommandResult<void>> {
+  return invoke<CommandResult<void>>('note_delete', { stem })
+}
