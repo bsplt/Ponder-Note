@@ -1,0 +1,752 @@
+:root {
+  --bg: #0c0f14;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-border: rgba(255, 255, 255, 0.10);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.65);
+  --muted-2: rgba(255, 255, 255, 0.45);
+  --focus: rgba(121, 192, 255, 0.9);
+  --primary: rgba(121, 192, 255, 0.22);
+  --primary-border: rgba(121, 192, 255, 0.60);
+  --danger: rgba(255, 98, 98, 0.14);
+  --danger-border: rgba(255, 98, 98, 0.55);
+  --warn: rgba(255, 196, 121, 0.16);
+  --warn-border: rgba(255, 196, 121, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(1200px 800px at 20% -10%, rgba(121, 192, 255, 0.25), transparent 55%),
+    radial-gradient(1000px 700px at 110% 20%, rgba(255, 196, 121, 0.18), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  line-height: 1.35;
+}
+
+.appRoot {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(10, 12, 16, 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.appHeaderLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.appBrand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.appScreenTitle {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appHeaderRight {
+  display: flex;
+  gap: 8px;
+}
+
+.appMain {
+  padding: 18px;
+  flex: 1;
+  display: flex;
+}
+
+.panel {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  border-radius: 14px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+}
+
+.panelSubtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.panelActions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.panelActionsInline {
+  margin-top: 0;
+}
+
+.overviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.overviewPath {
+  margin-top: 8px;
+}
+
+.notesHeader {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.notesHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notesTitle {
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.notesMeta {
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.mutedBlock {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.notesList {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.noteRow {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.noteRowInteractive {
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.noteRowInteractive:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.noteRowFocused {
+  border-color: var(--primary-border);
+  background: rgba(121, 192, 255, 0.10);
+}
+
+.noteRowNew {
+  border-style: dashed;
+  background: rgba(121, 192, 255, 0.08);
+}
+
+.noteRowDeleteWarning {
+  border-color: var(--warn-border);
+  background: var(--warn);
+}
+
+.noteRowDeleteWarning .noteName {
+  color: rgba(255, 196, 121, 0.95);
+  font-weight: 600;
+}
+
+.notesList:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+
+.noteRowMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.noteName {
+  font-weight: 650;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noteTimestamp {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.noteTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.noteTag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.noteTag:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* SearchBar Component */
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.12);
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.searchBar:focus-within {
+  border-color: var(--primary-border);
+  background: rgba(121, 192, 255, 0.06);
+}
+
+.searchBarInput {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text);
+}
+
+.searchBarInput::placeholder {
+  color: var(--muted-2);
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.filterPillInclude {
+  background: rgba(121, 192, 255, 0.18);
+  color: rgba(121, 192, 255, 0.95);
+}
+
+.filterPillExclude {
+  background: rgba(255, 98, 98, 0.18);
+  color: rgba(255, 98, 98, 0.95);
+}
+
+.filterPill button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.filterPill button:hover {
+  opacity: 1;
+}
+
+/* PillInput Component */
+.pillInput {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.12);
+  flex-wrap: wrap;
+  min-height: 40px;
+  position: relative;
+  cursor: text;
+}
+
+.pillInput:focus-within {
+  border-color: var(--primary-border);
+  background: rgba(121, 192, 255, 0.06);
+}
+
+.pillInputField {
+  flex: 1;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text);
+}
+
+.pillInputField::placeholder {
+  color: var(--muted-2);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pill button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.pill button:hover {
+  opacity: 1;
+}
+
+/* TagAutocomplete Component */
+.autocompleteDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: rgba(18, 20, 26, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocompleteItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.autocompleteItem:hover,
+.autocompleteItemSelected {
+  background: rgba(121, 192, 255, 0.12);
+}
+
+.editorPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editorMeta {
+  margin-top: 6px;
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.editorTagSection {
+  margin-top: 12px;
+}
+
+.editorTagError {
+  margin-top: 6px;
+  color: rgba(255, 98, 98, 0.95);
+  font-size: 13px;
+}
+
+.editorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--danger-border);
+  background: var(--danger);
+}
+
+.editorBannerMessage {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.editorBody {
+  margin-top: 6px;
+}
+
+.editorTextarea {
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 10, 12, 0.5);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.editorTextarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.editorFooter {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 10, 12, 0.72);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.btnPrimary {
+  background: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.slotGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.slot {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--text);
+}
+
+.slot:hover {
+  border-color: rgba(255, 255, 255, 0.20);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.slot:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.slotNumber {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.slotBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.slotNameRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.slotBadge {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+
+.slotBadgeHint {
+  border-color: var(--warn-border);
+  background: var(--warn);
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.slotBadgeError {
+  border-color: var(--danger-border);
+  background: var(--danger);
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.slotActive {
+  border-color: var(--primary-border);
+  background: rgba(121, 192, 255, 0.10);
+}
+
+.slotFallback {
+  border-color: var(--warn-border);
+  background: rgba(255, 196, 121, 0.10);
+}
+
+.slotError {
+  border-color: var(--danger-border);
+  background: rgba(255, 98, 98, 0.08);
+}
+
+.slot:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.inlineError {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--danger-border);
+  background: rgba(255, 98, 98, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.slotName {
+  font-weight: 700;
+}
+
+.path {
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: var(--muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 720px) {
+  .slotGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 440px) {
+  .appHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .appHeaderRight {
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1;
+  }
+
+  .slotGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Todo List */
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.todoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.todoGroupHeader {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+}
+
+.todoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.todoRow:hover {
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.todoRowFocused {
+  background: rgba(121, 192, 255, 0.10);
+  border-color: var(--primary-border);
+}
+
+.todoCheckbox {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.todoText {
+  flex: 1;
+  color: var(--text);
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.todoTextChecked {
+  color: var(--muted);
+}
+
+.todoOpenBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  transition: color 0.15s ease;
+}
+
+.todoOpenBtn:hover {
+  color: var(--focus);
+}
