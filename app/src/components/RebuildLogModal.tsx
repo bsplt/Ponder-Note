@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { open } from '@tauri-apps/plugin-opener'
+import { openPath } from '@tauri-apps/plugin-opener'
 import { type RebuildLog, workspaceGetRebuildLog, workspaceGetState } from '../api/workspace'
 
 type RebuildLogModalProps = {
@@ -99,7 +99,7 @@ export function RebuildLogModal({ isOpen, onClose }: RebuildLogModalProps) {
     if (!logPath) return
     setOpenError(null)
     try {
-      await open(logPath)
+      await openPath(logPath)
     } catch (err) {
       setOpenError(err instanceof Error ? err.message : 'Failed to open log file')
     }
