@@ -159,7 +159,7 @@ Plans:
 
 Plans:
 - [x] 07-01-PLAN.md — Rebuild routine, logging, and command wiring
-- [ ] 07-02-PLAN.md — Rebuild log UI action and modal
+- [x] 07-02-PLAN.md — Rebuild log UI action and modal
 - [x] 07-03-PLAN.md — Tokenized styles, responsive editor, Figma alignment
 - [ ] 07-04-PLAN.md — Human verification for rebuild + UI fidelity
 
