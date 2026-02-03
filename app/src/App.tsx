@@ -4,6 +4,7 @@ import { Editor } from './screens/Editor'
 import { Workspaces } from './screens/Workspaces'
 import { TodoList } from './screens/TodoList'
 import type { NoteSummary } from './api/workspace'
+import { RebuildLogModal } from './components/RebuildLogModal'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import './styles.css'
 
@@ -22,6 +23,7 @@ function App() {
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
+  const [rebuildLogOpen, setRebuildLogOpen] = useState(false)
   
   // Search state (persists when navigating to editor and back)
   const [searchText, setSearchText] = useState('')
@@ -52,6 +54,12 @@ function App() {
       setScreen('workspaces')
     }
   }, [activeStatus, loading, screen])
+
+  useEffect(() => {
+    if (screen === 'editor') {
+      setRebuildLogOpen(false)
+    }
+  }, [screen])
 
   const openEditor = useCallback(
     (note: NoteSummary, isNew: boolean, scrollTop: number) => {
@@ -122,6 +130,9 @@ function App() {
             >
               Workspaces
             </button>
+            <button type="button" className="btn" onClick={() => setRebuildLogOpen(true)}>
+              View rebuild log
+            </button>
           </div>
         ) : null}
       </header>
@@ -170,6 +181,8 @@ function App() {
           <Workspaces />
         )}
       </main>
+
+      <RebuildLogModal isOpen={rebuildLogOpen} onClose={() => setRebuildLogOpen(false)} />
     </div>
   )
 }
