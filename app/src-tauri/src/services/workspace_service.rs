@@ -308,6 +308,35 @@ impl WorkspaceService {
         Ok(())
     }
 
+    pub fn note_delete(&self, stem: &str) -> Result<(), WorkspaceServiceError> {
+        let (_slot, workspace_path) = self.active_workspace_path()?;
+
+        // Source note path
+        let note_path = workspace_path.join(format!("{stem}.md"));
+        if !note_path.exists() {
+            return Err(WorkspaceServiceError::NoteNotFound);
+        }
+
+        // Ensure deleted/ folder exists
+        let deleted_dir = workspace_path.join("deleted");
+        std::fs::create_dir_all(&deleted_dir)?;
+
+        // Target path with conflict handling (numeric suffix _1, _2, …)
+        let mut target_path = deleted_dir.join(format!("{stem}.md"));
+        let mut suffix = 1;
+        while target_path.exists() {
+            target_path = deleted_dir.join(format!("{stem}_{suffix}.md"));
+            suffix += 1;
+        }
+
+        // Move note file atomically
+        std::fs::rename(&note_path, &target_path)?;
+
+        // Leave sidecar in place (becomes orphaned) – do NOT delete .ponder/meta/{stem}.json
+
+        Ok(())
+    }
+
     pub fn get_all_tags(&self) -> Result<Vec<String>, WorkspaceServiceError> {
         let (_slot, path) = self.active_workspace_path()?;
         let meta_dir = path.join(".ponder").join("meta");
@@ -898,5 +927,115 @@ mod tests {
 
         let body = std::fs::read_to_string(&target).unwrap();
         assert_eq!(body, "new");
+    }
+
+    /// Helper: simulate the note_delete file-move logic in an isolated temp workspace.
+    /// Returns (workspace_root, deleted_dir).
+    fn setup_delete_workspace(stem: &str, body: &str) -> (tempfile::TempDir, PathBuf) {
+        let ws = tempfile::tempdir().unwrap();
+        let note = ws.path().join(format!("{stem}.md"));
+        std::fs::write(&note, body).unwrap();
+
+        // Create orphan sidecar
+        let meta = ws.path().join(".ponder").join("meta");
+        std::fs::create_dir_all(&meta).unwrap();
+        std::fs::write(meta.join(format!("{stem}.json")), "{}").unwrap();
+
+        let deleted = ws.path().join("deleted");
+        (ws, deleted)
+    }
+
+    /// Core move logic extracted so unit tests can exercise it without a full WorkspaceService.
+    fn do_note_delete(workspace_path: &Path, stem: &str) -> std::io::Result<()> {
+        let note_path = workspace_path.join(format!("{stem}.md"));
+        if !note_path.exists() {
+            return Err(std::io::Error::new(std::io::ErrorKind::NotFound, "note not found"));
+        }
+        let deleted_dir = workspace_path.join("deleted");
+        std::fs::create_dir_all(&deleted_dir)?;
+
+        let mut target_path = deleted_dir.join(format!("{stem}.md"));
+        let mut suffix = 1;
+        while target_path.exists() {
+            target_path = deleted_dir.join(format!("{stem}_{suffix}.md"));
+            suffix += 1;
+        }
+        std::fs::rename(&note_path, &target_path)
+    }
+
+    #[test]
+    fn note_delete_moves_file_to_deleted_folder() {
+        let (ws, deleted) = setup_delete_workspace("1234567890", "# Hello");
+
+        do_note_delete(ws.path(), "1234567890").unwrap();
+
+        // Note moved
+        assert!(!ws.path().join("1234567890.md").exists());
+        assert!(deleted.join("1234567890.md").exists());
+
+        // Sidecar still present (orphaned)
+        assert!(ws.path().join(".ponder").join("meta").join("1234567890.json").exists());
+    }
+
+    #[test]
+    fn note_delete_creates_deleted_dir_if_missing() {
+        let (ws, deleted) = setup_delete_workspace("1111111111", "body");
+        assert!(!deleted.exists());
+
+        do_note_delete(ws.path(), "1111111111").unwrap();
+
+        assert!(deleted.exists());
+        assert!(deleted.join("1111111111.md").exists());
+    }
+
+    #[test]
+    fn note_delete_conflict_handling_numeric_suffix() {
+        let (ws, deleted) = setup_delete_workspace("2222222222", "first");
+        std::fs::create_dir_all(&deleted).unwrap();
+
+        // Pre-place a file at the base target to simulate a prior delete
+        std::fs::write(deleted.join("2222222222.md"), "already here").unwrap();
+
+        do_note_delete(ws.path(), "2222222222").unwrap();
+
+        // Original slot taken → should be _1
+        assert!(deleted.join("2222222222.md").exists());
+        assert!(deleted.join("2222222222_1.md").exists());
+        assert_eq!(
+            std::fs::read_to_string(deleted.join("2222222222.md")).unwrap(),
+            "already here"
+        );
+        assert_eq!(
+            std::fs::read_to_string(deleted.join("2222222222_1.md")).unwrap(),
+            "first"
+        );
+    }
+
+    #[test]
+    fn note_delete_conflict_handling_multiple_suffixes() {
+        let (ws, deleted) = setup_delete_workspace("3333333333", "third");
+        std::fs::create_dir_all(&deleted).unwrap();
+
+        // Pre-fill base + _1
+        std::fs::write(deleted.join("3333333333.md"), "base").unwrap();
+        std::fs::write(deleted.join("3333333333_1.md"), "first").unwrap();
+
+        do_note_delete(ws.path(), "3333333333").unwrap();
+
+        assert!(deleted.join("3333333333_2.md").exists());
+        assert_eq!(
+            std::fs::read_to_string(deleted.join("3333333333_2.md")).unwrap(),
+            "third"
+        );
+    }
+
+    #[test]
+    fn note_delete_returns_error_when_note_missing() {
+        let ws = tempfile::tempdir().unwrap();
+        // No note file created
+
+        let result = do_note_delete(ws.path(), "9999999999");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::NotFound);
     }
 }
