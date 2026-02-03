@@ -1,5 +1,6 @@
 use crate::domain::note::NoteSummary;
-use crate::domain::workspace::{CommandResult, WorkspaceState};
+use crate::domain::rebuild::RebuildLog;
+use crate::domain::workspace::{CommandResult, WorkspaceFolderStatus, WorkspaceState};
 use crate::services::workspace_service::{InvalidWorkspaceKind, WorkspaceService, WorkspaceServiceError};
 use std::sync::Mutex;
 
@@ -18,7 +19,12 @@ pub fn workspace_get_state(
     };
 
     match svc.get_state() {
-        Ok(state) => CommandResult::ok(state),
+        Ok(state) => {
+            if active_workspace_ok(&state) {
+                let _ = svc.rebuild_active_workspace();
+            }
+            CommandResult::ok(state)
+        }
         Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
     }
 }
@@ -40,7 +46,12 @@ pub fn workspace_assign_slot(
     };
 
     match svc.assign_slot(slot, path) {
-        Ok(state) => CommandResult::ok(state),
+        Ok(state) => {
+            if active_workspace_ok(&state) {
+                let _ = svc.rebuild_active_workspace();
+            }
+            CommandResult::ok(state)
+        }
         Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
     }
 }
@@ -61,7 +72,52 @@ pub fn workspace_switch_slot(
     };
 
     match svc.switch_slot(slot) {
-        Ok(state) => CommandResult::ok(state),
+        Ok(state) => {
+            if active_workspace_ok(&state) {
+                let _ = svc.rebuild_active_workspace();
+            }
+            CommandResult::ok(state)
+        }
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn workspace_rebuild(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+) -> CommandResult<RebuildLog> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.rebuild_active_workspace() {
+        Ok(log) => CommandResult::ok(log),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn workspace_get_rebuild_log(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+) -> CommandResult<Option<RebuildLog>> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.get_rebuild_log() {
+        Ok(log) => CommandResult::ok(log),
         Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
     }
 }
@@ -189,4 +245,13 @@ fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
         WorkspaceServiceError::InvalidTodoToggle(_) => "invalid_todo_toggle",
         WorkspaceServiceError::NoteNotFound => "note_not_found",
     }
+}
+
+fn active_workspace_ok(state: &WorkspaceState) -> bool {
+    let idx = state.active_slot.saturating_sub(1) as usize;
+    state
+        .slots
+        .get(idx)
+        .and_then(|slot| slot.status)
+        == Some(WorkspaceFolderStatus::Ok)
 }

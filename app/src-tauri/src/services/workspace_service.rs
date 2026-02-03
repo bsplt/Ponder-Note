@@ -1,12 +1,13 @@
 use crate::domain::note::{NoteSidecar, NoteSummary};
 use crate::domain::note_rewrite::rewrite_exit_checklists;
 use crate::domain::note_title::derive_note_title;
-use crate::domain::rebuild::{RebuildError, RebuildLog};
+use crate::domain::rebuild::{RebuildCounts, RebuildError, RebuildLog};
 use crate::domain::todo::{extract_todos, toggle_checkbox_in_memory, TodoItem};
 use crate::domain::workspace::{
     slot_to_index, AppConfig, WorkspaceFolderStatus, WorkspaceSlotState, WorkspaceState,
 };
 use crate::storage::app_config_repo::{AppConfigRepo, AppConfigRepoError};
+use serde::Serialize;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::io::{BufRead, Write};
@@ -235,6 +236,250 @@ impl WorkspaceService {
 
         notes.sort_by_key(|note| note.created_at);
         Ok(notes)
+    }
+
+    pub fn rebuild_active_workspace(&self) -> Result<RebuildLog, WorkspaceServiceError> {
+        let (_slot, workspace_path) = self.active_workspace_path()?;
+        let mut errors = Vec::new();
+
+        let started_at = match current_unix_ms() {
+            Ok(ts) => ts,
+            Err(err) => {
+                errors.push(RebuildError {
+                    message: format!("timestamp error: {err}"),
+                    note_stem: None,
+                    path: None,
+                });
+                0
+            }
+        };
+
+        let mut counts = RebuildCounts::default();
+        let ponder_dir = workspace_path.join(".ponder");
+        let meta_dir = ponder_dir.join("meta");
+        let index_dir = ponder_dir.join("index");
+
+        if let Err(err) = std::fs::create_dir_all(&meta_dir) {
+            errors.push(RebuildError {
+                message: format!("failed to create meta dir: {err}"),
+                note_stem: None,
+                path: Some(meta_dir.to_string_lossy().to_string()),
+            });
+        }
+
+        if let Err(err) = std::fs::create_dir_all(&index_dir) {
+            errors.push(RebuildError {
+                message: format!("failed to create index dir: {err}"),
+                note_stem: None,
+                path: Some(index_dir.to_string_lossy().to_string()),
+            });
+        }
+
+        match std::fs::read_dir(&workspace_path) {
+            Ok(entries) => {
+                for entry in entries {
+                    let entry = match entry {
+                        Ok(entry) => entry,
+                        Err(err) => {
+                            errors.push(RebuildError {
+                                message: format!("failed to read workspace entry: {err}"),
+                                note_stem: None,
+                                path: Some(workspace_path.to_string_lossy().to_string()),
+                            });
+                            continue;
+                        }
+                    };
+
+                    if !entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
+                        continue;
+                    }
+
+                    let note_path = entry.path();
+                    if note_path.extension().and_then(|s| s.to_str()) != Some("md") {
+                        continue;
+                    }
+
+                    let Some(stem) = note_path.file_stem().and_then(|s| s.to_str()) else {
+                        continue;
+                    };
+
+                    let created_at = match stem.parse::<i64>() {
+                        Ok(ts) => ts,
+                        Err(_) => {
+                            errors.push(RebuildError {
+                                message: "invalid note filename timestamp".to_string(),
+                                note_stem: Some(stem.to_string()),
+                                path: Some(note_path.to_string_lossy().to_string()),
+                            });
+                            continue;
+                        }
+                    };
+
+                    counts.notes_scanned += 1;
+
+                    let first_line = match read_first_line(&note_path) {
+                        Ok(line) => line,
+                        Err(err) => {
+                            errors.push(RebuildError {
+                                message: format!("failed to read note: {err}"),
+                                note_stem: Some(stem.to_string()),
+                                path: Some(note_path.to_string_lossy().to_string()),
+                            });
+                            continue;
+                        }
+                    };
+
+                    let derived_title = derive_note_title(&first_line);
+                    let sidecar_path = meta_dir.join(format!("{stem}.json"));
+
+                    let mut existing_sidecar = None;
+                    let mut preserved_extra = BTreeMap::new();
+                    let mut had_sidecar = false;
+
+                    match std::fs::read_to_string(&sidecar_path) {
+                        Ok(raw) => {
+                            had_sidecar = true;
+                            match serde_json::from_str::<Value>(&raw) {
+                                Ok(value) => {
+                                    let (parsed, extra) = parse_sidecar_value(value);
+                                    preserved_extra = extra;
+                                    existing_sidecar = parsed;
+                                }
+                                Err(err) => {
+                                    errors.push(RebuildError {
+                                        message: format!("invalid sidecar json: {err}"),
+                                        note_stem: Some(stem.to_string()),
+                                        path: Some(sidecar_path.to_string_lossy().to_string()),
+                                    });
+                                }
+                            }
+                        }
+                        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(err) => {
+                            had_sidecar = true;
+                            errors.push(RebuildError {
+                                message: format!("failed to read sidecar: {err}"),
+                                note_stem: Some(stem.to_string()),
+                                path: Some(sidecar_path.to_string_lossy().to_string()),
+                            });
+                        }
+                    }
+
+                    let mut should_write = false;
+                    let mut repaired = false;
+                    let mut sidecar = match existing_sidecar {
+                        Some(sidecar) => sidecar,
+                        None => {
+                            should_write = true;
+                            if had_sidecar {
+                                counts.sidecars_repaired += 1;
+                            } else {
+                                counts.sidecars_created += 1;
+                            }
+                            NoteSidecar {
+                                title: derived_title.clone(),
+                                created_at,
+                                updated_at: None,
+                                tags: None,
+                                extra: preserved_extra,
+                            }
+                        }
+                    };
+
+                    if sidecar.created_at != created_at {
+                        sidecar.created_at = created_at;
+                        repaired = true;
+                    }
+
+                    if sidecar.title != derived_title {
+                        sidecar.title = derived_title;
+                        repaired = true;
+                    }
+
+                    if repaired {
+                        should_write = true;
+                        if had_sidecar {
+                            counts.sidecars_repaired += 1;
+                        } else {
+                            counts.sidecars_created += 1;
+                        }
+                    }
+
+                    if should_write {
+                        if let Err(err) = atomic_write_sidecar(&sidecar_path, &sidecar) {
+                            errors.push(RebuildError {
+                                message: format!("failed to write sidecar: {err}"),
+                                note_stem: Some(stem.to_string()),
+                                path: Some(sidecar_path.to_string_lossy().to_string()),
+                            });
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                errors.push(RebuildError {
+                    message: format!("failed to read workspace directory: {err}"),
+                    note_stem: None,
+                    path: Some(workspace_path.to_string_lossy().to_string()),
+                });
+            }
+        }
+
+        let index_created_at = match current_unix_ms() {
+            Ok(ts) => ts,
+            Err(err) => {
+                errors.push(RebuildError {
+                    message: format!("timestamp error: {err}"),
+                    note_stem: None,
+                    path: None,
+                });
+                0
+            }
+        };
+
+        if let Err(err) = write_index_marker(&index_dir, index_created_at) {
+            errors.push(RebuildError {
+                message: format!("failed to write index marker: {err}"),
+                note_stem: None,
+                path: Some(index_dir.to_string_lossy().to_string()),
+            });
+        }
+
+        let finished_at = match current_unix_ms() {
+            Ok(ts) => ts,
+            Err(err) => {
+                errors.push(RebuildError {
+                    message: format!("timestamp error: {err}"),
+                    note_stem: None,
+                    path: None,
+                });
+                started_at
+            }
+        };
+
+        let mut log = RebuildLog {
+            started_at,
+            finished_at,
+            workspace_path: workspace_path.to_string_lossy().to_string(),
+            counts,
+            errors,
+        };
+
+        if let Err(err) = write_rebuild_log(&workspace_path, &log) {
+            log.errors.push(RebuildError {
+                message: format!("rebuild log write failed: {err}"),
+                note_stem: None,
+                path: Some(rebuild_log_path(&workspace_path).to_string_lossy().to_string()),
+            });
+            let _ = write_rebuild_log(&workspace_path, &log);
+        }
+
+        Ok(log)
+    }
+
+    pub fn get_rebuild_log(&self) -> Result<Option<RebuildLog>, WorkspaceServiceError> {
+        let (_slot, workspace_path) = self.active_workspace_path()?;
+        read_rebuild_log(&workspace_path)
     }
 
     pub fn create_note(&self) -> Result<NoteSummary, WorkspaceServiceError> {
@@ -681,6 +926,39 @@ fn read_rebuild_log(workspace_path: &Path) -> Result<Option<RebuildLog>, Workspa
     match serde_json::from_str::<RebuildLog>(&raw) {
         Ok(log) => Ok(Some(log)),
         Err(_) => Ok(None),
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IndexVersionMarker {
+    schema_version: u32,
+    created_at: i64,
+}
+
+fn write_index_marker(index_dir: &Path, created_at: i64) -> Result<(), WorkspaceServiceError> {
+    std::fs::create_dir_all(index_dir)?;
+    let marker = IndexVersionMarker {
+        schema_version: 1,
+        created_at,
+    };
+    let json = serde_json::to_string_pretty(&marker)?;
+    let target_path = index_dir.join("version.json");
+
+    let mut tmp = NamedTempFile::new_in(index_dir)?;
+    tmp.write_all(json.as_bytes())?;
+    tmp.as_file().sync_all()?;
+
+    match tmp.persist(&target_path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+                std::fs::write(&target_path, json)?;
+                Ok(())
+            } else {
+                Err(WorkspaceServiceError::Io(err.error))
+            }
+        }
     }
 }
 
