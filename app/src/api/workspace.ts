@@ -24,6 +24,26 @@ export type NoteSummary = {
   filename?: string
 }
 
+export type RebuildLogCounts = {
+  notesScanned: number
+  sidecarsCreated: number
+  sidecarsRepaired: number
+}
+
+export type RebuildLogError = {
+  message: string
+  noteStem?: string | null
+  path?: string | null
+}
+
+export type RebuildLog = {
+  startedAt: number
+  finishedAt: number
+  workspacePath: string
+  counts: RebuildLogCounts
+  errors: RebuildLogError[]
+}
+
 export type CommandError = {
   code: string
   message: string
@@ -89,6 +109,11 @@ export async function workspaceUpdateNoteTags(stem: string, tags: string[]): Pro
 
 export async function workspaceGetAllTags(): Promise<string[]> {
   const res = await invoke<CommandResult<string[]>>('workspace_get_all_tags')
+  return unwrap(res)
+}
+
+export async function workspaceGetRebuildLog(): Promise<RebuildLog | null> {
+  const res = await invoke<CommandResult<RebuildLog | null>>('workspace_get_rebuild_log')
   return unwrap(res)
 }
 
