@@ -3,7 +3,7 @@ mod domain;
 mod services;
 mod storage;
 
-use crate::commands::notes::{note_discard, note_read, note_save};
+use crate::commands::notes::{note_delete, note_discard, note_read, note_save};
 use crate::commands::todos::{list_todos, toggle_todo};
 use crate::commands::workspace::{
     workspace_assign_slot, workspace_create_note, workspace_get_all_tags, workspace_get_state,
@@ -35,6 +35,7 @@ pub fn run() {
             note_read,
             note_save,
             note_discard,
+            note_delete,
             list_todos,
             toggle_todo
         ])

@@ -81,6 +81,27 @@ pub fn note_discard(
     }
 }
 
+#[tauri::command]
+pub fn note_delete(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+    stem: String,
+) -> CommandResult<()> {
+    let svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.note_delete(&stem) {
+        Ok(()) => CommandResult::ok(()),
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
 fn map_error_code(err: &WorkspaceServiceError) -> &'static str {
     match err {
         WorkspaceServiceError::InvalidSlot { .. } => "invalid_slot",
