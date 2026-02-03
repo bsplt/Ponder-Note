@@ -1,6 +1,7 @@
 use crate::domain::note::{NoteSidecar, NoteSummary};
 use crate::domain::note_rewrite::rewrite_exit_checklists;
 use crate::domain::note_title::derive_note_title;
+use crate::domain::rebuild::{RebuildError, RebuildLog};
 use crate::domain::todo::{extract_todos, toggle_checkbox_in_memory, TodoItem};
 use crate::domain::workspace::{
     slot_to_index, AppConfig, WorkspaceFolderStatus, WorkspaceSlotState, WorkspaceState,
@@ -637,6 +638,50 @@ fn load_or_rebuild_sidecar(
     };
 
     Ok((sidecar, should_write))
+}
+
+fn rebuild_log_path(workspace_path: &Path) -> PathBuf {
+    workspace_path.join(".ponder").join("rebuild-log.json")
+}
+
+fn write_rebuild_log(
+    workspace_path: &Path,
+    log: &RebuildLog,
+) -> Result<(), WorkspaceServiceError> {
+    let ponder_dir = workspace_path.join(".ponder");
+    std::fs::create_dir_all(&ponder_dir)?;
+
+    let json = serde_json::to_string_pretty(log)?;
+    let target_path = rebuild_log_path(workspace_path);
+
+    let mut tmp = NamedTempFile::new_in(&ponder_dir)?;
+    tmp.write_all(json.as_bytes())?;
+    tmp.as_file().sync_all()?;
+
+    match tmp.persist(&target_path) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            if err.error.kind() == std::io::ErrorKind::AlreadyExists {
+                std::fs::write(&target_path, json)?;
+                Ok(())
+            } else {
+                Err(WorkspaceServiceError::Io(err.error))
+            }
+        }
+    }
+}
+
+fn read_rebuild_log(workspace_path: &Path) -> Result<Option<RebuildLog>, WorkspaceServiceError> {
+    let path = rebuild_log_path(workspace_path);
+    let raw = match std::fs::read_to_string(&path) {
+        Ok(raw) => raw,
+        Err(_) => return Ok(None),
+    };
+
+    match serde_json::from_str::<RebuildLog>(&raw) {
+        Ok(log) => Ok(Some(log)),
+        Err(_) => Ok(None),
+    }
 }
 
 fn parse_sidecar_value(value: Value) -> (Option<NoteSidecar>, BTreeMap<String, Value>) {
