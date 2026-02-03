@@ -8,24 +8,35 @@ Use Nix as the source of truth for tooling, builds, and dependencies.
 - Prefer `nix build`, `nix run`, and `nix flake check` over ad-hoc install flows.
 - Avoid installing tooling via Homebrew, npm/pnpm, or `cargo install` outside the Nix environment unless explicitly requested.
 
-## Figma MCP
+## References
 
-For UI design reference, look at the Figma via MCP.
+- Figma MCP usage and handshake: `FIGMA_MCP.md`
+- MCP examples: `FIGMA_MCP_EXAMPLES.md`
 
-### Flow for Figma
+## UI Implementation
 
-1. **Build the map:** `get_metadata`
-   - If nothing is selected: request metadata for the whole page/current context.
-   - Goal: identify top-level frames, hierarchy, names, sizes, positions.
+### Core principles
 
-2. **Get eyes on it:** `get_screenshot`
-   - Capture screenshots of the most relevant frames.
-   - Prioritize the 3–5 largest or most semantically important frames (e.g., “Login”, “Checkout”, “Settings”, “Dialog”, “Table”, “Dashboard”).
+- Treat Figma MCP output as design reference, not final code style.
+- Use existing components
+- Replace Tailwind utilities with project tokens/utilities when applicable.
+- Use the project's color system, typography scale, and spacing tokens consistently.
+- Ask the user to select the frames and components you are interested in for `get_design_context`
+- Asking really is better than guessing
 
-3. **Pull structured context:** `get_design_context`
-   - Fetch layout/system details for the shortlisted frames (Auto Layout, spacing, typography, component structure).
-   - If output is too large: use `get_metadata` to narrow down, then re-run `get_design_context` on subtrees.
+### Visual fidelity
 
-4. **Optional (usually valuable):**
-   - `get_variable_defs` for token/style consistency (colors, spacing, type).
-   - `get_code_connect_map` to detect component reuse/drift relative to the codebase.
+- Aim for 1:1 parity with Figma.
+- Prefer design-system tokens and adjust spacing or sizes minimally to match visuals.
+- Validate against screenshots for both look and behavior.
+
+### Layout and responsiveness
+
+- Implement responsiveness based on Figma Auto Layout.
+- Respect min-width and max-width settings of frames, if set
+- Parent frames are adaptive unless Figma specifies a fixed width.
+
+### Interaction and states
+
+- Implement component interaction states when defined in Figma (hover, focus, active, disabled).
+- Honor any annotations provided in Figma
