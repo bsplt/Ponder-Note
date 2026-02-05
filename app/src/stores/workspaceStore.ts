@@ -100,6 +100,8 @@ function createWorkspaceStore() {
   const refreshNotes = async () => {
     try {
       const notes = await workspaceListNotes()
+      // Sort notes by createdAt descending (newest first)
+      notes.sort((a, b) => b.createdAt - a.createdAt)
       setState({ notes, errorMessage: null })
     } catch (err) {
       if (isWorkspaceApiError(err)) {
