@@ -30,7 +30,7 @@ function App() {
   const [includeTags, setIncludeTags] = useState<string[]>([])
   const [excludeTags, setExcludeTags] = useState<string[]>([])
   
-  const didInitialRoute = useRef(false)
+  const didBoot = useRef(false)
   const title = useMemo(() => titleForScreen(screen), [screen])
 
   const loading = useWorkspaceStore((s) => s.loading)
@@ -44,9 +44,14 @@ function App() {
   useEffect(() => {
     if (loading) return
 
-    if (!didInitialRoute.current) {
-      didInitialRoute.current = true
-      setScreen(activeStatus === 'ok' ? 'overview' : 'workspaces')
+    if (!didBoot.current) {
+      didBoot.current = true
+      // On first boot: start on overview if a workspace is configured (even
+      // if its status is temporarily non-ok, e.g. during note loading).
+      // Only go to workspaces if no workspace has been assigned at all.
+      if (activeStatus === 'unassigned') {
+        setScreen('workspaces')
+      }
       return
     }
 

@@ -68,7 +68,7 @@ function createWorkspaceStore() {
     activeSlot: 1,
     activeStatus: 'unassigned',
     fallbackSlot: null,
-    loading: false,
+    loading: true,
     errorMessage: null,
     notes: [],
     problemSlot: null,
