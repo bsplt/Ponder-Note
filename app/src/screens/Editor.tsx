@@ -265,9 +265,7 @@ export function Editor(props: EditorProps) {
       try {
         await workspaceUpdateNoteTags(stem, tags)
         setTagSaveError(null)
-        
-        // Trigger workspace refresh so tags appear in overview immediately
-        await workspaceActions.refreshNotes()
+        // Note: refreshNotes() is called on editor exit, so tags will appear in overview then
       } catch (err) {
         setTagSaveError('Failed to save tags')
         console.error('Tag save error:', err)
@@ -333,13 +331,15 @@ export function Editor(props: EditorProps) {
       </div>
 
       <div className="editorBody">
-        <textarea
-          ref={textareaRef}
-          className="editorTextarea"
-          value={body}
-          onChange={handleChange}
-          spellCheck={false}
-        />
+        <div className="editorContent">
+          <textarea
+            ref={textareaRef}
+            className="editorTextarea"
+            value={body}
+            onChange={handleChange}
+            spellCheck={false}
+          />
+        </div>
       </div>
 
       <div className="editorFooter">

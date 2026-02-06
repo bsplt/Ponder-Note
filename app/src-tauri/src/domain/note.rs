@@ -25,6 +25,9 @@ pub struct NoteSummary {
     #[serde(default)]
     pub tags: Vec<String>,
     pub filename: String,
+    /// Full note body for search; not displayed in the overview list.
+    #[serde(default)]
+    pub preview: String,
 }
 
 #[cfg(test)]

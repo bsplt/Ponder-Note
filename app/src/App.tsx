@@ -4,6 +4,7 @@ import { Editor } from './screens/Editor'
 import { Workspaces } from './screens/Workspaces'
 import { TodoList } from './screens/TodoList'
 import type { NoteSummary } from './api/workspace'
+import { RebuildLogModal } from './components/RebuildLogModal'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import './styles.css'
 
@@ -22,13 +23,14 @@ function App() {
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
+  const [rebuildLogOpen, setRebuildLogOpen] = useState(false)
   
   // Search state (persists when navigating to editor and back)
   const [searchText, setSearchText] = useState('')
   const [includeTags, setIncludeTags] = useState<string[]>([])
   const [excludeTags, setExcludeTags] = useState<string[]>([])
   
-  const didInitialRoute = useRef(false)
+  const didBoot = useRef(false)
   const title = useMemo(() => titleForScreen(screen), [screen])
 
   const loading = useWorkspaceStore((s) => s.loading)
@@ -42,9 +44,14 @@ function App() {
   useEffect(() => {
     if (loading) return
 
-    if (!didInitialRoute.current) {
-      didInitialRoute.current = true
-      setScreen(activeStatus === 'ok' ? 'overview' : 'workspaces')
+    if (!didBoot.current) {
+      didBoot.current = true
+      // On first boot: start on overview if a workspace is configured (even
+      // if its status is temporarily non-ok, e.g. during note loading).
+      // Only go to workspaces if no workspace has been assigned at all.
+      if (activeStatus === 'unassigned') {
+        setScreen('workspaces')
+      }
       return
     }
 
@@ -52,6 +59,12 @@ function App() {
       setScreen('workspaces')
     }
   }, [activeStatus, loading, screen])
+
+  useEffect(() => {
+    if (screen === 'editor') {
+      setRebuildLogOpen(false)
+    }
+  }, [screen])
 
   const openEditor = useCallback(
     (note: NoteSummary, isNew: boolean, scrollTop: number) => {
@@ -122,6 +135,9 @@ function App() {
             >
               Workspaces
             </button>
+            <button type="button" className="btn" onClick={() => setRebuildLogOpen(true)}>
+              View rebuild log
+            </button>
           </div>
         ) : null}
       </header>
@@ -167,9 +183,11 @@ function App() {
             onOpenNote={handleOpenNoteFromTodoList}
           />
         ) : (
-          <Workspaces />
+          <Workspaces onGoToOverview={() => setScreen('overview')} />
         )}
       </main>
+
+      <RebuildLogModal isOpen={rebuildLogOpen} onClose={() => setRebuildLogOpen(false)} />
     </div>
   )
 }

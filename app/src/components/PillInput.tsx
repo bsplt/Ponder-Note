@@ -93,10 +93,14 @@ export function PillInput(props: PillInputProps) {
   const handleBlur = useCallback(() => {
     // Delay to allow click on autocomplete item
     setTimeout(() => {
+      // Create pill from any remaining input text on blur
+      if (inputValue.trim()) {
+        addPill(inputValue)
+      }
       setShowAutocomplete(false)
       onBlur?.()
     }, 150)
-  }, [onBlur])
+  }, [addPill, inputValue, onBlur])
 
   const handleAutocompleteSelect = useCallback(
     (tag: string) => {
@@ -144,7 +148,7 @@ export function PillInput(props: PillInputProps) {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        placeholder={values.length === 0 ? placeholder : '+'}
+        placeholder={values.length === 0 ? placeholder : ''}
         className="pillInputField"
       />
       {showAutocomplete && filteredSuggestions.length > 0 && (
