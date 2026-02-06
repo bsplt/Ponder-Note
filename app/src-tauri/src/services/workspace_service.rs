@@ -195,7 +195,7 @@ impl WorkspaceService {
             let Some(stem) = note_path.file_stem().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let Ok(created_at) = stem.parse::<i64>() else {
+            let Some(created_at) = parse_stem_timestamp(stem) else {
                 continue;
             };
 
@@ -305,9 +305,9 @@ impl WorkspaceService {
                         continue;
                     };
 
-                    let created_at = match stem.parse::<i64>() {
-                        Ok(ts) => ts,
-                        Err(_) => {
+                    let created_at = match parse_stem_timestamp(stem) {
+                        Some(ts) => ts,
+                        None => {
                             errors.push(RebuildError {
                                 message: "invalid note filename timestamp".to_string(),
                                 note_stem: Some(stem.to_string()),
@@ -848,6 +848,44 @@ fn read_first_line(path: &Path) -> Result<String, WorkspaceServiceError> {
     let mut line = String::new();
     reader.read_line(&mut line)?;
     Ok(line.trim_end_matches(&['\r', '\n'][..]).to_string())
+}
+
+/// Seconds/milliseconds threshold: timestamps below this value are assumed to
+/// be in seconds and are converted to milliseconds by multiplying by 1000.
+/// 10 000 000 000 ms ≈ Nov 1970, while 10 000 000 000 s ≈ year 2286.
+const SECONDS_MS_THRESHOLD: i64 = 10_000_000_000;
+
+/// Normalise a raw timestamp to milliseconds. Values below the threshold are
+/// treated as seconds and multiplied by 1000.
+fn normalise_ts_to_ms(raw: i64) -> i64 {
+    if raw < SECONDS_MS_THRESHOLD {
+        raw * 1000
+    } else {
+        raw
+    }
+}
+
+/// Parse a note stem into a millisecond-precision `created_at` timestamp.
+///
+/// Accepted stem formats:
+/// - Pure numeric: `"1769850814706"` or `"1769018584"`
+/// - Numeric prefix with suffix: `"1769850814_meeting"` (leading digits before
+///   the first `_`)
+///
+/// Returns `None` if no leading numeric portion can be extracted.
+fn parse_stem_timestamp(stem: &str) -> Option<i64> {
+    // Try full stem as a number first (fast path for normal notes).
+    if let Ok(raw) = stem.parse::<i64>() {
+        return Some(normalise_ts_to_ms(raw));
+    }
+
+    // Try extracting the numeric prefix before the first '_'.
+    let numeric_part = stem.split('_').next()?;
+    if numeric_part.is_empty() {
+        return None;
+    }
+    let raw: i64 = numeric_part.parse().ok()?;
+    Some(normalise_ts_to_ms(raw))
 }
 
 fn load_or_rebuild_sidecar(
