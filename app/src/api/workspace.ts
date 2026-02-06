@@ -22,6 +22,8 @@ export type NoteSummary = {
   updatedAt: number | null
   tags: string[]
   filename?: string
+  /** Full note body used for content search in the overview. */
+  preview: string
 }
 
 export type RebuildLogCounts = {

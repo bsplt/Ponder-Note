@@ -199,7 +199,8 @@ impl WorkspaceService {
                 continue;
             };
 
-            let first_line = read_first_line(&note_path)?;
+            let content = std::fs::read_to_string(&note_path)?;
+            let first_line = content.lines().next().unwrap_or("").to_string();
             let derived_title = derive_note_title(&first_line);
 
             let sidecar_path = meta_dir.join(format!("{stem}.json"));
@@ -230,6 +231,7 @@ impl WorkspaceService {
                 updated_at: sidecar.updated_at,
                 tags: sidecar.tags.clone().unwrap_or_default(),
                 filename: format!("{stem}.md"),
+                preview: content,
             };
             notes.push(summary);
         }
@@ -513,6 +515,7 @@ impl WorkspaceService {
             updated_at: None,
             tags: Vec::new(),
             filename: format!("{created_at}.md"),
+            preview: String::new(),
         })
     }
 

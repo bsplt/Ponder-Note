@@ -57,10 +57,10 @@ export function buildSearchRegex(query: string): RegExp | null {
  * Filtering logic:
  * 1. Include tags (AND logic): note must have ALL included tags
  * 2. Exclude tags: note must have NONE of the excluded tags
- * 3. Search text: matches against note.title only (body search deferred)
+ * 3. Search text: matches against note title and body content
  *
  * @param notes - Array of notes to filter
- * @param searchText - Text to search for in note titles (supports wildcards)
+ * @param searchText - Text to search for in note titles and body (supports wildcards)
  * @param includeTags - Tags that must ALL be present on the note
  * @param excludeTags - Tags that must NOT be present on the note
  * @returns Filtered notes in original order (chronological by timestamp)
@@ -87,12 +87,11 @@ export function filterNotes(
     )
   }
 
-  // Filter by search text (title only for Phase 4)
+  // Filter by search text (title + body content)
   const regex = buildSearchRegex(searchText)
   if (regex) {
     filtered = filtered.filter((note) => {
-      // Search title only (NoteSummary doesn't include body field)
-      const searchableText = note.title ?? ''
+      const searchableText = [note.title ?? '', note.preview ?? ''].join(' ')
       return regex.test(searchableText)
     })
   }
