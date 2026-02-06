@@ -28,14 +28,22 @@
 
 :root {
   /* ── Palette: note background slots (swap these to retheme) ─────── */
-  --color-slot-1: #ffd35c;  /* gold   */
-  --color-slot-2: #bfb2b0;  /* taupe  */
-  --color-slot-3: #ffbcf2;  /* pink   */
-  --color-slot-4: #85a0d9;  /* blue   */
-  --color-slot-5: #a8d8b9;  /* sage   */
-  --color-slot-6: #f4a261;  /* peach  */
-  --color-slot-7: #c8b6ff;  /* lavender */
-  --color-slot-8: #ffc6c6;  /* coral  */
+  --color-slot-1:  #ffd35c;  /* gold      */
+  --color-slot-2:  #bfb2b0;  /* taupe     */
+  --color-slot-3:  #ffbcf2;  /* pink      */
+  --color-slot-4:  #85a0d9;  /* blue      */
+  --color-slot-5:  #a8d8b9;  /* sage      */
+  --color-slot-6:  #f4a261;  /* peach     */
+  --color-slot-7:  #c8b6ff;  /* lavender  */
+  --color-slot-8:  #ffc6c6;  /* coral     */
+  --color-slot-9:  #b8e0d2;  /* mint      */
+  --color-slot-10: #eac4d5;  /* rose      */
+  --color-slot-11: #d4e09b;  /* lime      */
+  --color-slot-12: #f6bd60;  /* amber     */
+  --color-slot-13: #a2d2ff;  /* sky       */
+  --color-slot-14: #d5c4a1;  /* sand      */
+  --color-slot-15: #cdb4db;  /* mauve     */
+  --color-slot-16: #f9c74f;  /* sunflower */
 
   /* ── Colours (light / warm theme) ──────────────────────────────── */
   --color-bg: var(--color-slot-1);
