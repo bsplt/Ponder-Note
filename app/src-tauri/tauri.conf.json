@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "Ponder",
-        "width": 800,
-        "height": 600,
-        "backgroundColor": "#0c0f14",
+        "width": 1200,
+        "height": 800,
+        "backgroundColor": "#FFD35C",
         "titleBarStyle": "Transparent",
         "devtools": true
       }
