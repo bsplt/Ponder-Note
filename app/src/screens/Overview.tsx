@@ -290,6 +290,18 @@ export function Overview(props: OverviewProps) {
         return
       }
 
+      if (event.key === 'W' || event.key === 'w') {
+        event.preventDefault()
+        onManageWorkspaces()
+        return
+      }
+
+      if (event.key === 'N' || event.key === 'n') {
+        event.preventDefault()
+        onNewNote()
+        return
+      }
+
       if (event.key === 'd' || event.key === 'D') {
         event.preventDefault()
 
@@ -312,7 +324,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, onOpenTodoList, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote])
+  }, [clampIndex, openFocused, onOpenTodoList, onManageWorkspaces, onNewNote, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =

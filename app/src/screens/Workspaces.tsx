@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { confirmReplace, pickDirectory } from '../api/tauri'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 
@@ -13,7 +13,11 @@ function slotSubtitle(path: string | null): string {
   return path ?? '(no folder)'
 }
 
-export function Workspaces() {
+type WorkspacesProps = {
+  onGoToOverview: () => void
+}
+
+export function Workspaces({ onGoToOverview }: WorkspacesProps) {
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
   const activeStatus = useWorkspaceStore((s) => s.activeStatus)
@@ -48,6 +52,18 @@ export function Workspaces() {
     },
     [loading, onPickAndAssign],
   )
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === 'O' || e.key === 'o') {
+        e.preventDefault()
+        onGoToOverview()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onGoToOverview])
 
   return (
     <section className="panel">

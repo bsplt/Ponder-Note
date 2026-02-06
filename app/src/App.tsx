@@ -183,7 +183,7 @@ function App() {
             onOpenNote={handleOpenNoteFromTodoList}
           />
         ) : (
-          <Workspaces />
+          <Workspaces onGoToOverview={() => setScreen('overview')} />
         )}
       </main>
 
