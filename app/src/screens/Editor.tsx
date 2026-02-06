@@ -3,6 +3,7 @@ import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
 import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
+import { noteColorSlot } from '../utils/noteColor'
 
 type EditorProps = {
   stem: string
@@ -297,7 +298,7 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <section className="panel editorPanel">
+    <section className="panel editorPanel" style={{ '--note-bg': `var(--color-slot-${noteColorSlot(stem)})` } as React.CSSProperties}>
       <div className="editorHeader">
         <div>
           <h2 className="panelTitle">Editing note</h2>

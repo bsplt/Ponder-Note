@@ -3,6 +3,7 @@ import { listTodos, toggleTodo, type TodoItem } from '../api/todos'
 import { groupTodosByTags } from '../utils/todoGrouping'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { Toast } from '../components/Toast'
+import { noteColorSlot } from '../utils/noteColor'
 
 type TodoListProps = {
   onExit: () => void
@@ -114,6 +115,7 @@ export function TodoList(props: TodoListProps) {
               <div
                 key={`${group.tag}-${todo.noteStem}-${todo.lineNumber}`}
                 className={`todoRow ${isFocused ? 'todoRowFocused' : ''}`}
+                style={{ '--note-bg': `var(--color-slot-${noteColorSlot(todo.noteStem)})` } as React.CSSProperties}
                 onClick={() => handleToggle(todo)}
               >
                 <span className="todoCheckbox">{todo.checked ? '[x]' : '[ ]'}</span>

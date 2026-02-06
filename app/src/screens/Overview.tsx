@@ -5,6 +5,7 @@ import type { NoteSummary } from '../api/workspace'
 import { deleteNote } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 import { filterNotes } from '../utils/search'
+import { noteColorSlot } from '../utils/noteColor'
 
 type OverviewProps = {
   onManageWorkspaces: () => void
@@ -414,6 +415,7 @@ export function Overview(props: OverviewProps) {
               <li
                 key={note.stem}
                 className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}${isDeleteWarning ? ' noteRowDeleteWarning' : ''}`}
+                style={{ '--note-bg': `var(--color-slot-${noteColorSlot(note.stem)})` } as React.CSSProperties}
                 onClick={() => {
                   setFocusedIndex(rowIndex)
                   setDeleteConfirmStem(null)
