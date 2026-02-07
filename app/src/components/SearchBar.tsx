@@ -50,6 +50,16 @@ export function SearchBar(props: SearchBarProps) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
+      // Escape: clear everything and blur
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onSearchTextChange('')
+        onIncludeTagsChange([])
+        onExcludeTagsChange([])
+        e.currentTarget.blur()
+        return
+      }
+
       // Backspace when input is empty: remove last pill
       if (e.key === 'Backspace' && searchText === '') {
         e.preventDefault()

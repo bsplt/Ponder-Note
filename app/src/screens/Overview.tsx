@@ -270,6 +270,14 @@ export function Overview(props: OverviewProps) {
         setDeleteConfirmStem(null)
       }
 
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onSearchTextChange('')
+        onIncludeTagsChange([])
+        onExcludeTagsChange([])
+        return
+      }
+
       if (event.key === 'ArrowDown') {
         event.preventDefault()
         setFocusedIndex((prev) => clampIndex(prev + 1))
@@ -328,7 +336,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, onOpenTodoList, onManageWorkspaces, onNewNote, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote])
+  }, [clampIndex, openFocused, onOpenTodoList, onManageWorkspaces, onNewNote, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =

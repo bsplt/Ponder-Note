@@ -356,6 +356,7 @@ body {
   list-style: none;
   display: grid;
   gap: 0;
+  outline: none;
 }
 
 .noteRow {
