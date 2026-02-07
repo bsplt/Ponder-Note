@@ -652,7 +652,7 @@ body {
 }
 
 .editorHeader {
-  display: flex;
+  display: none;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-6);
@@ -706,24 +706,22 @@ body {
 .editorTextarea {
   width: 100%;
   min-height: var(--size-editor-min-height);
-  resize: vertical;
   padding: var(--space-7);
-  border-radius: var(--radius-md);
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-surface-strong);
+  outline: none;
+  border: none;
+  background: none;
   color: var(--color-text);
   font-family: var(--font-mono);
   font-size: inherit;
   line-height: inherit;
+  resize: none;
 }
 
 .editorTextarea:focus-visible {
-  outline: var(--outline-width) solid var(--color-focus);
-  outline-offset: var(--space-1);
 }
 
 .editorFooter {
-  display: flex;
+  display: none;
   justify-content: space-between;
   color: var(--color-muted-2);
   font-size: var(--font-size-sm);
