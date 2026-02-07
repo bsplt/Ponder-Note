@@ -382,7 +382,8 @@ body {
 }
 
 .noteRowFocused {
-  max-height: 37.5rem;   /* large enough to hug any content (600px @ ref) */
+  /* max-height is set by JS (useNoteRowHeight) to the exact scrollHeight
+     so the CSS transition animates over the real content distance. */
   overflow: visible;
   background-image: var(--color-note-focus-overlay);
 }

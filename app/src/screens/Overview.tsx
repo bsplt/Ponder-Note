@@ -6,6 +6,7 @@ import { deleteNote } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 import { filterNotes } from '../utils/search'
 import { noteColorSlot } from '../utils/noteColor'
+import { useNoteRowHeight } from '../hooks/useNoteRowHeight'
 
 type OverviewProps = {
   onManageWorkspaces: () => void
@@ -94,6 +95,8 @@ export function Overview(props: OverviewProps) {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
+
+  const setNoteRowRef = useNoteRowHeight(focusedIndex)
   const [deleteConfirmStem, setDeleteConfirmStem] = useState<string | null>(null)
   const deleteConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -396,6 +399,7 @@ export function Overview(props: OverviewProps) {
           <ul className="notesList" ref={listRef} tabIndex={0}>
             <li
               key="new-note"
+              ref={(el) => setNoteRowRef(0, el)}
               className={`noteRow noteRowInteractive noteRowNew${
                 focusedIndex === 0 ? ' noteRowFocused' : ''
               }`}
@@ -414,6 +418,7 @@ export function Overview(props: OverviewProps) {
             return (
               <li
                 key={note.stem}
+                ref={(el) => setNoteRowRef(rowIndex, el)}
                 className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}${isDeleteWarning ? ' noteRowDeleteWarning' : ''}`}
                 style={{ '--note-bg': `var(--color-slot-${noteColorSlot(note.stem)})` } as React.CSSProperties}
                 onClick={() => {
@@ -460,6 +465,7 @@ export function Overview(props: OverviewProps) {
         <ul className="notesList" ref={listRef} tabIndex={0}>
           <li
             key="new-note"
+            ref={(el) => setNoteRowRef(0, el)}
             className={`noteRow noteRowInteractive noteRowNew${
               focusedIndex === 0 ? ' noteRowFocused' : ''
             }`}
