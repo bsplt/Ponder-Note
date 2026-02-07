@@ -233,7 +233,7 @@ body {
 }
 
 .appHeader {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
@@ -277,7 +277,6 @@ body {
 .panel {
   width: min(var(--size-panel-max), 100%);
   margin: 0 auto;
-  padding: var(--space-15);
   border: none;
   background: var(--note-bg, var(--color-bg));
   border-radius: 0;
@@ -308,7 +307,7 @@ body {
 /* ── Overview ───────────────────────────────────────────────────────── */
 
 .overviewHeader {
-  display: flex;
+  display: none;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-6);
@@ -320,7 +319,7 @@ body {
 
 .notesHeader {
   margin-top: var(--space-9);
-  display: flex;
+  display: none;
   justify-content: space-between;
   gap: var(--space-6);
   align-items: flex-start;
@@ -360,13 +359,17 @@ body {
 }
 
 .noteRow {
-  padding: 0 var(--space-15);
+  display: flex;
+  justify-content: space-between;
+  padding: var(--size-touch) var(--space-15);
   border: none;
   border-radius: 0;
   background: var(--note-bg, var(--color-slot-1));
   max-height: var(--size-note-row);
   overflow: hidden;
   transition: max-height 200ms ease-in-out;
+  min-height: var(--size-note-row);
+  align-items: flex-start;
 }
 
 .noteRowInteractive {
@@ -407,10 +410,10 @@ body {
 .noteRowMain {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-14);
+  justify-content: start;
+  flex-direction: row-reverse;
+  gap: var(--space-13);
   min-width: 0;
-  min-height: var(--size-note-row);
 }
 
 .noteName {
@@ -422,7 +425,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1 1 0;
-  padding-top: var(--size-touch);
 }
 
 .noteRowFocused .noteName {
@@ -442,9 +444,9 @@ body {
   padding: var(--space-7) var(--space-6);
   min-width: var(--size-touch);
   text-align: center;
-  line-height: var(--line-height-base);
-  margin-top: var(--size-touch);
+  line-height: var(--font-size-lg);
   flex-shrink: 0;
+  width: 12rem;
 }
 
 .noteTags {
@@ -452,8 +454,9 @@ body {
   gap: var(--space-2);
   flex-wrap: wrap;
   align-items: center;
-  margin-top: var(--size-touch);
   flex-shrink: 0;
+  min-height: var(--font-size-lg);
+  margin: 0.75rem 0;
 }
 
 .noteTag {
