@@ -104,8 +104,8 @@
 
   /* ── Note row focus overlay ────────────────────────────────────── */
   --color-note-focus-overlay: linear-gradient(
-    rgba(255, 255, 255, 0.10),
-    rgba(255, 255, 255, 0.10)
+    rgba(255, 255, 255, 0.20),
+    rgba(255, 255, 255, 0.20)
   );
 
   /* ── Typography ────────────────────────────────────────────────── */
@@ -374,7 +374,7 @@ body {
 
 .noteRowInteractive {
   cursor: pointer;
-  transition: max-height 200ms ease-in-out, filter 150ms ease;
+  transition: max-height 100ms ease-in-out;
 }
 
 .noteRowInteractive:hover {
@@ -453,10 +453,11 @@ body {
 
 .noteTags {
   display: flex;
+  justify-content: flex-end;
   gap: var(--space-4);
   flex-wrap: wrap;
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
   min-height: var(--font-size-lg);
   margin: 0.75rem 0;
 }
@@ -505,6 +506,7 @@ body {
   background: transparent;
   color: var(--color-text);
   min-height: var(--size-touch);
+  font-family: var(--font-mono);
 }
 
 .searchBarInput::placeholder {
