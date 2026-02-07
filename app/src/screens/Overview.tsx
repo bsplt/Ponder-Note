@@ -385,7 +385,7 @@ export function Overview(props: OverviewProps) {
         onIncludeTagsChange={onIncludeTagsChange}
         excludeTags={excludeTags}
         onExcludeTagsChange={onExcludeTagsChange}
-        placeholder="Search notes (Cmd+F)"
+        placeholder="Search"
         inputRef={searchInputRef}
       />
 
@@ -403,7 +403,7 @@ export function Overview(props: OverviewProps) {
               onDoubleClick={onNewNote}
             >
               <div className="noteRowMain">
-                <div className="noteName">+ New Note</div>
+                <div className="noteName">New Note</div>
                 <div className="noteTimestamp">Enter to create</div>
               </div>
             </li>
@@ -453,7 +453,7 @@ export function Overview(props: OverviewProps) {
           })}
           </ul>
           {filteredNotes.length === 0 && notes.length > 0 && (
-            <div className="mutedBlock">No notes match your search.</div>
+            <div className="mutedBlock"></div>
           )}
         </>
       ) : (
@@ -467,7 +467,7 @@ export function Overview(props: OverviewProps) {
             onDoubleClick={onNewNote}
           >
             <div className="noteRowMain">
-              <div className="noteName">+ New Note</div>
+              <div className="noteName">New Note</div>
               <div className="noteTimestamp">Enter to create</div>
             </div>
           </li>
