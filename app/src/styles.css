@@ -376,8 +376,6 @@ body {
 
 .noteRow {
   display: flex;
-  justify-content: space-between;
-  padding: var(--size-touch) var(--space-15);
   border: none;
   border-radius: 0;
   background: var(--note-bg, var(--color-slot-1));
@@ -386,6 +384,17 @@ body {
   transition: max-height 200ms ease-in-out;
   min-height: var(--size-note-row);
   align-items: flex-start;
+}
+
+.noteRowContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  margin: 0 auto;
+  max-width: var(--max-content-width);
+  padding: var(--size-touch);
 }
 
 .noteRowInteractive {
@@ -490,6 +499,7 @@ body {
   min-height: calc(var(--size-touch) - 1.5rem);  /* 24px @ ref */
   cursor: pointer;
   transition: background 0.15s ease;
+  white-space: nowrap;
 }
 
 .noteTag:hover {
@@ -928,7 +938,7 @@ body {
     padding: 0 var(--space-6);
   }
 
-  .noteRow {
+  .noteRowContent {
     padding: 0 var(--space-8);
   }
 
@@ -960,7 +970,7 @@ body {
     padding: 0 var(--space-4);
   }
 
-  .noteRow {
+  .noteRowContent {
     padding: 0 var(--space-6);
   }
 }

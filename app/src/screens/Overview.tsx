@@ -414,9 +414,11 @@ export function Overview(props: OverviewProps) {
               onClick={() => setFocusedIndex(0)}
               onDoubleClick={onNewNote}
             >
-              <div className="noteRowMain">
-                <div className="noteName">New Note</div>
-                <div className="noteTimestamp">Enter to create</div>
+              <div className="noteRowContent">
+                <div className="noteRowMain">
+                  <div className="noteName">New Note</div>
+                  <div className="noteTimestamp">Enter to create</div>
+                </div>
               </div>
             </li>
             {filteredNotes.map((note, idx) => {
@@ -435,32 +437,34 @@ export function Overview(props: OverviewProps) {
                 }}
                 onDoubleClick={() => onOpenNote(note, scrollTop())}
               >
-                <div className="noteRowMain">
-                  <div className="noteName">{isDeleteWarning ? 'Press d again to delete' : displayNoteTitle(note)}</div>
-                  <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
-                </div>
-                {note.tags && note.tags.length > 0 && (
-                  <div className="noteTags">
-                    {[...note.tags].sort().map((tag) => (
-                      <span
-                        key={tag}
-                        className="noteTag"
-                        onClick={(e) => {
-                          e.stopPropagation() // Don't trigger row click
-                          if (e.metaKey || e.ctrlKey) {
-                            // Exclude tag
-                            onExcludeTagsChange(excludeTags.includes(tag) ? excludeTags : [...excludeTags, tag])
-                          } else {
-                            // Include tag
-                            onIncludeTagsChange(includeTags.includes(tag) ? includeTags : [...includeTags, tag])
-                          }
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                <div className="noteRowContent">
+                  <div className="noteRowMain">
+                    <div className="noteName">{isDeleteWarning ? 'Press d again to delete' : displayNoteTitle(note)}</div>
+                    <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
                   </div>
-                )}
+                  {note.tags && note.tags.length > 0 && (
+                    <div className="noteTags">
+                      {[...note.tags].sort().map((tag) => (
+                        <span
+                          key={tag}
+                          className="noteTag"
+                          onClick={(e) => {
+                            e.stopPropagation() // Don't trigger row click
+                            if (e.metaKey || e.ctrlKey) {
+                              // Exclude tag
+                              onExcludeTagsChange(excludeTags.includes(tag) ? excludeTags : [...excludeTags, tag])
+                            } else {
+                              // Include tag
+                              onIncludeTagsChange(includeTags.includes(tag) ? includeTags : [...includeTags, tag])
+                            }
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </li>
             )
           })}
@@ -480,9 +484,11 @@ export function Overview(props: OverviewProps) {
             onClick={() => setFocusedIndex(0)}
             onDoubleClick={onNewNote}
           >
-            <div className="noteRowMain">
-              <div className="noteName">New Note</div>
-              <div className="noteTimestamp">Enter to create</div>
+            <div className="noteRowContent">
+              <div className="noteRowMain">
+                <div className="noteName">New Note</div>
+                <div className="noteTimestamp">Enter to create</div>
+              </div>
             </div>
           </li>
           <li className="mutedBlock">No notes found in the workspace root.</li>
