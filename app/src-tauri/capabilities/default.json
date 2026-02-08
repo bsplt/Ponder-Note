@@ -7,6 +7,8 @@
   ],
   "permissions": [
     "core:default",
+    "core:window:allow-set-background-color",
+    "core:window:allow-set-title-bar-style",
     "opener:default",
     "dialog:default"
   ]

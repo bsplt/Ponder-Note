@@ -6,6 +6,8 @@ import { TodoList } from './screens/TodoList'
 import type { NoteSummary } from './api/workspace'
 import { RebuildLogModal } from './components/RebuildLogModal'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
+import { applyEditorChrome, resetEditorChrome } from './utils/editorChrome'
+import { noteColorSlot } from './utils/noteColor'
 import './styles.css'
 
 type Screen = 'overview' | 'workspaces' | 'editor' | 'todolist'
@@ -18,6 +20,10 @@ function titleForScreen(screen: Screen): string {
 }
 
 function App() {
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    (/mac/i.test(navigator.platform ?? '') || /macintosh|mac os x/i.test(navigator.userAgent ?? ''))
+
   const [screen, setScreen] = useState<Screen>('overview')
   const [activeNoteStem, setActiveNoteStem] = useState<string | null>(null)
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
@@ -66,6 +72,21 @@ function App() {
     }
   }, [screen])
 
+  useEffect(() => {
+    if (screen === 'editor' && activeNoteStem) {
+      void applyEditorChrome(noteColorSlot(activeNoteStem))
+      return
+    }
+
+    void resetEditorChrome()
+  }, [activeNoteStem, screen])
+
+  useEffect(() => {
+    return () => {
+      void resetEditorChrome()
+    }
+  }, [])
+
   const openEditor = useCallback(
     (note: NoteSummary, isNew: boolean, scrollTop: number) => {
       setActiveNoteStem(note.stem)
@@ -112,7 +133,8 @@ function App() {
   }, [notes, handleOpenNote])
 
   return (
-    <div className="appRoot">
+    <div className={`appRoot${isMac ? ' appRootMac' : ''}`}>
+      {isMac ? <div className="windowDragRegion" data-tauri-drag-region /> : null}
       <header className="appHeader">
         <div className="appHeaderLeft">
           <div className="appBrand">Ponder</div>

@@ -16,7 +16,8 @@
         "width": 1200,
         "height": 800,
         "backgroundColor": "#FFD35C",
-        "titleBarStyle": "Transparent",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "devtools": true
       }
     ],
