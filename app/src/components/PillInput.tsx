@@ -127,19 +127,21 @@ export function PillInput(props: PillInputProps) {
   return (
     <div className="pillInput" onClick={handleContainerClick}>
       {values.map((value, idx) => (
-        <span key={idx} className="pill">
-          {value}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              removePill(idx)
-            }}
-            aria-label={`Remove ${value}`}
-          >
-            ×
-          </button>
-        </span>
+        <div key={idx}>
+          <span className="pill">
+            {value}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                removePill(idx)
+              }}
+              aria-label={`Remove ${value}`}
+            >
+              ×
+            </button>
+          </span>
+        </div>
       ))}
       <input
         ref={inputRef}

@@ -66,7 +66,7 @@ export function Workspaces({ onGoToOverview }: WorkspacesProps) {
   }, [onGoToOverview])
 
   return (
-    <section className="panel">
+    <section className="panel workspacesPanel">
       <h2 className="panelTitle">Workspace slots</h2>
       {!hasAssigned ? (
         <p className="panelSubtitle">Assign a folder to any slot to get started.</p>

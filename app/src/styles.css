@@ -319,6 +319,10 @@ body {
   margin-top: 0;
 }
 
+.workspacesPanel {
+  padding: var(--size-touch);
+}
+
 /* ── Overview ───────────────────────────────────────────────────────── */
 
 .overviewHeader {
