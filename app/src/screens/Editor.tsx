@@ -350,7 +350,7 @@ export function Editor(props: EditorProps) {
           onChange={setTags}
           onBlur={handleTagBlur}
           suggestions={workspaceTags}
-          placeholder="Add tags"
+          placeholder="Tags"
         />
         {tagSaveError && <div className="editorTagError">{tagSaveError}</div>}
       </div>

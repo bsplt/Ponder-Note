@@ -190,6 +190,7 @@
 
   /* ── App background (solid, no gradients) ──────────────────────── */
   --app-bg: var(--color-bg);
+  --max-content-width: 56rem;
 }
 
 /* ── Adaptive root font-size ──────────────────────────────────────── */
@@ -399,7 +400,6 @@ body {
 .noteRowFocused {
   /* max-height is set by JS (useNoteRowHeight) to the exact scrollHeight
      so the CSS transition animates over the real content distance. */
-  overflow: visible;
   background-image: var(--color-note-focus-overlay);
 }
 
@@ -435,11 +435,10 @@ body {
 
 .noteName {
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xl);
+  font-size: var(--size-touch);
   line-height: var(--size-touch);
   max-width: 32rem;      /* 512px @ ref */
   min-width: 0;
-  overflow: hidden;
   text-overflow: ellipsis;
   flex: 1 1 0;
 }
@@ -571,10 +570,6 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-6);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
   flex-wrap: wrap;
   min-height: var(--size-pill-input-height);
   position: relative;
@@ -594,6 +589,7 @@ body {
   font-size: var(--font-size-base);
   background: transparent;
   color: var(--color-text);
+  font-family: var(--font-mono);
 }
 
 .pillInputField::placeholder {
@@ -666,6 +662,7 @@ body {
   flex: 1;
   min-height: 100vh;
   min-height: 100dvh;
+  max-width: var(--max-content-width);
 }
 
 .editorHeader {
@@ -716,9 +713,6 @@ body {
 
 .editorContent {
   width: 100%;
-  max-width: var(--editor-column-width);
-  margin: 0 auto;
-  padding: 0 var(--space-8);
   font-size: var(--editor-font-fluid);
   line-height: var(--editor-line-height);
   flex: 1;
@@ -731,7 +725,7 @@ body {
   width: 100%;
   min-height: 100%;
   height: auto;
-  padding: var(--space-7);
+  padding: 0;
   outline: none;
   border: none;
   background: none;
