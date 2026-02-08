@@ -270,6 +270,7 @@ body {
   padding: 0;
   flex: 1;
   display: flex;
+  min-height: 0;
 }
 
 /* ── Panel ──────────────────────────────────────────────────────────── */
@@ -649,6 +650,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  flex: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .editorHeader {
@@ -692,6 +696,9 @@ body {
 
 .editorBody {
   margin-top: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
 .editorContent {
@@ -701,11 +708,16 @@ body {
   padding: 0 var(--space-8);
   font-size: var(--editor-font-fluid);
   line-height: var(--editor-line-height);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .editorTextarea {
   width: 100%;
-  min-height: var(--size-editor-min-height);
+  min-height: 100%;
+  height: auto;
   padding: var(--space-7);
   outline: none;
   border: none;
@@ -715,6 +727,7 @@ body {
   font-size: inherit;
   line-height: inherit;
   resize: none;
+  overflow: hidden;
 }
 
 .editorTextarea:focus-visible {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
@@ -57,9 +57,23 @@ export function Editor(props: EditorProps) {
   const [workspaceTags, setWorkspaceTags] = useState<string[]>([])
   const [tagSaveError, setTagSaveError] = useState<string | null>(null)
 
+  const syncTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+    const minHeight = Number.parseFloat(window.getComputedStyle(textarea).minHeight) || 0
+    const nextHeight = Math.max(textarea.scrollHeight, minHeight)
+    textarea.style.height = `${nextHeight}px`
+  }, [])
+
   useEffect(() => {
     bodyRef.current = body
   }, [body])
+
+  useLayoutEffect(() => {
+    syncTextareaHeight()
+  }, [body, syncTextareaHeight])
 
   useEffect(() => {
     saveErrorRef.current = saveError
@@ -96,6 +110,7 @@ export function Editor(props: EditorProps) {
       requestAnimationFrame(() => {
         const textarea = textareaRef.current
         if (!textarea) return
+        syncTextareaHeight()
         textarea.focus()
         const pos = cursorStartPosition(initialBody, isNew)
         textarea.setSelectionRange(pos, pos)
@@ -104,7 +119,7 @@ export function Editor(props: EditorProps) {
       setLoading(false)
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load note')
     }
-  }, [isNew, notes, stem])
+  }, [isNew, notes, stem, syncTextareaHeight])
 
   useEffect(() => {
     void loadNote()
@@ -190,6 +205,15 @@ export function Editor(props: EditorProps) {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const onResize = () => {
+      syncTextareaHeight()
+    }
+
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [syncTextareaHeight])
 
   const saveStatus = useMemo(() => formatTime(lastSavedAt), [lastSavedAt])
 
