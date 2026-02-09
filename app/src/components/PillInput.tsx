@@ -126,9 +126,9 @@ export function PillInput(props: PillInputProps) {
 
   return (
     <div className="pillInput" onClick={handleContainerClick}>
-      {values.map((value, idx) => (
-        <div key={idx}>
-          <span className="pill">
+      <div className="pillInputContent">
+        {values.map((value, idx) => (
+          <span key={idx} className="pill">
             {value}
             <button
               type="button"
@@ -141,18 +141,18 @@ export function PillInput(props: PillInputProps) {
               ×
             </button>
           </span>
-        </div>
-      ))}
-      <input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        placeholder={values.length === 0 ? placeholder : ''}
-        className="pillInputField"
-      />
+        ))}
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder={values.length === 0 ? placeholder : ''}
+          className="pillInputField"
+        />
+      </div>
       {showAutocomplete && filteredSuggestions.length > 0 && (
         <TagAutocomplete
           inputValue={inputValue}

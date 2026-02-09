@@ -491,7 +491,7 @@ export function Overview(props: OverviewProps) {
               </div>
             </div>
           </li>
-          <li className="mutedBlock">No notes found in the workspace root.</li>
+          <li className="mutedBlock"></li>
         </ul>
       )}
 

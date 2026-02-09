@@ -583,13 +583,21 @@ body {
 /* ── PillInput Component ────────────────────────────────────────────── */
 
 .pillInput {
+  min-height: var(--size-pill-input-height);
+  position: relative;
+  cursor: text;
+  align-content: center;
+}
+
+.pillInputContent {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
-  min-height: var(--size-pill-input-height);
-  position: relative;
-  cursor: text;
+  width: 100%;
+  min-width: 0;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
 }
 
 .pillInput:focus-within {
@@ -608,6 +616,7 @@ body {
   font-family: var(--font-mono);
   max-width: var(--max-content-width);
   margin: 0 auto;
+  min-height: var(--size-touch);
 }
 
 .pillInputField::placeholder {
@@ -652,11 +661,12 @@ body {
 .editorPanel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-13);
   flex: 1;
   min-height: 100vh;
   min-height: 100dvh;
   align-items: center;
+  padding-top: var(--space-13);
 }
 
 .editorHeader {
@@ -673,7 +683,7 @@ body {
 }
 
 .editorTagSection {
-  margin-top: var(--space-6);
+  margin-top: 0;
   width: 100%;
 }
 
