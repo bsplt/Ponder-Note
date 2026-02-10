@@ -178,6 +178,7 @@
   --size-autocomplete-max-height: 12.5rem;  /* 200px @ ref */
   --size-editor-min-height: 26.25rem;  /* 420px @ ref */
   --size-toast-offset: 1.125rem;       /* 18px @ ref */
+  --window-drag-height: 0px;
 
   /* ── Editor ────────────────────────────────────────────────────── */
   --editor-font-min: 1.125rem;  /* 18px @ ref */
@@ -236,7 +237,8 @@ body {
 }
 
 .appRootMac {
-  padding-top: 30px;
+  --window-drag-height: 30px;
+  padding-top: var(--window-drag-height);
 }
 
 .windowDragRegion {
@@ -244,7 +246,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 30px;
+  height: var(--window-drag-height);
   z-index: 100;
 }
 
@@ -664,8 +666,8 @@ body {
   flex-direction: column;
   gap: var(--space-13);
   flex: 1;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: calc(100vh - var(--window-drag-height));
+  min-height: calc(100dvh - var(--window-drag-height));
   align-items: center;
   padding-top: var(--space-13);
 }
@@ -711,7 +713,6 @@ body {
 }
 
 .editorBody {
-  margin-top: var(--space-3);
   flex: 1;
   min-height: 0;
   display: flex;
@@ -731,7 +732,7 @@ body {
 
 .editorTextarea {
   width: 100%;
-  min-height: 100%;
+  min-height: 0;
   height: auto;
   padding: 0 0 var(--editor-bottom-gap) 0;
   outline: none;

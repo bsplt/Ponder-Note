@@ -62,8 +62,8 @@ export function Editor(props: EditorProps) {
     if (!textarea) return
 
     textarea.style.height = 'auto'
-    const minHeight = Number.parseFloat(window.getComputedStyle(textarea).minHeight) || 0
-    const nextHeight = Math.max(textarea.scrollHeight, minHeight)
+    const availableContainerHeight = textarea.parentElement?.clientHeight ?? 0
+    const nextHeight = Math.max(textarea.scrollHeight, availableContainerHeight)
     textarea.style.height = `${nextHeight}px`
   }, [])
 
