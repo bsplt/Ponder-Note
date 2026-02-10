@@ -187,8 +187,8 @@
   --editor-column-max: 72ch;
   --editor-column-width: clamp(var(--editor-column-min), 72vw, var(--editor-column-max));
   --editor-font-fluid: clamp(var(--editor-font-min), calc(1.2vw + var(--space-6)), var(--editor-font-max));
-  --editor-inline-gutter: clamp(var(--space-4), 3vw, var(--space-8));
-  --editor-bottom-gap: var(--space-8);
+  --editor-inline-gutter: var(--size-touch);
+  --editor-bottom-gap: var(--size-touch);
 
   /* ── App background (solid, no gradients) ──────────────────────── */
   --app-bg: var(--color-bg);
@@ -597,8 +597,7 @@ body {
   gap: var(--space-3);
   flex-wrap: wrap;
   width: 100%;
-  min-width: 0;
-  max-width: var(--max-content-width);
+  width: min(var(--max-content-width),calc(100% - (2 * var(--editor-inline-gutter))));
   margin: 0 auto;
 }
 
