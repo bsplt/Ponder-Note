@@ -3,6 +3,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 const APP_BG_VAR = '--app-bg'
 const DEFAULT_SLOT = 1
 const DEFAULT_COLOR_FALLBACK = '#FFD35C'
+let lastNativeWindowColorKey: string | null = null
 
 type TauriColor = {
   red: number
@@ -77,12 +78,15 @@ function isMacOS(): boolean {
 
 async function setWindowBackgroundColor(color: string): Promise<void> {
   if (!isMacOS()) return
+  const colorKey = color.trim().toLowerCase()
+  if (lastNativeWindowColorKey === colorKey) return
+
   const tauriColor = cssColorToTauriColor(color)
   if (!tauriColor) return
 
   try {
-    await getCurrentWindow().setTitleBarStyle('overlay')
     await getCurrentWindow().setBackgroundColor(tauriColor)
+    lastNativeWindowColorKey = colorKey
   } catch (error) {
     console.warn('[ponder][editor_chrome] failed to set window background color', error)
   }

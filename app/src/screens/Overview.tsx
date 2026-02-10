@@ -5,6 +5,7 @@ import type { NoteSummary } from '../api/workspace'
 import { deleteNote } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 import { filterNotes } from '../utils/search'
+import { isTypingTarget } from '../utils/keyboard'
 import { noteColorSlot } from '../utils/noteColor'
 import { useNoteRowHeight } from '../hooks/useNoteRowHeight'
 
@@ -20,15 +21,6 @@ type OverviewProps = {
   onIncludeTagsChange: (tags: string[]) => void
   excludeTags: string[]
   onExcludeTagsChange: (tags: string[]) => void
-  onOpenTodoList: () => void
-}
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null
-  if (!el) return false
-  if (el.isContentEditable) return true
-  const tag = el.tagName?.toLowerCase()
-  return tag === 'input' || tag === 'textarea' || tag === 'select'
 }
 
 function formatNoteTimestamp(note: NoteSummary): string {
@@ -71,7 +63,6 @@ export function Overview(props: OverviewProps) {
   const onIncludeTagsChange = props.onIncludeTagsChange
   const excludeTags = props.excludeTags
   const onExcludeTagsChange = props.onExcludeTagsChange
-  const onOpenTodoList = props.onOpenTodoList
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -296,24 +287,6 @@ export function Overview(props: OverviewProps) {
         return
       }
 
-      if (event.key === 'T' || event.key === 't') {
-        event.preventDefault()
-        onOpenTodoList()
-        return
-      }
-
-      if (event.key === 'W' || event.key === 'w') {
-        event.preventDefault()
-        onManageWorkspaces()
-        return
-      }
-
-      if (event.key === 'N' || event.key === 'n') {
-        event.preventDefault()
-        onNewNote()
-        return
-      }
-
       if (event.key === 'd' || event.key === 'D') {
         event.preventDefault()
 
@@ -336,7 +309,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, onOpenTodoList, onManageWorkspaces, onNewNote, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange])
+  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =

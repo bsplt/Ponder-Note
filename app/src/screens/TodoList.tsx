@@ -82,9 +82,6 @@ export function TodoList(props: TodoListProps) {
       if (flatTodos[focusedIndex]) {
         props.onOpenNote(flatTodos[focusedIndex].noteStem)
       }
-    } else if (e.key === 'O' || e.key === 'o') {
-      e.preventDefault()
-      props.onExit()
     }
   }, [focusedIndex, flatTodos, handleToggle, props])
   

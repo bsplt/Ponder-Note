@@ -7,12 +7,12 @@ import type { NoteSummary } from './api/workspace'
 import { RebuildLogModal } from './components/RebuildLogModal'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import { applyEditorChrome, resetEditorChrome } from './utils/editorChrome'
+import { getGlobalNavAction, isTypingTarget, type AppScreen } from './utils/keyboard'
 import { noteColorSlot } from './utils/noteColor'
+import { restoreAppInputFocus } from './utils/windowFocus'
 import './styles.css'
 
-type Screen = 'overview' | 'workspaces' | 'editor' | 'todolist'
-
-function titleForScreen(screen: Screen): string {
+function titleForScreen(screen: AppScreen): string {
   if (screen === 'overview') return 'Overview'
   if (screen === 'editor') return 'Editor'
   if (screen === 'todolist') return 'Todos'
@@ -24,18 +24,21 @@ function App() {
     typeof navigator !== 'undefined' &&
     (/mac/i.test(navigator.platform ?? '') || /macintosh|mac os x/i.test(navigator.userAgent ?? ''))
 
-  const [screen, setScreen] = useState<Screen>('overview')
+  const [screen, setScreen] = useState<AppScreen>('overview')
   const [activeNoteStem, setActiveNoteStem] = useState<string | null>(null)
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
   const [rebuildLogOpen, setRebuildLogOpen] = useState(false)
-  
+  const appMainRef = useRef<HTMLElement | null>(null)
+  const previousScreenRef = useRef<AppScreen>('overview')
+  const previousEditorStemRef = useRef<string | null>(null)
+
   // Search state (persists when navigating to editor and back)
   const [searchText, setSearchText] = useState('')
   const [includeTags, setIncludeTags] = useState<string[]>([])
   const [excludeTags, setExcludeTags] = useState<string[]>([])
-  
+
   const didBoot = useRef(false)
   const title = useMemo(() => titleForScreen(screen), [screen])
 
@@ -73,12 +76,27 @@ function App() {
   }, [screen])
 
   useEffect(() => {
-    if (screen === 'editor' && activeNoteStem) {
+    const previousScreen = previousScreenRef.current
+    const previousEditorStem = previousEditorStemRef.current
+
+    const enteringEditor = previousScreen !== 'editor' && screen === 'editor'
+    const leavingEditor = previousScreen === 'editor' && screen !== 'editor'
+    const switchingEditorNote =
+      previousScreen === 'editor' &&
+      screen === 'editor' &&
+      activeNoteStem !== null &&
+      activeNoteStem !== previousEditorStem
+
+    if ((enteringEditor || switchingEditorNote) && activeNoteStem) {
       void applyEditorChrome(noteColorSlot(activeNoteStem))
-      return
     }
 
-    void resetEditorChrome()
+    if (leavingEditor) {
+      void resetEditorChrome()
+    }
+
+    previousScreenRef.current = screen
+    previousEditorStemRef.current = activeNoteStem
   }, [activeNoteStem, screen])
 
   useEffect(() => {
@@ -119,18 +137,68 @@ function App() {
     setOverviewFocusStem(result.discarded ? null : result.stem)
   }, [])
 
-  const handleOpenTodoList = useCallback(() => {
-    setScreen('todolist')
-  }, [])
-
   const handleExitTodoList = useCallback(() => {
     setScreen('overview')
   }, [])
 
   const handleOpenNoteFromTodoList = useCallback((stem: string) => {
-    const note = notes.find(n => n.stem === stem)
+    const note = notes.find((n) => n.stem === stem)
     if (note) handleOpenNote(note, 0)
   }, [notes, handleOpenNote])
+
+  const handleGlobalCreateNote = useCallback(() => {
+    void (async () => {
+      const res = await workspaceActions.createNote()
+      if (!res.ok) return
+      const currentScrollTop = window.scrollY || document.documentElement.scrollTop || 0
+      openEditor(res.note, true, currentScrollTop)
+    })()
+  }, [openEditor])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (rebuildLogOpen) return
+
+      const action = getGlobalNavAction({
+        screen,
+        key: event.key,
+        repeat: event.repeat,
+        metaKey: event.metaKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        target: event.target,
+      })
+      if (!action) return
+
+      event.preventDefault()
+
+      if (action === 'workspaces') {
+        setScreen('workspaces')
+        return
+      }
+
+      if (action === 'overview') {
+        setScreen('overview')
+        return
+      }
+
+      if (action === 'todolist') {
+        setScreen('todolist')
+        return
+      }
+
+      handleGlobalCreateNote()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleGlobalCreateNote, rebuildLogOpen, screen])
+
+  useEffect(() => {
+    if (screen === 'editor' || rebuildLogOpen) return
+    if (isTypingTarget(document.activeElement)) return
+    void restoreAppInputFocus(appMainRef.current)
+  }, [rebuildLogOpen, screen])
 
   return (
     <div className={`appRoot${isMac ? ' appRootMac' : ''}`}>
@@ -164,7 +232,7 @@ function App() {
         ) : null}
       </header>
 
-      <main className="appMain">
+      <main className="appMain" ref={appMainRef} tabIndex={-1}>
         {screen === 'overview' ? (
           <Overview
             onManageWorkspaces={() => setScreen('workspaces')}
@@ -178,7 +246,6 @@ function App() {
             onIncludeTagsChange={setIncludeTags}
             excludeTags={excludeTags}
             onExcludeTagsChange={setExcludeTags}
-            onOpenTodoList={handleOpenTodoList}
           />
         ) : screen === 'editor' ? (
           activeNoteStem ? (
@@ -196,16 +263,12 @@ function App() {
               onIncludeTagsChange={setIncludeTags}
               excludeTags={excludeTags}
               onExcludeTagsChange={setExcludeTags}
-              onOpenTodoList={handleOpenTodoList}
             />
           )
         ) : screen === 'todolist' ? (
-          <TodoList
-            onExit={handleExitTodoList}
-            onOpenNote={handleOpenNoteFromTodoList}
-          />
+          <TodoList onExit={handleExitTodoList} onOpenNote={handleOpenNoteFromTodoList} />
         ) : (
-          <Workspaces onGoToOverview={() => setScreen('overview')} />
+          <Workspaces />
         )}
       </main>
 
