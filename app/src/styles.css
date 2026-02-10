@@ -187,6 +187,8 @@
   --editor-column-max: 72ch;
   --editor-column-width: clamp(var(--editor-column-min), 72vw, var(--editor-column-max));
   --editor-font-fluid: clamp(var(--editor-font-min), calc(1.2vw + var(--space-6)), var(--editor-font-max));
+  --editor-inline-gutter: clamp(var(--space-4), 3vw, var(--space-8));
+  --editor-bottom-gap: var(--space-8);
 
   /* ── App background (solid, no gradients) ──────────────────────── */
   --app-bg: var(--color-bg);
@@ -714,8 +716,8 @@ body {
   flex: 1;
   min-height: 0;
   display: flex;
-  max-width: var(--max-content-width);
-  width: 100%;
+  width: min(var(--max-content-width), calc(100% - (2 * var(--editor-inline-gutter))));
+  margin-inline: auto;
 }
 
 .editorContent {
@@ -732,7 +734,7 @@ body {
   width: 100%;
   min-height: 100%;
   height: auto;
-  padding: 0;
+  padding: 0 0 var(--editor-bottom-gap) 0;
   outline: none;
   border: none;
   background: none;
@@ -931,10 +933,6 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .editorContent {
-    padding: 0 var(--space-6);
-  }
-
   .noteRowContent {
     padding: 0 var(--space-8);
   }
@@ -961,10 +959,6 @@ body {
 
   .slotGrid {
     grid-template-columns: 1fr;
-  }
-
-  .editorContent {
-    padding: 0 var(--space-4);
   }
 
   .noteRowContent {
