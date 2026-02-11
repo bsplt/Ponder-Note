@@ -22,6 +22,12 @@ export function useNoteRowHeight(focusedIndex: number) {
     }
   }, [])
 
+  const scrollRowIntoView = useCallback((index: number) => {
+    const el = rowRefs.current.get(index)
+    if (!el) return
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' })
+  }, [])
+
   // Apply the correct max-height to all rows whenever focusedIndex changes
   useEffect(() => {
     for (const [index, el] of rowRefs.current) {
@@ -72,5 +78,5 @@ export function useNoteRowHeight(focusedIndex: number) {
     }
   }, [focusedIndex])
 
-  return setRowRef
+  return { setRowRef, scrollRowIntoView }
 }

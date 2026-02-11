@@ -87,7 +87,7 @@ export function Overview(props: OverviewProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
 
-  const setNoteRowRef = useNoteRowHeight(focusedIndex)
+  const { setRowRef: setNoteRowRef, scrollRowIntoView } = useNoteRowHeight(focusedIndex)
   const [deleteConfirmStem, setDeleteConfirmStem] = useState<string | null>(null)
   const deleteConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -271,13 +271,29 @@ export function Overview(props: OverviewProps) {
 
       if (event.key === 'ArrowDown') {
         event.preventDefault()
-        setFocusedIndex((prev) => clampIndex(prev + 1))
+        setFocusedIndex((prev) => {
+          const nextIndex = clampIndex(prev + 1)
+          if (nextIndex !== prev) {
+            requestAnimationFrame(() => {
+              scrollRowIntoView(nextIndex)
+            })
+          }
+          return nextIndex
+        })
         return
       }
 
       if (event.key === 'ArrowUp') {
         event.preventDefault()
-        setFocusedIndex((prev) => clampIndex(prev - 1))
+        setFocusedIndex((prev) => {
+          const nextIndex = clampIndex(prev - 1)
+          if (nextIndex !== prev) {
+            requestAnimationFrame(() => {
+              scrollRowIntoView(nextIndex)
+            })
+          }
+          return nextIndex
+        })
         return
       }
 
@@ -309,7 +325,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange])
+  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange, scrollRowIntoView])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =
