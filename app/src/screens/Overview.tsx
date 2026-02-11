@@ -274,9 +274,7 @@ export function Overview(props: OverviewProps) {
         setFocusedIndex((prev) => {
           const nextIndex = clampIndex(prev + 1)
           if (nextIndex !== prev) {
-            requestAnimationFrame(() => {
-              scrollRowIntoView(nextIndex)
-            })
+            scrollRowIntoView(nextIndex, { durationMs: 100, settleDelayMs: 110 })
           }
           return nextIndex
         })
@@ -288,9 +286,7 @@ export function Overview(props: OverviewProps) {
         setFocusedIndex((prev) => {
           const nextIndex = clampIndex(prev - 1)
           if (nextIndex !== prev) {
-            requestAnimationFrame(() => {
-              scrollRowIntoView(nextIndex)
-            })
+            scrollRowIntoView(nextIndex, { durationMs: 100, settleDelayMs: 110 })
           }
           return nextIndex
         })
