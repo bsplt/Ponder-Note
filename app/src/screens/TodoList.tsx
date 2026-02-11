@@ -115,7 +115,7 @@ export function TodoList(props: TodoListProps) {
                 style={{ '--note-bg': `var(--color-slot-${noteColorSlot(todo.noteStem)})` } as React.CSSProperties}
                 onClick={() => handleToggle(todo)}
               >
-                <span className="todoCheckbox">{todo.checked ? '[x]' : '[ ]'}</span>
+                <span className="todoCheckbox">{todo.checked ? '■' : ' '}</span>
                 <span className={`todoText ${todo.checked ? 'todoTextChecked' : ''}`}>
                   {todo.text}
                 </span>
