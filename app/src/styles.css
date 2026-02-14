@@ -700,6 +700,15 @@ body {
   font-size: var(--font-size-md);
 }
 
+.editorModeHint {
+  width: min(var(--max-content-width), calc(100% - (2 * var(--editor-inline-gutter))));
+  margin: var(--space-3) auto 0;
+  min-height: var(--space-8);
+  color: var(--color-muted-2);
+  font-size: var(--font-size-sm);
+  line-height: var(--space-8);
+}
+
 .editorBanner {
   display: flex;
   align-items: center;
@@ -751,6 +760,132 @@ body {
 }
 
 .editorTextarea:focus-visible {
+}
+
+.editorMarkdown {
+  width: 100%;
+  min-height: 0;
+  padding: 0 0 var(--editor-bottom-gap) 0;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: inherit;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.editorMarkdown > :first-child {
+  margin-top: 0;
+}
+
+.editorMarkdown > :last-child {
+  margin-bottom: 0;
+}
+
+.editorMarkdown h1,
+.editorMarkdown h2,
+.editorMarkdown h3,
+.editorMarkdown h4,
+.editorMarkdown h5,
+.editorMarkdown h6 {
+  margin: var(--space-11) 0 var(--space-6);
+  line-height: 1.25;
+}
+
+.editorMarkdown h1 {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.editorMarkdown h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+}
+
+.editorMarkdown h3 {
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+}
+
+.editorMarkdown p,
+.editorMarkdown ul,
+.editorMarkdown ol,
+.editorMarkdown blockquote,
+.editorMarkdown pre,
+.editorMarkdown table,
+.editorMarkdown hr {
+  margin: 0 0 var(--space-8);
+}
+
+.editorMarkdown ul,
+.editorMarkdown ol {
+  padding-left: var(--space-13);
+}
+
+.editorMarkdown li + li {
+  margin-top: var(--space-3);
+}
+
+.editorMarkdown blockquote {
+  margin-left: 0;
+  padding-left: var(--space-8);
+  border-left: var(--border-width-strong) solid var(--color-border-strong);
+  color: var(--color-muted);
+}
+
+.editorMarkdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.editorMarkdown code {
+  font-family: var(--font-mono);
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-xs);
+  padding: 0 var(--space-2);
+  font-size: 0.9em;
+}
+
+.editorMarkdown pre {
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-7);
+  overflow-x: auto;
+}
+
+.editorMarkdown pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.editorMarkdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.editorMarkdown th,
+.editorMarkdown td {
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--space-4) var(--space-5);
+  text-align: left;
+}
+
+.editorMarkdown th {
+  background: var(--color-surface-strong);
+}
+
+.editorMarkdown hr {
+  border: none;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.editorMarkdown input[type='checkbox'] {
+  margin-right: var(--space-3);
+}
+
+.editorMarkdown ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
 }
 
 .editorFooter {

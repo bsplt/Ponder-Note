@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
 import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
 import { noteColorSlot } from '../utils/noteColor'
+import { isTypingTarget } from '../utils/keyboard'
 
 type EditorProps = {
   stem: string
   isNew: boolean
   onExit: (result: { stem: string; discarded: boolean }) => void
 }
+
+type EditorMode = 'preview' | 'edit'
 
 const AUTO_SAVE_DELAY_MS = 500
 const AUTO_RETRY_DELAY_MS = 4500
@@ -36,6 +41,10 @@ function cursorStartPosition(body: string, isNew: boolean): number {
   return 0
 }
 
+function defaultEditorMode(isNew: boolean): EditorMode {
+  return isNew ? 'edit' : 'preview'
+}
+
 export function Editor(props: EditorProps) {
   const { stem, isNew, onExit } = props
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -56,6 +65,7 @@ export function Editor(props: EditorProps) {
   const [tags, setTags] = useState<string[]>([])
   const [workspaceTags, setWorkspaceTags] = useState<string[]>([])
   const [tagSaveError, setTagSaveError] = useState<string | null>(null)
+  const [mode, setMode] = useState<EditorMode>(() => defaultEditorMode(isNew))
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current
@@ -72,12 +82,17 @@ export function Editor(props: EditorProps) {
   }, [body])
 
   useLayoutEffect(() => {
+    if (mode !== 'edit') return
     syncTextareaHeight()
-  }, [body, syncTextareaHeight])
+  }, [body, mode, syncTextareaHeight])
 
   useEffect(() => {
     saveErrorRef.current = saveError
   }, [saveError])
+
+  useEffect(() => {
+    setMode(defaultEditorMode(isNew))
+  }, [isNew, stem])
 
   // Load workspace tags on mount
   useEffect(() => {
@@ -105,25 +120,31 @@ export function Editor(props: EditorProps) {
       // Load note tags from workspace notes list
       const note = notes.find((n) => n.stem === stem)
       setTags(note?.tags || [])
-      
+
       setLoading(false)
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current
-        if (!textarea) return
-        syncTextareaHeight()
-        textarea.focus()
-        const pos = cursorStartPosition(initialBody, isNew)
-        textarea.setSelectionRange(pos, pos)
-      })
     } catch (err) {
       setLoading(false)
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load note')
     }
-  }, [isNew, notes, stem, syncTextareaHeight])
+  }, [isNew, notes, stem])
 
   useEffect(() => {
     void loadNote()
   }, [loadNote])
+
+  useEffect(() => {
+    if (loading || errorMessage || mode !== 'edit') return
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      syncTextareaHeight()
+      textarea.focus()
+
+      const pos = cursorStartPosition(bodyRef.current, isNew)
+      textarea.setSelectionRange(pos, pos)
+    })
+  }, [errorMessage, isNew, loading, mode, syncTextareaHeight, stem])
 
   const performSave = useCallback(
     async (options: { force?: boolean; rewriteOnExit?: boolean } = {}) => {
@@ -208,12 +229,13 @@ export function Editor(props: EditorProps) {
 
   useEffect(() => {
     const onResize = () => {
+      if (mode !== 'edit') return
       syncTextareaHeight()
     }
 
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [syncTextareaHeight])
+  }, [mode, syncTextareaHeight])
 
   const saveStatus = useMemo(() => formatTime(lastSavedAt), [lastSavedAt])
 
@@ -250,6 +272,12 @@ export function Editor(props: EditorProps) {
       }
     }
 
+    if (mode === 'preview') {
+      await workspaceActions.refreshNotes()
+      onExit({ stem, discarded: false })
+      return
+    }
+
     if (saveInFlightRef.current) {
       await saveInFlightRef.current
     }
@@ -267,10 +295,24 @@ export function Editor(props: EditorProps) {
 
     await workspaceActions.refreshNotes()
     onExit({ stem, discarded: false })
-  }, [isExiting, isNew, onExit, performSave, stem])
+  }, [isExiting, isNew, mode, onExit, performSave, stem])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        mode === 'preview' &&
+        !event.repeat &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !isTypingTarget(event.target) &&
+        (event.key === 'e' || event.key === 'E')
+      ) {
+        event.preventDefault()
+        setMode('edit')
+        return
+      }
+
       if (event.key !== 'Escape') return
       event.preventDefault()
       void handleExit()
@@ -278,7 +320,7 @@ export function Editor(props: EditorProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [handleExit])
+  }, [handleExit, mode])
 
   const handleRetrySave = useCallback(() => {
     void performSave({ force: true })
@@ -322,10 +364,10 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <section className="panel editorPanel" style={{ '--note-bg': `var(--color-slot-${noteColorSlot(stem)})` } as React.CSSProperties}>
+    <section className="panel editorPanel" style={{ '--note-bg': `var(--color-slot-${noteColorSlot(stem)})` } as CSSProperties}>
       <div className="editorHeader">
         <div>
-          <h2 className="panelTitle">Editing note</h2>
+          <h2 className="panelTitle">{mode === 'edit' ? 'Editing note' : 'Viewing note'}</h2>
           <div className="editorMeta">Last saved: {saveStatus}</div>
         </div>
         <button type="button" className="btn" onClick={handleExit} disabled={isExiting}>
@@ -353,17 +395,24 @@ export function Editor(props: EditorProps) {
           placeholder="Tags"
         />
         {tagSaveError && <div className="editorTagError">{tagSaveError}</div>}
+        <div className="editorModeHint">{mode === 'preview' ? 'Press E to edit' : 'Editing mode'}</div>
       </div>
 
       <div className="editorBody">
         <div className="editorContent">
-          <textarea
-            ref={textareaRef}
-            className="editorTextarea"
-            value={body}
-            onChange={handleChange}
-            spellCheck={false}
-          />
+          {mode === 'edit' ? (
+            <textarea
+              ref={textareaRef}
+              className="editorTextarea"
+              value={body}
+              onChange={handleChange}
+              spellCheck={false}
+            />
+          ) : (
+            <div className="editorMarkdown">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+            </div>
+          )}
         </div>
       </div>
 
