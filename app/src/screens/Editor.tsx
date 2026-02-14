@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
@@ -410,7 +411,7 @@ export function Editor(props: EditorProps) {
             />
           ) : (
             <div className="editorMarkdown">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{body}</ReactMarkdown>
             </div>
           )}
         </div>
