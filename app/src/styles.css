@@ -330,6 +330,56 @@ body {
 
 /* ── Overview ───────────────────────────────────────────────────────── */
 
+.overviewPanel {
+  --overview-note-row-min-height: var(--size-note-row);
+  --overview-note-row-padding-y: var(--size-touch);
+  --overview-note-row-padding-x: var(--space-15);
+  --overview-note-content-gap: var(--space-13);
+  --overview-note-main-gap: var(--space-13);
+  --overview-note-title-font-size: var(--size-touch);
+  --overview-note-title-line-height: var(--size-touch);
+  --overview-note-title-max-width: 32rem;
+  --overview-note-timestamp-font-size: var(--font-size-lg);
+  --overview-note-timestamp-line-height: var(--font-size-lg);
+  --overview-note-timestamp-padding-y: var(--space-7);
+  --overview-note-timestamp-padding-x: var(--space-6);
+  --overview-note-timestamp-min-width: var(--size-touch);
+  --overview-note-timestamp-width: 12rem;
+  --overview-note-tags-gap: var(--space-4);
+  --overview-note-tags-min-height: var(--font-size-lg);
+  --overview-note-tags-margin-y: 0.75rem;
+  --overview-note-tag-font-size: var(--font-size-sm);
+  --overview-note-tag-padding-y: var(--space-2);
+  --overview-note-tag-padding-x: var(--space-6);
+  --overview-note-tag-min-width: var(--size-touch);
+  --overview-note-tag-min-height: calc(var(--size-touch) - 1.5rem);
+}
+
+.overviewPanelCompact {
+  --overview-note-row-min-height: calc(var(--size-touch) * 2);
+  --overview-note-row-padding-y: var(--space-8);
+  --overview-note-row-padding-x: var(--space-12);
+  --overview-note-content-gap: var(--space-10);
+  --overview-note-main-gap: var(--space-9);
+  --overview-note-title-font-size: var(--font-size-lg);
+  --overview-note-title-line-height: var(--font-size-lg);
+  --overview-note-title-max-width: 28rem;
+  --overview-note-timestamp-font-size: var(--font-size-base);
+  --overview-note-timestamp-line-height: var(--font-size-base);
+  --overview-note-timestamp-padding-y: var(--space-5);
+  --overview-note-timestamp-padding-x: var(--space-5);
+  --overview-note-timestamp-min-width: var(--space-14);
+  --overview-note-timestamp-width: 8.5rem;
+  --overview-note-tags-gap: var(--space-3);
+  --overview-note-tags-min-height: var(--font-size-base);
+  --overview-note-tags-margin-y: var(--space-4);
+  --overview-note-tag-font-size: var(--font-size-xs);
+  --overview-note-tag-padding-y: var(--space-1);
+  --overview-note-tag-padding-x: var(--space-4);
+  --overview-note-tag-min-width: 2rem;
+  --overview-note-tag-min-height: 1.25rem;
+}
+
 .overviewHeader {
   display: none;
   justify-content: space-between;
@@ -388,10 +438,10 @@ body {
   border: none;
   border-radius: 0;
   background: var(--note-bg, var(--color-slot-1));
-  max-height: var(--size-note-row);
+  max-height: var(--overview-note-row-min-height);
   overflow: hidden;
-  transition: max-height 200ms ease-in-out;
-  min-height: var(--size-note-row);
+  transition: max-height 180ms ease-in-out, min-height 180ms ease-in-out;
+  min-height: var(--overview-note-row-min-height);
   align-items: flex-start;
 }
 
@@ -399,17 +449,18 @@ body {
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: var(--space-13);
+  gap: var(--overview-note-content-gap);
   width: 100%;
   min-width: 0;
   margin: 0 auto;
   max-width: var(--size-note-row-content-max, 100%);
-  padding: var(--size-touch) var(--space-15);
+  padding: var(--overview-note-row-padding-y) var(--overview-note-row-padding-x);
+  transition: padding 180ms ease-in-out, gap 180ms ease-in-out;
 }
 
 .noteRowInteractive {
   cursor: pointer;
-  transition: max-height 100ms ease-in-out;
+  transition: max-height 100ms ease-in-out, min-height 100ms ease-in-out;
 }
 
 .noteRowInteractive:hover {
@@ -447,18 +498,20 @@ body {
   align-items: flex-start;
   justify-content: start;
   flex-direction: row-reverse;
-  gap: var(--space-13);
+  gap: var(--overview-note-main-gap);
   flex: 1 1 auto;
   min-width: 0;
+  transition: gap 180ms ease-in-out;
 }
 
 .noteName {
   font-weight: var(--font-weight-semibold);
-  font-size: var(--size-touch);
-  line-height: var(--size-touch);
-  max-width: 32rem;      /* 512px @ ref */
+  font-size: var(--overview-note-title-font-size);
+  line-height: var(--overview-note-title-line-height);
+  max-width: var(--overview-note-title-max-width);
   min-width: 0;
   flex: 1 1 0;
+  transition: font-size 180ms ease-in-out, line-height 180ms ease-in-out, max-width 180ms ease-in-out;
 }
 
 .noteRowFocused .noteName {
@@ -469,47 +522,59 @@ body {
 
 .noteTimestamp {
   color: var(--color-text);
-  font-size: var(--font-size-lg);
+  font-size: var(--overview-note-timestamp-font-size);
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   background: var(--color-chip-bg);
   border-radius: var(--radius-pill);
-  padding: var(--space-7) var(--space-6);
-  min-width: var(--size-touch);
+  padding: var(--overview-note-timestamp-padding-y) var(--overview-note-timestamp-padding-x);
+  min-width: var(--overview-note-timestamp-min-width);
   text-align: center;
-  line-height: var(--font-size-lg);
+  line-height: var(--overview-note-timestamp-line-height);
   flex-shrink: 0;
-  width: 12rem;
+  width: var(--overview-note-timestamp-width);
+  transition:
+    font-size 180ms ease-in-out,
+    line-height 180ms ease-in-out,
+    padding 180ms ease-in-out,
+    width 180ms ease-in-out,
+    min-width 180ms ease-in-out;
 }
 
 .noteTags {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-4);
+  gap: var(--overview-note-tags-gap);
   flex-wrap: wrap;
   align-items: center;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 40%;
-  min-height: var(--font-size-lg);
-  margin: 0.75rem 0 0.75rem auto;
+  min-height: var(--overview-note-tags-min-height);
+  margin: var(--overview-note-tags-margin-y) 0 var(--overview-note-tags-margin-y) auto;
+  transition: gap 180ms ease-in-out, min-height 180ms ease-in-out, margin 180ms ease-in-out;
 }
 
 .noteTag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-2) var(--space-6);
+  padding: var(--overview-note-tag-padding-y) var(--overview-note-tag-padding-x);
   border-radius: var(--radius-pill);
   background: var(--color-chip-bg);
   color: var(--color-text);
-  font-size: var(--font-size-sm);
+  font-size: var(--overview-note-tag-font-size);
   font-weight: var(--font-weight-medium);
-  min-width: var(--size-touch);
-  min-height: calc(var(--size-touch) - 1.5rem);  /* 24px @ ref */
+  min-width: var(--overview-note-tag-min-width);
+  min-height: var(--overview-note-tag-min-height);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    font-size 180ms ease-in-out,
+    padding 180ms ease-in-out,
+    min-width 180ms ease-in-out,
+    min-height 180ms ease-in-out;
   white-space: nowrap;
   overflow: hidden;
 }

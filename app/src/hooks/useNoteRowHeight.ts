@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef } from 'react'
  * The fix: set `max-height` to the element's `scrollHeight` when focused,
  * so the transition distance matches real content exactly.
  */
-export function useNoteRowHeight(focusedIndex: number) {
+export function useNoteRowHeight(focusedIndex: number, layoutMode: 'normal' | 'compact') {
   const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map())
   const immediateScrollRafRef = useRef<number | null>(null)
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -134,7 +134,7 @@ export function useNoteRowHeight(focusedIndex: number) {
     [clearPendingScrollWork, scrollFocusedRowIfNeeded],
   )
 
-  // Apply the correct max-height to all rows whenever focusedIndex changes
+  // Apply the correct max-height to all rows whenever focus or layout density changes
   useEffect(() => {
     for (const [index, el] of rowRefs.current) {
       if (index === focusedIndex) {
@@ -152,7 +152,7 @@ export function useNoteRowHeight(focusedIndex: number) {
         el.style.maxHeight = ''
       }
     }
-  }, [focusedIndex])
+  }, [focusedIndex, layoutMode])
 
   useEffect(() => {
     return () => {
@@ -188,7 +188,7 @@ export function useNoteRowHeight(focusedIndex: number) {
       window.removeEventListener('resize', onResize)
       if (rafId !== null) cancelAnimationFrame(rafId)
     }
-  }, [focusedIndex])
+  }, [focusedIndex, layoutMode])
 
   return { setRowRef, scrollRowIntoView }
 }

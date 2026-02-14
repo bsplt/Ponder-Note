@@ -21,6 +21,8 @@ type OverviewProps = {
   onIncludeTagsChange: (tags: string[]) => void
   excludeTags: string[]
   onExcludeTagsChange: (tags: string[]) => void
+  isCompact: boolean
+  onToggleCompact: () => void
 }
 
 function formatNoteTimestamp(note: NoteSummary): string {
@@ -63,6 +65,8 @@ export function Overview(props: OverviewProps) {
   const onIncludeTagsChange = props.onIncludeTagsChange
   const excludeTags = props.excludeTags
   const onExcludeTagsChange = props.onExcludeTagsChange
+  const isCompact = props.isCompact
+  const onToggleCompact = props.onToggleCompact
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -87,7 +91,8 @@ export function Overview(props: OverviewProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
 
-  const { setRowRef: setNoteRowRef, scrollRowIntoView } = useNoteRowHeight(focusedIndex)
+  const layoutMode: 'normal' | 'compact' = isCompact ? 'compact' : 'normal'
+  const { setRowRef: setNoteRowRef, scrollRowIntoView } = useNoteRowHeight(focusedIndex, layoutMode)
   const [deleteConfirmStem, setDeleteConfirmStem] = useState<string | null>(null)
   const deleteConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -299,6 +304,12 @@ export function Overview(props: OverviewProps) {
         return
       }
 
+      if (event.key === 'c' || event.key === 'C') {
+        event.preventDefault()
+        onToggleCompact()
+        return
+      }
+
       if (event.key === 'd' || event.key === 'D') {
         event.preventDefault()
 
@@ -321,7 +332,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange, scrollRowIntoView])
+  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange, onToggleCompact, scrollRowIntoView])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =
@@ -351,7 +362,7 @@ export function Overview(props: OverviewProps) {
   }
 
   return (
-    <section className="panel">
+    <section className={`panel overviewPanel${isCompact ? ' overviewPanelCompact' : ''}`}>
       <div className="overviewHeader">
         <div>
           <h2 className="panelTitle">Workspace {activeSlot}</h2>

@@ -29,6 +29,7 @@ function App() {
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
+  const [overviewCompact, setOverviewCompact] = useState(false)
   const [rebuildLogOpen, setRebuildLogOpen] = useState(false)
   const appMainRef = useRef<HTMLElement | null>(null)
   const previousScreenRef = useRef<AppScreen>('overview')
@@ -246,6 +247,8 @@ function App() {
             onIncludeTagsChange={setIncludeTags}
             excludeTags={excludeTags}
             onExcludeTagsChange={setExcludeTags}
+            isCompact={overviewCompact}
+            onToggleCompact={() => setOverviewCompact((value) => !value)}
           />
         ) : screen === 'editor' ? (
           activeNoteStem ? (
@@ -263,6 +266,8 @@ function App() {
               onIncludeTagsChange={setIncludeTags}
               excludeTags={excludeTags}
               onExcludeTagsChange={setExcludeTags}
+              isCompact={overviewCompact}
+              onToggleCompact={() => setOverviewCompact((value) => !value)}
             />
           )
         ) : screen === 'todolist' ? (
