@@ -1,2 +1,143 @@
 # Ponder Note
 
+Ponder is a fast, keyboard-friendly desktop app for people who keep their notes in Markdown files and want action items to stay connected to the original notes.
+
+Built for meeting notes, project logs, and personal knowledge workflows where plain files matter.
+
+## Why Ponder
+
+- Keep notes as plain `.md` files in your own folders.
+- Switch between up to 9 workspace folders instantly.
+- Search note titles and full content from one overview.
+- Extract open todos from all notes and triage them in one screen.
+- Toggle todos once and sync the checkbox back to the source note.
+
+## What You Can Use It For
+
+- Meeting protocols with action-item tracking.
+- Team/project notebooks split by workspace (client, product, ops, etc.).
+- Personal planning in Markdown without lock-in to a proprietary note format.
+- "Inbox + execution" flow where notes and todos stay in sync.
+
+## Feature Highlights
+
+- **Markdown-first notes**: notes are root-level `.md` files in your workspace.
+- **Auto title extraction**: note title is derived from the first line (Markdown-aware).
+- **Autosave editor**: with retry logic when save fails.
+- **Tagging system**: add tags as pills, with autocomplete from existing workspace tags.
+- **Powerful search**:
+  - Full-text matching across title + body preview.
+  - Multi-term AND search.
+  - `*` wildcard support (example: `meet*`).
+  - Include/exclude tag filters (`#tag` and `#-tag`).
+- **Todo aggregation**:
+  - Parses Markdown checkboxes (`[ ]`, `- [ ]`, `[x]`).
+  - Skips fenced code blocks and blockquotes.
+  - Groups todos by note tags, ordered by recency.
+- **Safe deletion**: deleting a note moves it to `deleted/` (no hard delete).
+- **Workspace health + fallback**: detects missing/unreadable folders and supports fallback slot behavior.
+- **Rebuild diagnostics**: writes and displays rebuild logs for note sidecar/index maintenance.
+
+## Quick Start (Nix-first)
+
+### Prerequisites
+
+- Nix with flakes enabled
+- macOS toolchain (Xcode Command Line Tools)
+
+### Run in dev mode
+
+```bash
+nix develop
+cd app
+pnpm install
+pnpm tauri dev
+```
+
+### Run tests
+
+```bash
+nix develop
+cd app
+pnpm test
+```
+
+### Build a debug app bundle
+
+From repo root:
+
+```bash
+./build-app.sh
+```
+
+## Usage Workflow
+
+1. Open **Workspaces** and assign a folder to a slot (1-9).
+2. In **Overview**, create a note (`New Note`) or open an existing one.
+3. Write in Markdown. Lines starting with `o ` are converted to `[ ]` when exiting edit mode.
+4. Add tags in the editor to power filtering and todo grouping.
+5. Open **Todos** to process open tasks across notes.
+
+## Keyboard Shortcuts
+
+### Global (outside editor, when not typing)
+
+- `o` -> Overview
+- `w` -> Workspaces
+- `t` -> Todos
+- `n` -> New note
+
+### Overview
+
+- `1..9` -> Switch workspace slot
+- `Arrow Up / Arrow Down` -> Move selection
+- `Enter` -> Open selected note / create new note
+- `d` (twice) -> Delete selected note (moves to `deleted/`)
+- `c` -> Toggle compact list
+- `Cmd/Ctrl + f` -> Focus search
+- `Esc` -> Clear search and tag filters
+
+### Editor
+
+- `Esc` -> Exit editor
+- `e` -> Switch from preview to edit mode
+
+### Todos
+
+- `Arrow Up / Arrow Down` -> Move selection
+- `Space` -> Toggle todo
+- `Enter` -> Open source note
+- `Esc` -> Back to overview
+
+## Workspace/Data Model
+
+For each workspace folder:
+
+- Notes live at root as timestamp-based files (for example `1739612345678.md`).
+- Ponder metadata lives in `.ponder/`:
+  - `.ponder/meta/<stem>.json` (title, timestamps, tags, plus preserved extra fields)
+  - `.ponder/rebuild-log.json`
+  - `.ponder/index/version.json`
+- Deleted notes are moved to `deleted/`.
+
+## Tech Stack
+
+- **Desktop shell**: Tauri v2 (Rust backend)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Testing**: Vitest
+- **Tooling**: Nix dev shell, pnpm, Cargo
+
+## Project Structure
+
+```text
+.
+├── app/                 # Tauri app (frontend + Rust backend)
+│   ├── src/             # React UI
+│   └── src-tauri/       # Rust commands, domain logic, storage
+├── flake.nix            # Nix dev shell definition
+└── build-app.sh         # Nix-based debug build helper
+```
+
+## Notes
+
+- This repo currently has no explicit OSS license file. Add one before broad reuse/distribution.
