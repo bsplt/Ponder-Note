@@ -561,7 +561,7 @@ impl WorkspaceService {
         let (_slot, workspace_path) = self.active_workspace_path()?;
 
         // Source note path
-        let note_path = workspace_path.join(format!("{stem}.md"));
+        let note_path = self.note_path_from_stem(&workspace_path, stem)?;
         if !note_path.exists() {
             return Err(WorkspaceServiceError::NoteNotFound);
         }
@@ -713,7 +713,7 @@ impl WorkspaceService {
         char_offset: usize,
     ) -> Result<bool, WorkspaceServiceError> {
         let workspace_dir = self.workspace_dir()?;
-        let note_path = workspace_dir.join(format!("{}.md", stem));
+        let note_path = self.note_path_from_stem(&workspace_dir, stem)?;
         
         if !note_path.exists() {
             return Err(WorkspaceServiceError::NoteNotFound);
@@ -1269,6 +1269,22 @@ fn current_unix_ms() -> Result<i64, WorkspaceServiceError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::workspace::AppConfig;
+    use std::collections::BTreeMap;
+
+    fn service_for_workspace(path: &Path) -> WorkspaceService {
+        let mut workspaces: [Option<String>; 9] = Default::default();
+        workspaces[0] = Some(path.to_string_lossy().to_string());
+
+        WorkspaceService {
+            repo: AppConfigRepo,
+            cfg: AppConfig {
+                workspaces,
+                active_slot: 1,
+                extra: BTreeMap::new(),
+            },
+        }
+    }
 
     #[test]
     fn atomic_write_note_creates_new_file() {
@@ -1401,5 +1417,33 @@ mod tests {
         let result = do_note_delete(ws.path(), "9999999999");
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn note_delete_rejects_path_traversal_stem() {
+        let ws = tempfile::tempdir().unwrap();
+        let svc = service_for_workspace(ws.path());
+
+        let result = svc.note_delete("../outside");
+        match result {
+            Err(WorkspaceServiceError::Io(err)) => {
+                assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+            }
+            _ => panic!("Expected InvalidInput Io error for traversal stem"),
+        }
+    }
+
+    #[test]
+    fn toggle_todo_rejects_path_traversal_stem() {
+        let ws = tempfile::tempdir().unwrap();
+        let svc = service_for_workspace(ws.path());
+
+        let result = svc.toggle_todo("../outside", 0, 0);
+        match result {
+            Err(WorkspaceServiceError::Io(err)) => {
+                assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+            }
+            _ => panic!("Expected InvalidInput Io error for traversal stem"),
+        }
     }
 }
