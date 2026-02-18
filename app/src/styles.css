@@ -358,7 +358,7 @@ body {
 .overviewPanelCompact {
   --overview-note-row-min-height: calc(var(--size-touch) * 2);
   --overview-note-row-padding-y: var(--space-8);
-  --overview-note-row-padding-x: var(--space-12);
+  /* --overview-note-row-padding-x: var(--space-12); */
   --overview-note-content-gap: var(--space-10);
   --overview-note-main-gap: var(--space-9);
   --overview-note-title-font-size: var(--font-size-lg);
@@ -379,6 +379,8 @@ body {
   --overview-note-tag-min-width: 2rem;
   --overview-note-tag-min-height: 1.25rem;
 }
+
+
 
 .overviewHeader {
   display: none;
@@ -438,7 +440,6 @@ body {
 }
 
 .shortcutsGroup {
-  border-top: var(--border-width) solid var(--color-border-subtle);
   padding-top: var(--space-8);
 }
 
@@ -521,6 +522,14 @@ body {
   transition: max-height 180ms ease-in-out, min-height 180ms ease-in-out;
   min-height: var(--overview-note-row-min-height);
   align-items: flex-start;
+}
+
+.overviewPanelCompact .noteRow {
+  min-height: 0;
+}
+
+.overviewPanelCompact .noteName {
+  line-height: var(--font-size-xl);
 }
 
 .noteRowContent {
@@ -705,18 +714,18 @@ body {
   width: var(--size-touch);
   min-width: var(--size-touch);
   height: var(--size-touch);
-  border: var(--border-width) solid var(--color-button-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-button-bg);
+  border: none;
+  background: none;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-sm);
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  opacity: 0.5;
 }
 
 .searchBarHelpButton:hover {
@@ -887,6 +896,7 @@ body {
   color: var(--color-muted-2);
   font-size: var(--font-size-sm);
   line-height: var(--space-8);
+  display: none;
 }
 
 .editorBanner {
@@ -968,20 +978,9 @@ body {
 .editorMarkdown h4,
 .editorMarkdown h5,
 .editorMarkdown h6 {
-  margin: var(--space-11) 0 var(--space-6);
+  margin: 0 0 var(--space-8);
   line-height: 1.25;
-}
-
-.editorMarkdown h1 {
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-}
-
-.editorMarkdown h2 {
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
-}
-
-.editorMarkdown h3 {
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-size: inherit;
 }
 
 .editorMarkdown p,
@@ -1092,11 +1091,10 @@ body {
   transform: translateX(-50%);
   padding: var(--space-5) var(--space-6);
   border-radius: var(--radius-pill);
-  border: var(--border-width) solid var(--color-toast-border);
+  border: none;
   background: var(--color-toast-bg);
   backdrop-filter: blur(var(--blur-strong));
   color: var(--color-text);
-  box-shadow: var(--shadow-toast);
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────── */
@@ -1173,6 +1171,7 @@ body {
   font-weight: var(--font-weight-heavy);
   background: var(--color-slot-number-bg);
   border: var(--border-width) solid var(--color-slot-number-border);
+  font-size: var(--font-size-sm);
 }
 
 .slotBody {
@@ -1241,6 +1240,7 @@ body {
 
 .slotName {
   font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
 }
 
 .path {
