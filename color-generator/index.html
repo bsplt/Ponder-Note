@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OKLCH Background Generator</title>
+  <style>
+    :root {
+      --ui-bg: #f4f2eb;
+      --ui-panel: #fffdf8;
+      --ui-border: #d8d3c6;
+      --ui-text: #1e232d;
+      --ui-muted: #5f6675;
+      --ui-accent: #3050a8;
+      --ui-danger: #b32d2d;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(27, 31, 35, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--ui-text);
+      background:
+        radial-gradient(circle at 10% -10%, #f7f0d7 0%, transparent 38%),
+        radial-gradient(circle at 90% 0%, #e8eefc 0%, transparent 36%),
+        var(--ui-bg);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--ui-panel);
+      border: 1px solid var(--ui-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--ui-muted);
+      font-size: 0.95rem;
+    }
+
+    .control-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      font-size: 0.86rem;
+    }
+
+    .field.wide {
+      grid-column: span 2;
+    }
+
+    .field > span {
+      color: var(--ui-muted);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .hint {
+      font-size: 0.74rem;
+      color: #727b8f;
+      line-height: 1.3;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 9px;
+      border: 1px solid var(--ui-border);
+      border-radius: 9px;
+      font-size: 0.9rem;
+      color: var(--ui-text);
+      background: #fff;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--ui-accent);
+    }
+
+    input[readonly] {
+      background: #f7f7f7;
+      color: #666;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid color-mix(in srgb, var(--ui-accent) 40%, transparent);
+      outline-offset: 1px;
+    }
+
+    .field-inline {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mono {
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
+    }
+
+    .small {
+      font-size: 0.8rem;
+      color: var(--ui-muted);
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+    }
+
+    .status.ok {
+      color: #145f2b;
+      background: #edf9f1;
+      border-color: #c8ebd3;
+    }
+
+    .status.error {
+      color: #8f1f1f;
+      background: #feecec;
+      border-color: #f6cccc;
+    }
+
+    .toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin-top: 10px;
+      font-size: 0.88rem;
+    }
+
+    .toggles label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--ui-muted);
+    }
+
+    .subpanel-wrap {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .subpanel {
+      border: 1px dashed #cbc4b1;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fffcf6;
+    }
+
+    .subpanel.core {
+      border-style: solid;
+      border-color: #d0d8ee;
+      background: #f7f9ff;
+    }
+
+    .subpanel h2 {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      color: #4f5564;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .sub-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .subpanel[data-hidden="true"] {
+      display: none;
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .button {
+      border: 1px solid #3456ac;
+      background: #3456ac;
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      border-color: #bfc7dc;
+      background: #f5f7ff;
+      color: #30426d;
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      background: #fefefe;
+    }
+
+    .hex-list {
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid var(--ui-border);
+      border-radius: 8px;
+      background: #ffffff;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      font-size: 0.8rem;
+      color: #424a5b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tile {
+      border: 1px solid rgba(0, 0, 0, 0.09);
+      border-radius: 12px;
+      padding: 10px;
+      min-height: 172px;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 8px;
+    }
+
+    .tile.warn {
+      outline: 2px solid color-mix(in srgb, var(--ui-danger) 54%, transparent);
+      outline-offset: 1px;
+    }
+
+    .tile-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 0.9rem;
+    }
+
+    .warn-badge {
+      color: var(--ui-danger);
+      border: 1px solid color-mix(in srgb, var(--ui-danger) 45%, transparent);
+      background: rgba(255, 255, 255, 0.68);
+      border-radius: 999px;
+      padding: 1px 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sample {
+      align-self: center;
+      display: grid;
+      gap: 5px;
+    }
+
+    .sample-aa {
+      font-size: 1.6rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sample-body {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .sample-chip {
+      display: inline-block;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: 4px 10px;
+      width: max-content;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .tile-meta {
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.72rem;
+      display: grid;
+      gap: 2px;
+      color: rgba(8, 14, 24, 0.8);
+    }
+
+    @media (max-width: 1020px) {
+      .control-grid,
+      .sub-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field.wide {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .output-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>OKLCH Hue-Biased Background Generator</h1>
+      <p class="subtitle">16 Hintergrundfarben aus einer Textfarbe mit kohaerenter Hue-Verteilung, konstantem L und reproduzierbarer Seed-Logik.</p>
+
+      <div class="control-grid">
+        <label class="field wide">
+          <span>Textfarbe (`#RRGGBB` oder `oklch(L C H)`)</span>
+          <input id="text-input" data-control type="text" value="#1e2a6d" spellcheck="false">
+        </label>
+
+        <label class="field">
+          <span>Mode</span>
+          <select id="mode" data-control>
+            <option value="A">A - Two-Hemispheres</option>
+            <option value="B">B - Warped Wheel</option>
+            <option value="C">C - Cluster</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Chroma-Profil</span>
+          <select id="chroma-profile" data-control>
+            <option value="pyramid">pyramid</option>
+            <option value="distance">distance-based</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Seed</span>
+          <input id="seed" data-control type="number" min="0" step="1" value="42">
+        </label>
+
+        <label class="field">
+          <span>Jitter (deg)</span>
+          <input id="jitter" data-control type="number" min="0" max="30" step="0.1" value="4">
+        </label>
+
+        <label class="field">
+          <span>L_bg</span>
+          <div class="field-inline">
+            <input id="l-bg" data-control type="range" min="0.55" max="1" step="0.001" value="0.9">
+            <span id="l-bg-value" class="mono">0.900</span>
+          </div>
+        </label>
+
+        <label class="field">
+          <span>C_bg_min</span>
+          <input id="c-min" data-control type="number" min="0" max="0.4" step="0.001" value="0.02">
+        </label>
+
+        <label class="field">
+          <span>C_bg_max</span>
+          <input id="c-max" data-control type="number" min="0" max="0.4" step="0.001" value="0.14">
+        </label>
+
+        <label class="field">
+          <span>Processing Hue Offset (deg)</span>
+          <div class="field-inline">
+            <input id="processing-hue-offset" data-control type="range" min="-90" max="90" step="1" value="0">
+            <span id="processing-hue-offset-value" class="mono">0</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="toggles">
+        <label><input id="soft-guard" data-control type="checkbox" checked> Soft contrast guard aktiv</label>
+        <label><input id="check-contrast" data-control type="checkbox" checked> Kontrastcheck anzeigen (WCAG 4.5:1)</label>
+        <label><input id="auto-adjust" data-control type="checkbox"> Auto-adjust L minimal (nur heller)</label>
+        <label><input id="flip-processing-hue" data-control type="checkbox"> Processing Hue +180deg (nur intern)</label>
+        <label><input id="show-advanced" data-control type="checkbox"> Advanced Geometry/Legacy Controls</label>
+        <label><input id="export-hex-comments" data-control type="checkbox"> HEX-Kommentare im CSS-Export</label>
+      </div>
+
+      <div id="parse-status" class="status ok">Bereit.</div>
+
+      <div class="subpanel-wrap">
+        <div class="subpanel core">
+          <h2>Art Direction (Core)</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span title="Staerkere Kohaesion zieht Hues in die Familie der Textfarbe.">cohesion_strength</span>
+              <div class="field-inline">
+                <input id="ad-cohesion" data-control type="range" min="0" max="1" step="0.01" value="0.62">
+                <span id="ad-cohesion-value" class="mono">0.62</span>
+              </div>
+              <span class="hint">Familienaehnlichkeit zur Textfarbe.</span>
+            </label>
+            <label class="field">
+              <span title="Steuert kontrollierte Gegenpole statt vollem Regenbogen.">opposition_tension</span>
+              <div class="field-inline">
+                <input id="ad-opposition" data-control type="range" min="0" max="1" step="0.01" value="0.28">
+                <span id="ad-opposition-value" class="mono">0.28</span>
+              </div>
+              <span class="hint">Wie stark Gegenpol-Farben zugelassen werden.</span>
+            </label>
+            <label class="field">
+              <span title="Erhoeht Mindestabstand zwischen Hues fuer gleichmaessige Verteilung.">distribution_uniformity</span>
+              <div class="field-inline">
+                <input id="ad-uniformity" data-control type="range" min="0" max="1" step="0.01" value="0.54">
+                <span id="ad-uniformity-value" class="mono">0.54</span>
+              </div>
+              <span class="hint">Vermeidet lokale Hue-Klumpen.</span>
+            </label>
+            <label class="field">
+              <span title="Begrenzt den erlaubten Hue-Korridor um die Textfarbe.">hue_bandwidth</span>
+              <div class="field-inline">
+                <input id="ad-bandwidth" data-control type="range" min="0" max="1" step="0.01" value="0.48">
+                <span id="ad-bandwidth-value" class="mono">0.48</span>
+              </div>
+              <span class="hint">Schmaler = mehr Fokus, breiter = mehr Kreisabdeckung.</span>
+            </label>
+            <label class="field">
+              <span title="Bestimmt, wie stark Chroma nach Hue-Distanz priorisiert wird.">chroma_focus</span>
+              <div class="field-inline">
+                <input id="ad-chroma-focus" data-control type="range" min="0" max="1" step="0.01" value="0.58">
+                <span id="ad-chroma-focus-value" class="mono">0.58</span>
+              </div>
+              <span class="hint">Nahe zur Textfarbe eher saettiger.</span>
+            </label>
+            <label class="field">
+              <span title="Daempft Chroma mit zunehmender Hue-Distanz.">chroma_taper</span>
+              <div class="field-inline">
+                <input id="ad-chroma-taper" data-control type="range" min="0" max="1" step="0.01" value="0.42">
+                <span id="ad-chroma-taper-value" class="mono">0.42</span>
+              </div>
+              <span class="hint">Hoeher = ruhigeres Farbspektrum.</span>
+            </label>
+            <label class="field">
+              <span title="Anteil der 16 Farben, die als Akzentrolle behandelt werden.">accent_quota</span>
+              <div class="field-inline">
+                <input id="ad-accent-quota" data-control type="range" min="0" max="0.5" step="0.01" value="0.18">
+                <span id="ad-accent-quota-value" class="mono">0.18</span>
+              </div>
+              <span class="hint">Mehr Akzente = mehr visuelle Peaks.</span>
+            </label>
+            <label class="field">
+              <span title="Anteil gedaempfter, neutraler Hintergruende.">neutral_quota</span>
+              <div class="field-inline">
+                <input id="ad-neutral-quota" data-control type="range" min="0" max="0.5" step="0.01" value="0.22">
+                <span id="ad-neutral-quota-value" class="mono">0.22</span>
+              </div>
+              <span class="hint">Mehr Neutrals = mehr Ruhe und Hierarchie.</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="mode-a-panel" class="subpanel mode-panel legacy-panel">
+          <h2>Mode A - Two-Hemispheres</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span>main_count</span>
+              <input id="a-main-count" data-control type="number" min="0" max="16" step="1" value="11">
+            </label>
+            <label class="field">
+              <span>contrast_count</span>
+              <input id="a-contrast-count" type="number" readonly value="5">
+            </label>
+            <label class="field">
+              <span>main_range_deg</span>
+              <input id="a-main-range" data-control type="number" min="0" max="360" step="1" value="96">
+            </label>
+            <label class="field">
+              <span>contrast_range_deg</span>
+              <input id="a-contrast-range" data-control type="number" min="0" max="360" step="1" value="50">
+            </label>
+            <label class="field">
+              <span>hue_offset_deg</span>
+              <input id="a-hue-offset" data-control type="number" min="-360" max="360" step="1" value="0">
+            </label>
+          </div>
+        </div>
+
+        <div id="mode-b-panel" class="subpanel mode-panel legacy-panel" data-hidden="true">
+          <h2>Mode B - Warped Wheel</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span>warp_strength</span>
+              <div class="field-inline">
+                <input id="b-warp-strength" data-control type="range" min="0" max="1" step="0.01" value="0.45">
+                <span id="b-warp-strength-value" class="mono">0.45</span>
+              </div>
+            </label>
+            <label class="field">
+              <span>warp_shape</span>
+              <select id="b-warp-shape" data-control>
+                <option value="gaussian">gaussian</option>
+                <option value="easeInOut">easeInOut</option>
+                <option value="logistic">logistic</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>hue_offset_deg</span>
+              <input id="b-hue-offset" data-control type="number" min="-360" max="360" step="1" value="0">
+            </label>
+          </div>
+        </div>
+
+        <div id="mode-c-panel" class="subpanel mode-panel legacy-panel" data-hidden="true">
+          <h2>Mode C - Cluster</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span>cluster_count_a</span>
+              <input id="c-count-1" data-control type="number" min="0" max="16" step="1" value="6">
+            </label>
+            <label class="field">
+              <span>cluster_count_b</span>
+              <input id="c-count-2" data-control type="number" min="0" max="16" step="1" value="6">
+            </label>
+            <label class="field">
+              <span>cluster_count_c</span>
+              <input id="c-count-3" data-control type="number" min="0" max="16" step="1" value="4">
+            </label>
+            <label class="field">
+              <span>center_shift_1 (deg)</span>
+              <input id="c-center-2" data-control type="number" min="-360" max="360" step="1" value="110">
+            </label>
+            <label class="field">
+              <span>center_shift_2 (deg)</span>
+              <input id="c-center-3" data-control type="number" min="-360" max="360" step="1" value="-145">
+            </label>
+            <label class="field">
+              <span>spread_a (deg)</span>
+              <input id="c-spread-1" data-control type="number" min="1" max="180" step="1" value="22">
+            </label>
+            <label class="field">
+              <span>spread_b (deg)</span>
+              <input id="c-spread-2" data-control type="number" min="1" max="180" step="1" value="26">
+            </label>
+            <label class="field">
+              <span>spread_c (deg)</span>
+              <input id="c-spread-3" data-control type="number" min="1" max="180" step="1" value="16">
+            </label>
+          </div>
+        </div>
+
+        <div id="pyramid-panel" class="subpanel chroma-panel legacy-panel">
+          <h2>Chroma - Pyramid</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span>low_count</span>
+              <input id="pyr-count-low" data-control type="number" min="0" max="16" step="1" value="9">
+            </label>
+            <label class="field">
+              <span>mid_count</span>
+              <input id="pyr-count-mid" data-control type="number" min="0" max="16" step="1" value="5">
+            </label>
+            <label class="field">
+              <span>high_count</span>
+              <input id="pyr-count-high" data-control type="number" min="0" max="16" step="1" value="2">
+            </label>
+            <label class="field">
+              <span>low range (min)</span>
+              <input id="pyr-low-min" data-control type="number" min="0" max="0.4" step="0.001" value="0.02">
+            </label>
+            <label class="field">
+              <span>low range (max)</span>
+              <input id="pyr-low-max" data-control type="number" min="0" max="0.4" step="0.001" value="0.06">
+            </label>
+            <label class="field">
+              <span>mid range (min)</span>
+              <input id="pyr-mid-min" data-control type="number" min="0" max="0.4" step="0.001" value="0.06">
+            </label>
+            <label class="field">
+              <span>mid range (max)</span>
+              <input id="pyr-mid-max" data-control type="number" min="0" max="0.4" step="0.001" value="0.10">
+            </label>
+            <label class="field">
+              <span>high range (min)</span>
+              <input id="pyr-high-min" data-control type="number" min="0" max="0.4" step="0.001" value="0.10">
+            </label>
+            <label class="field">
+              <span>high range (max)</span>
+              <input id="pyr-high-max" data-control type="number" min="0" max="0.4" step="0.001" value="0.14">
+            </label>
+          </div>
+        </div>
+
+        <div id="distance-panel" class="subpanel chroma-panel legacy-panel" data-hidden="true">
+          <h2>Chroma - Distance-Based</h2>
+          <div class="sub-grid">
+            <label class="field">
+              <span>C_near</span>
+              <input id="dist-c-near" data-control type="number" min="0" max="0.4" step="0.001" value="0.12">
+            </label>
+            <label class="field">
+              <span>C_far</span>
+              <input id="dist-c-far" data-control type="number" min="0" max="0.4" step="0.001" value="0.04">
+            </label>
+            <label class="field">
+              <span>falloff curve</span>
+              <select id="dist-curve" data-control>
+                <option value="smoothstep">smoothstep</option>
+                <option value="linear">linear</option>
+                <option value="logistic">logistic</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <strong>16 Backgrounds</strong>
+      <div class="small">Jedes Tile zeigt Hintergrund + Textsample mit der eingegebenen Textfarbe.</div>
+      <div id="palette-grid" class="grid" style="margin-top: 10px;"></div>
+    </section>
+
+    <section class="panel">
+      <div class="output-actions">
+        <div>
+          <strong>CSS Variablen (OKLCH)</strong>
+          <div class="small">Copy-pastable Ausgabe fuer `:root`.</div>
+        </div>
+        <div>
+          <button id="copy-css" class="button" type="button">Copy CSS</button>
+        </div>
+      </div>
+      <textarea id="css-output" readonly></textarea>
+      <div id="copy-status" class="small" aria-live="polite"></div>
+      <div id="hex-output" class="hex-list mono"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const TARGET_COUNT = 16;
+      const state = {
+        textInput: "#1e2a6d",
+        mode: "A",
+        chromaProfile: "pyramid",
+        seed: 42,
+        jitter: 4,
+        Lbg: 0.9,
+        Cmin: 0.02,
+        Cmax: 0.14,
+        checkContrast: true,
+        autoAdjust: false,
+        softContrastGuard: true,
+        flipProcessingHue: false,
+        processingHueOffset: 0,
+        showAdvanced: false,
+        exportHexComments: false,
+        wcagTarget: 4.5,
+        motherStrengthLegacy: 0.2,
+        artDirection: {
+          cohesionStrength: 0.62,
+          oppositionTension: 0.28,
+          distributionUniformity: 0.54,
+          hueBandwidth: 0.48,
+          chromaFocus: 0.58,
+          chromaTaper: 0.42,
+          accentQuota: 0.18,
+          neutralQuota: 0.22
+        },
+        A: {
+          mainCount: 11,
+          contrastCount: 5,
+          mainRange: 96,
+          contrastRange: 50,
+          hueOffset: 0
+        },
+        B: {
+          warpStrength: 0.45,
+          warpShape: "gaussian",
+          hueOffset: 0
+        },
+        C: {
+          counts: [6, 6, 4],
+          centers: [0, 110, -145],
+          spreads: [22, 26, 16]
+        },
+        pyramid: {
+          counts: [9, 5, 2],
+          ranges: [
+            [0.02, 0.06],
+            [0.06, 0.10],
+            [0.10, 0.14]
+          ]
+        },
+        distance: {
+          Cnear: 0.12,
+          Cfar: 0.04,
+          curve: "smoothstep"
+        }
+      };
+
+      const maxChromaCache = new Map();
+      const $ = (id) => document.getElementById(id);
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function normalizeHue(deg) {
+        let h = deg % 360;
+        if (h < 0) h += 360;
+        return h;
+      }
+
+      function shortestHueDistance(from, to) {
+        return ((to - from + 540) % 360) - 180;
+      }
+
+      function mulberry32(seed) {
+        let t = seed >>> 0;
+        return function () {
+          t += 0x6D2B79F5;
+          let r = Math.imul(t ^ (t >>> 15), t | 1);
+          r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+          return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function smoothstep(t) {
+        const x = clamp(t, 0, 1);
+        return x * x * (3 - 2 * x);
+      }
+
+      function curveValue(t, curve) {
+        const x = clamp(t, 0, 1);
+        if (curve === "linear") return x;
+        if (curve === "logistic") {
+          const k = 10;
+          const v = 1 / (1 + Math.exp(-k * (x - 0.5)));
+          const v0 = 1 / (1 + Math.exp(-k * (0 - 0.5)));
+          const v1 = 1 / (1 + Math.exp(-k * (1 - 0.5)));
+          return clamp((v - v0) / (v1 - v0), 0, 1);
+        }
+        return smoothstep(x);
+      }
+
+      function warpKernel(distNorm, shape) {
+        const x = clamp(distNorm, 0, 1);
+        if (shape === "easeInOut") return 1 - smoothstep(x);
+        if (shape === "logistic") return 1 / (1 + Math.exp((x - 0.35) * 12));
+        const sigma = 0.42;
+        return Math.exp(-(x * x) / (2 * sigma * sigma));
+      }
+
+      function gaussianAround(x, sigma) {
+        return Math.exp(-(x * x) / (2 * sigma * sigma));
+      }
+
+      function srgbToLinear(v) {
+        if (v <= 0.04045) return v / 12.92;
+        return Math.pow((v + 0.055) / 1.055, 2.4);
+      }
+
+      function linearToSrgb(v) {
+        if (v <= 0.0031308) return 12.92 * v;
+        return 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+      }
+
+      function hexToSrgb(hex) {
+        const clean = hex.trim().replace(/^#/, "");
+        const int = parseInt(clean, 16);
+        const r = ((int >> 16) & 255) / 255;
+        const g = ((int >> 8) & 255) / 255;
+        const b = (int & 255) / 255;
+        return [r, g, b];
+      }
+
+      function srgbToHex(srgb) {
+        const values = srgb.map((c) => clamp(c, 0, 1));
+        const parts = values.map((c) => Math.round(c * 255).toString(16).padStart(2, "0"));
+        return "#" + parts.join("");
+      }
+
+      function linearSrgbToOklab(linear) {
+        const r = linear[0];
+        const g = linear[1];
+        const b = linear[2];
+        const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+        const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+        const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+        const l3 = Math.cbrt(l);
+        const m3 = Math.cbrt(m);
+        const s3 = Math.cbrt(s);
+        return {
+          L: 0.2104542553 * l3 + 0.7936177850 * m3 - 0.0040720468 * s3,
+          a: 1.9779984951 * l3 - 2.4285922050 * m3 + 0.4505937099 * s3,
+          b: 0.0259040371 * l3 + 0.7827717662 * m3 - 0.8086757660 * s3
+        };
+      }
+
+      function oklabToLinearSrgb(oklab) {
+        const L = oklab.L;
+        const a = oklab.a;
+        const b = oklab.b;
+        const l3 = L + 0.3963377774 * a + 0.2158037573 * b;
+        const m3 = L - 0.1055613458 * a - 0.0638541728 * b;
+        const s3 = L - 0.0894841775 * a - 1.2914855480 * b;
+        const l = l3 * l3 * l3;
+        const m = m3 * m3 * m3;
+        const s = s3 * s3 * s3;
+        return [
+          4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+          -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+        ];
+      }
+
+      function oklabToOklch(oklab) {
+        const C = Math.sqrt(oklab.a * oklab.a + oklab.b * oklab.b);
+        const H = normalizeHue(Math.atan2(oklab.b, oklab.a) * (180 / Math.PI));
+        return { L: oklab.L, C: C, H: H };
+      }
+
+      function oklchToOklab(oklch) {
+        const angle = oklch.H * Math.PI / 180;
+        return {
+          L: oklch.L,
+          a: oklch.C * Math.cos(angle),
+          b: oklch.C * Math.sin(angle)
+        };
+      }
+
+      function srgbToOklch(srgb) {
+        const linear = srgb.map(srgbToLinear);
+        const lab = linearSrgbToOklab(linear);
+        return oklabToOklch(lab);
+      }
+
+      function isLinearInGamut(linear) {
+        const epsilon = 1e-7;
+        return linear.every((c) => c >= -epsilon && c <= 1 + epsilon);
+      }
+
+      function oklchToSrgbInGamut(oklch) {
+        const target = { L: clamp(oklch.L, 0, 1), C: Math.max(0, oklch.C), H: normalizeHue(oklch.H) };
+        const initialLinear = oklabToLinearSrgb(oklchToOklab(target));
+        let final = { ...target };
+        let clipped = false;
+        if (!isLinearInGamut(initialLinear)) {
+          clipped = true;
+          let low = 0;
+          let high = target.C;
+          for (let i = 0; i < 22; i += 1) {
+            const mid = (low + high) / 2;
+            const attempt = oklabToLinearSrgb(oklchToOklab({ L: target.L, C: mid, H: target.H }));
+            if (isLinearInGamut(attempt)) low = mid;
+            else high = mid;
+          }
+          final.C = low;
+        }
+        const finalLinear = oklabToLinearSrgb(oklchToOklab(final));
+        const finalSrgb = finalLinear.map((c) => clamp(linearToSrgb(c), 0, 1));
+        return { oklch: final, srgb: finalSrgb, linear: finalLinear, hex: srgbToHex(finalSrgb), clipped };
+      }
+
+      function relativeLuminance(srgb) {
+        const [r, g, b] = srgb.map(srgbToLinear);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(srgbA, srgbB) {
+        const l1 = relativeLuminance(srgbA);
+        const l2 = relativeLuminance(srgbB);
+        const hi = Math.max(l1, l2);
+        const lo = Math.min(l1, l2);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      function formatOklch(oklch) {
+        return "oklch(" + (oklch.L * 100).toFixed(2) + "% " + oklch.C.toFixed(4) + " " + normalizeHue(oklch.H).toFixed(2) + ")";
+      }
+
+      function parseColorInput(raw) {
+        const value = raw.trim();
+        if (!value) return { error: "Bitte eine Textfarbe eingeben." };
+        const hexMatch = value.match(/^#?([0-9a-fA-F]{6})$/);
+        if (hexMatch) {
+          const hex = "#" + hexMatch[1].toLowerCase();
+          return { source: "hex", original: hex, oklch: srgbToOklch(hexToSrgb(hex)) };
+        }
+        if (/^oklch\(/i.test(value)) {
+          const contentMatch = value.match(/^oklch\((.*)\)$/i);
+          if (!contentMatch) return { error: "Ungueltiges oklch-Format. Erwartet: oklch(L C H)." };
+          const body = contentMatch[1].split("/")[0].replace(/,/g, " ").trim();
+          const parts = body.split(/\s+/).filter(Boolean);
+          if (parts.length < 3) return { error: "OKLCH braucht mindestens drei Werte: L C H." };
+          const Lraw = parts[0];
+          const Cnum = parseFloat(parts[1]);
+          const Hnum = parseFloat(parts[2]);
+          const Lnum = parseFloat(Lraw);
+          if (!Number.isFinite(Lnum) || !Number.isFinite(Cnum) || !Number.isFinite(Hnum)) {
+            return { error: "OKLCH enthaelt ungueltige Zahlen." };
+          }
+          let L = Lraw.endsWith("%") ? Lnum / 100 : Lnum;
+          if (!Lraw.endsWith("%") && L > 1) L /= 100;
+          return {
+            source: "oklch",
+            original: value,
+            oklch: { L: clamp(L, 0, 1), C: Math.max(0, Cnum), H: normalizeHue(Hnum) }
+          };
+        }
+        return { error: "Nicht erkannt. Erlaubt sind #RRGGBB oder oklch(L C H)." };
+      }
+
+      function getNumber(id, fallback) {
+        const value = parseFloat($(id).value);
+        return Number.isFinite(value) ? value : fallback;
+      }
+
+      function normalizeCounts(rawCounts, total) {
+        const sanitized = rawCounts.map((v) => Math.max(0, Math.floor(Number.isFinite(v) ? v : 0)));
+        const sum = sanitized.reduce((acc, v) => acc + v, 0);
+        if (sum === total) return sanitized;
+        if (sum === 0) {
+          const fallback = new Array(sanitized.length).fill(0);
+          fallback[0] = total;
+          return fallback;
+        }
+        const scaled = sanitized.map((v) => (v / sum) * total);
+        const base = scaled.map((v) => Math.floor(v));
+        let rest = total - base.reduce((acc, v) => acc + v, 0);
+        const fractions = scaled.map((v, i) => ({ i, frac: v - Math.floor(v) })).sort((a, b) => b.frac - a.frac);
+        let idx = 0;
+        while (rest > 0 && fractions.length > 0) {
+          base[fractions[idx % fractions.length].i] += 1;
+          rest -= 1;
+          idx += 1;
+        }
+        return base;
+      }
+
+      function randomInRange(rng, min, max) {
+        if (max <= min) return min;
+        return min + (max - min) * rng();
+      }
+
+      function deterministicShuffle(values, rng) {
+        const copy = values.slice();
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(rng() * (i + 1));
+          const tmp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = tmp;
+        }
+        return copy;
+      }
+
+      function ensureHueCount(hues, total, rng, anchorHue, jitter) {
+        const out = hues.slice(0, total);
+        while (out.length < total) {
+          const idx = out.length;
+          const base = anchorHue + (idx * 360) / total;
+          out.push(normalizeHue(base + (rng() * 2 - 1) * jitter));
+        }
+        return out;
+      }
+
+      function generateHues(textHue) {
+        const rng = mulberry32(Math.floor(state.seed));
+        if (state.mode === "A") {
+          const arr = [];
+          const anchor = normalizeHue(textHue + state.A.hueOffset);
+          const mainCount = clamp(Math.round(state.A.mainCount), 0, TARGET_COUNT);
+          const contrastCount = clamp(TARGET_COUNT - mainCount, 0, TARGET_COUNT);
+          state.A.contrastCount = contrastCount;
+          $("a-contrast-count").value = String(contrastCount);
+          const addArc = function (count, center, span) {
+            for (let i = 0; i < count; i += 1) {
+              const t = (i + 0.5) / Math.max(1, count);
+              const offset = (t - 0.5) * span;
+              arr.push(normalizeHue(center + offset + (rng() * 2 - 1) * state.jitter));
+            }
+          };
+          addArc(mainCount, anchor, Math.abs(state.A.mainRange));
+          addArc(contrastCount, normalizeHue(anchor + 180), Math.abs(state.A.contrastRange));
+          return ensureHueCount(arr, TARGET_COUNT, rng, anchor, state.jitter);
+        }
+        if (state.mode === "B") {
+          const arr = [];
+          const anchor = normalizeHue(textHue + state.B.hueOffset);
+          for (let i = 0; i < TARGET_COUNT; i += 1) {
+            const base = normalizeHue(anchor + (i * 360) / TARGET_COUNT);
+            const diffToText = shortestHueDistance(base, textHue);
+            const kernel = warpKernel(Math.abs(diffToText) / 180, state.B.warpShape);
+            const pull = diffToText * state.B.warpStrength * kernel;
+            arr.push(normalizeHue(base + pull + (rng() * 2 - 1) * state.jitter));
+          }
+          return arr;
+        }
+        const arr = [];
+        const counts = normalizeCounts(state.C.counts, TARGET_COUNT);
+        const centers = [0, state.C.centers[1], state.C.centers[2]];
+        for (let c = 0; c < 3; c += 1) {
+          const center = normalizeHue(textHue + centers[c]);
+          const spread = Math.abs(state.C.spreads[c]);
+          const count = counts[c];
+          for (let i = 0; i < count; i += 1) {
+            const t = (i + 0.5) / Math.max(1, count);
+            const baseOffset = (t - 0.5) * 2 * spread;
+            arr.push(normalizeHue(center + baseOffset + (rng() * 2 - 1) * state.jitter));
+          }
+        }
+        return ensureHueCount(deterministicShuffle(arr, rng), TARGET_COUNT, rng, textHue, state.jitter);
+      }
+
+      function applyStyleHueField(hues, textHue, artDirection, rng) {
+        const bandMapped = Math.tanh(artDirection.hueBandwidth * 2.2) / Math.tanh(2.2);
+        const bandLimit = lerp(24, 180, bandMapped);
+        const kPull = 0.58;
+        const kOpp = 26;
+        return hues.map((hue) => {
+          const d = shortestHueDistance(hue, textHue);
+          const pull = -d * artDirection.cohesionStrength * kPull;
+          const oppKernel = gaussianAround(180 - Math.abs(d), 42);
+          const sign = d === 0 ? (rng() < 0.5 ? -1 : 1) : Math.sign(d);
+          const opposition = sign * artDirection.oppositionTension * kOpp * oppKernel;
+          const withNoise = normalizeHue(hue + pull + opposition + (rng() * 2 - 1) * state.jitter * 0.25);
+          const limitedDist = clamp(shortestHueDistance(textHue, withNoise), -bandLimit, bandLimit);
+          return normalizeHue(textHue + limitedDist);
+        });
+      }
+
+      function applyHueRelaxation(hues, uniformity, iterations) {
+        let out = hues.slice();
+        const minSep = lerp(6, 18, uniformity);
+        for (let iter = 0; iter < iterations; iter += 1) {
+          const next = out.slice();
+          for (let i = 0; i < out.length; i += 1) {
+            let push = 0;
+            for (let j = 0; j < out.length; j += 1) {
+              if (i === j) continue;
+              const diff = shortestHueDistance(out[i], out[j]);
+              const abs = Math.abs(diff);
+              if (abs > 1e-3 && abs < minSep) {
+                push -= Math.sign(diff) * (minSep - abs) * 0.34;
+              }
+            }
+            next[i] = normalizeHue(out[i] + clamp(push, -4, 4));
+          }
+          out = next;
+        }
+        return out;
+      }
+
+      function buildRoleMap(hues, textHue, accentQuota, neutralQuota, oppositionTension) {
+        const accentCount = clamp(Math.round(TARGET_COUNT * accentQuota), 0, TARGET_COUNT);
+        const neutralCount = clamp(Math.round(TARGET_COUNT * neutralQuota), 0, TARGET_COUNT - accentCount);
+        const entries = hues.map((hue, index) => {
+          const distNorm = Math.abs(shortestHueDistance(hue, textHue)) / 180;
+          const nearScore = 1 - distNorm;
+          const oppScore = distNorm;
+          const accentScore = nearScore * (1 - oppositionTension) + oppScore * oppositionTension * 0.92;
+          const neutralScore = distNorm * 0.72 + (1 - accentScore) * 0.28;
+          return { index, accentScore, neutralScore };
+        });
+        const roles = new Array(TARGET_COUNT).fill("body");
+        const accents = entries.slice().sort((a, b) => b.accentScore - a.accentScore).slice(0, accentCount);
+        accents.forEach((entry) => { roles[entry.index] = "accent"; });
+        const neutralCandidates = entries.filter((entry) => roles[entry.index] === "body");
+        neutralCandidates.sort((a, b) => b.neutralScore - a.neutralScore).slice(0, neutralCount).forEach((entry) => {
+          roles[entry.index] = "neutral";
+        });
+        return roles;
+      }
+
+      function assignChromaByRoleAndDistance(hues, roles, textHue, artDirection, rng) {
+        const cMin = state.Cmin;
+        const cMax = state.Cmax;
+        const focusExp = lerp(0.9, 3.1, artDirection.chromaFocus);
+        const range = Math.max(cMax - cMin, 1e-5);
+        const bands = {
+          neutral: [cMin, cMin + range * 0.35],
+          body: [cMin + range * 0.24, cMin + range * 0.75],
+          accent: [cMin + range * 0.56, cMax]
+        };
+        return hues.map((hue, i) => {
+          const role = roles[i];
+          const distNorm = Math.abs(shortestHueDistance(hue, textHue)) / 180;
+          const distanceWeight = 1 - Math.pow(distNorm, focusExp);
+          let chroma;
+          if (state.chromaProfile === "distance") {
+            const near = clamp(state.distance.Cnear, cMin, cMax);
+            const far = clamp(state.distance.Cfar, cMin, cMax);
+            const profileBase = lerp(near, far, curveValue(distNorm, state.distance.curve));
+            const roleMul = role === "neutral" ? 0.7 : role === "accent" ? 1.18 : 1;
+            chroma = profileBase * lerp(0.82, 1.18, distanceWeight) * roleMul;
+          } else {
+            const band = bands[role];
+            chroma = lerp(band[0], band[1], 0.25 + 0.65 * distanceWeight);
+          }
+          const taper = 1 - artDirection.chromaTaper * distNorm * 0.75;
+          const noise = (rng() * 2 - 1) * range * 0.04;
+          return clamp(chroma * taper + noise, cMin, cMax);
+        });
+      }
+
+      function getMaxChromaAtLH(L, H) {
+        const key = L.toFixed(4) + "|" + normalizeHue(H).toFixed(2);
+        if (maxChromaCache.has(key)) return maxChromaCache.get(key);
+        let low = 0;
+        let high = 0.45;
+        for (let i = 0; i < 22; i += 1) {
+          const mid = (low + high) / 2;
+          const candidate = oklchToSrgbInGamut({ L, C: mid, H });
+          if (candidate.clipped) high = mid;
+          else low = mid;
+        }
+        maxChromaCache.set(key, low);
+        return low;
+      }
+
+      function applyGamutRelativeScaling(L, H, requestedC) {
+        const cRange = Math.max(state.Cmax - state.Cmin, 1e-6);
+        const ratio = clamp((requestedC - state.Cmin) / cRange, 0, 1);
+        const maxAtLH = getMaxChromaAtLH(L, H);
+        const scaledC = ratio * maxAtLH;
+        return { C: scaledC, CmaxAtLH: maxAtLH, scaleWasLimited: scaledC + 1e-5 < requestedC };
+      }
+
+      function applySoftContrastGuard(tile, textSrgb, target, enabled) {
+        let candidate = oklchToSrgbInGamut(tile);
+        let ratio = contrastRatio(textSrgb, candidate.srgb);
+        if (!enabled) {
+          return { candidate, ratio, softGuardAdjusted: false, softGuardReducedC: false, softGuardRaisedL: false };
+        }
+        const guardTarget = target + 0.35;
+        if (ratio >= guardTarget) {
+          return { candidate, ratio, softGuardAdjusted: false, softGuardReducedC: false, softGuardRaisedL: false };
+        }
+
+        let workL = tile.L;
+        let workC = tile.C;
+        let softGuardReducedC = false;
+        let softGuardRaisedL = false;
+
+        let best = { c: workC, candidate, ratio };
+        for (let step = 1; step <= 8; step += 1) {
+          const c = tile.C * (1 - 0.35 * (step / 8));
+          const attempt = oklchToSrgbInGamut({ L: workL, C: c, H: tile.H });
+          const attemptRatio = contrastRatio(textSrgb, attempt.srgb);
+          if (attemptRatio > best.ratio) best = { c, candidate: attempt, ratio: attemptRatio };
+          if (attemptRatio >= guardTarget) {
+            best = { c, candidate: attempt, ratio: attemptRatio };
+            break;
+          }
+        }
+        if (best.c < workC - 1e-5) {
+          workC = best.c;
+          candidate = best.candidate;
+          ratio = best.ratio;
+          softGuardReducedC = true;
+        }
+
+        if (ratio < guardTarget) {
+          const maxL = clamp(tile.L + 0.04, tile.L, 1);
+          const atMax = oklchToSrgbInGamut({ L: maxL, C: workC, H: tile.H });
+          const ratioAtMax = contrastRatio(textSrgb, atMax.srgb);
+          if (ratioAtMax > ratio) {
+            if (ratioAtMax >= guardTarget) {
+              let low = workL;
+              let high = maxL;
+              let bestCandidate = atMax;
+              for (let i = 0; i < 18; i += 1) {
+                const mid = (low + high) / 2;
+                const probe = oklchToSrgbInGamut({ L: mid, C: workC, H: tile.H });
+                const probeRatio = contrastRatio(textSrgb, probe.srgb);
+                if (probeRatio >= guardTarget) {
+                  bestCandidate = probe;
+                  high = mid;
+                } else {
+                  low = mid;
+                }
+              }
+              candidate = bestCandidate;
+              ratio = contrastRatio(textSrgb, candidate.srgb);
+            } else {
+              candidate = atMax;
+              ratio = ratioAtMax;
+            }
+            if (candidate.oklch.L > workL + 1e-5) {
+              workL = candidate.oklch.L;
+              softGuardRaisedL = true;
+            }
+          }
+        }
+
+        return {
+          candidate,
+          ratio,
+          softGuardAdjusted: softGuardReducedC || softGuardRaisedL,
+          softGuardReducedC,
+          softGuardRaisedL
+        };
+      }
+
+      function findMinLightnessForContrast(chroma, hue, textSrgb, initialL, target) {
+        const maxCandidate = oklchToSrgbInGamut({ L: 1, C: chroma, H: hue });
+        if (contrastRatio(textSrgb, maxCandidate.srgb) < target) return null;
+        let low = clamp(initialL, 0, 1);
+        let high = 1;
+        let best = maxCandidate;
+        for (let i = 0; i < 20; i += 1) {
+          const mid = (low + high) / 2;
+          const candidate = oklchToSrgbInGamut({ L: mid, C: chroma, H: hue });
+          const ratio = contrastRatio(textSrgb, candidate.srgb);
+          if (ratio >= target) {
+            best = candidate;
+            high = mid;
+          } else {
+            low = mid;
+          }
+        }
+        return best;
+      }
+
+      function generatePalette(textOklch) {
+        const resolvedText = oklchToSrgbInGamut(textOklch);
+        const text = {
+          oklch: resolvedText.oklch,
+          srgb: resolvedText.srgb,
+          hex: resolvedText.hex,
+          gamutClipped: resolvedText.clipped
+        };
+        const flipOffset = state.flipProcessingHue ? 180 : 0;
+        const processingHue = normalizeHue(text.oklch.H + flipOffset + state.processingHueOffset);
+        const hueRng = mulberry32(Math.floor(state.seed) + 2024);
+        const chromaRng = mulberry32(Math.floor(state.seed) + 1337);
+        const rawHues = generateHues(processingHue);
+        const styledHues = applyStyleHueField(rawHues, processingHue, state.artDirection, hueRng);
+        const relaxedHues = applyHueRelaxation(styledHues, state.artDirection.distributionUniformity, 3);
+        const roles = buildRoleMap(relaxedHues, processingHue, state.artDirection.accentQuota, state.artDirection.neutralQuota, state.artDirection.oppositionTension);
+        const requestedChromas = assignChromaByRoleAndDistance(relaxedHues, roles, processingHue, state.artDirection, chromaRng);
+
+        const tiles = [];
+        for (let i = 0; i < TARGET_COUNT; i += 1) {
+          const hue = normalizeHue(relaxedHues[i]);
+          const requestedC = requestedChromas[i];
+          const scaled = applyGamutRelativeScaling(state.Lbg, hue, requestedC);
+          const baseTile = { L: state.Lbg, C: scaled.C, H: hue };
+          const guarded = applySoftContrastGuard(baseTile, text.srgb, state.wcagTarget, state.checkContrast && state.softContrastGuard);
+
+          let candidate = guarded.candidate;
+          let ratio = guarded.ratio;
+          let autoAdjusted = false;
+
+          if (state.checkContrast && state.autoAdjust && ratio < state.wcagTarget) {
+            const adjusted = findMinLightnessForContrast(candidate.oklch.C, candidate.oklch.H, text.srgb, candidate.oklch.L, state.wcagTarget);
+            if (adjusted) {
+              candidate = adjusted;
+              ratio = contrastRatio(text.srgb, candidate.srgb);
+              autoAdjusted = candidate.oklch.L > state.Lbg + 1e-4;
+            }
+          }
+
+          tiles.push({
+            id: i + 1,
+            role: roles[i],
+            hueInput: normalizeHue(rawHues[i]),
+            hueStyled: hue,
+            contrast: ratio,
+            warn: state.checkContrast && ratio < state.wcagTarget,
+            autoAdjusted,
+            softGuardAdjusted: guarded.softGuardAdjusted,
+            softGuardReducedC: guarded.softGuardReducedC,
+            softGuardRaisedL: guarded.softGuardRaisedL,
+            gamutClipped: candidate.clipped || scaled.scaleWasLimited,
+            oklch: candidate.oklch,
+            hex: candidate.hex,
+            srgb: candidate.srgb
+          });
+        }
+        return { text, tiles, processingHue };
+      }
+
+      function updateStateFromUI() {
+        state.textInput = $("text-input").value.trim();
+        state.mode = $("mode").value;
+        state.chromaProfile = $("chroma-profile").value;
+        state.seed = Math.max(0, Math.round(getNumber("seed", 42)));
+        state.jitter = clamp(getNumber("jitter", 4), 0, 30);
+        state.Lbg = clamp(getNumber("l-bg", 0.9), 0, 1);
+
+        const cMinRaw = clamp(getNumber("c-min", 0.02), 0, 0.4);
+        const cMaxRaw = clamp(getNumber("c-max", 0.14), 0, 0.4);
+        state.Cmin = Math.min(cMinRaw, cMaxRaw);
+        state.Cmax = Math.max(cMinRaw, cMaxRaw);
+
+        state.checkContrast = $("check-contrast").checked;
+        state.autoAdjust = $("auto-adjust").checked;
+        state.softContrastGuard = $("soft-guard").checked;
+        state.flipProcessingHue = $("flip-processing-hue").checked;
+        state.processingHueOffset = clamp(getNumber("processing-hue-offset", 0), -90, 90);
+        state.showAdvanced = $("show-advanced").checked;
+        state.exportHexComments = $("export-hex-comments").checked;
+
+        state.artDirection.cohesionStrength = clamp(getNumber("ad-cohesion", 0.62), 0, 1);
+        state.artDirection.oppositionTension = clamp(getNumber("ad-opposition", 0.28), 0, 1);
+        state.artDirection.distributionUniformity = clamp(getNumber("ad-uniformity", 0.54), 0, 1);
+        state.artDirection.hueBandwidth = clamp(getNumber("ad-bandwidth", 0.48), 0, 1);
+        state.artDirection.chromaFocus = clamp(getNumber("ad-chroma-focus", 0.58), 0, 1);
+        state.artDirection.chromaTaper = clamp(getNumber("ad-chroma-taper", 0.42), 0, 1);
+        state.artDirection.accentQuota = clamp(getNumber("ad-accent-quota", 0.18), 0, 0.5);
+        state.artDirection.neutralQuota = clamp(getNumber("ad-neutral-quota", 0.22), 0, 0.5);
+        state.motherStrengthLegacy = state.artDirection.cohesionStrength * 2 - 1;
+
+        state.A.mainCount = clamp(Math.round(getNumber("a-main-count", 11)), 0, TARGET_COUNT);
+        state.A.contrastCount = TARGET_COUNT - state.A.mainCount;
+        state.A.mainRange = clamp(getNumber("a-main-range", 96), 0, 360);
+        state.A.contrastRange = clamp(getNumber("a-contrast-range", 50), 0, 360);
+        state.A.hueOffset = getNumber("a-hue-offset", 0);
+
+        state.B.warpStrength = clamp(getNumber("b-warp-strength", 0.45), 0, 1);
+        state.B.warpShape = $("b-warp-shape").value;
+        state.B.hueOffset = getNumber("b-hue-offset", 0);
+
+        state.C.counts = [
+          clamp(Math.round(getNumber("c-count-1", 6)), 0, TARGET_COUNT),
+          clamp(Math.round(getNumber("c-count-2", 6)), 0, TARGET_COUNT),
+          clamp(Math.round(getNumber("c-count-3", 4)), 0, TARGET_COUNT)
+        ];
+        state.C.centers = [0, getNumber("c-center-2", 110), getNumber("c-center-3", -145)];
+        state.C.spreads = [
+          clamp(getNumber("c-spread-1", 22), 1, 180),
+          clamp(getNumber("c-spread-2", 26), 1, 180),
+          clamp(getNumber("c-spread-3", 16), 1, 180)
+        ];
+
+        state.pyramid.counts = [
+          clamp(Math.round(getNumber("pyr-count-low", 9)), 0, TARGET_COUNT),
+          clamp(Math.round(getNumber("pyr-count-mid", 5)), 0, TARGET_COUNT),
+          clamp(Math.round(getNumber("pyr-count-high", 2)), 0, TARGET_COUNT)
+        ];
+        state.pyramid.ranges = [
+          [getNumber("pyr-low-min", 0.02), getNumber("pyr-low-max", 0.06)],
+          [getNumber("pyr-mid-min", 0.06), getNumber("pyr-mid-max", 0.10)],
+          [getNumber("pyr-high-min", 0.10), getNumber("pyr-high-max", 0.14)]
+        ];
+        state.distance.Cnear = clamp(getNumber("dist-c-near", 0.12), 0, 0.4);
+        state.distance.Cfar = clamp(getNumber("dist-c-far", 0.04), 0, 0.4);
+        state.distance.curve = $("dist-curve").value;
+
+        $("a-contrast-count").value = String(state.A.contrastCount);
+      }
+
+      function syncPanels() {
+        const showLegacy = state.showAdvanced;
+        if (!showLegacy) {
+          $("mode-a-panel").dataset.hidden = "true";
+          $("mode-b-panel").dataset.hidden = "true";
+          $("mode-c-panel").dataset.hidden = "true";
+          $("pyramid-panel").dataset.hidden = "true";
+          $("distance-panel").dataset.hidden = "true";
+          return;
+        }
+        const mode = state.mode;
+        $("mode-a-panel").dataset.hidden = mode === "A" ? "false" : "true";
+        $("mode-b-panel").dataset.hidden = mode === "B" ? "false" : "true";
+        $("mode-c-panel").dataset.hidden = mode === "C" ? "false" : "true";
+        const profile = state.chromaProfile;
+        $("pyramid-panel").dataset.hidden = profile === "pyramid" ? "false" : "true";
+        $("distance-panel").dataset.hidden = profile === "distance" ? "false" : "true";
+      }
+
+      function syncReadouts() {
+        $("l-bg-value").textContent = state.Lbg.toFixed(3);
+        $("processing-hue-offset-value").textContent = String(Math.round(state.processingHueOffset));
+        $("b-warp-strength-value").textContent = state.B.warpStrength.toFixed(2);
+        $("ad-cohesion-value").textContent = state.artDirection.cohesionStrength.toFixed(2);
+        $("ad-opposition-value").textContent = state.artDirection.oppositionTension.toFixed(2);
+        $("ad-uniformity-value").textContent = state.artDirection.distributionUniformity.toFixed(2);
+        $("ad-bandwidth-value").textContent = state.artDirection.hueBandwidth.toFixed(2);
+        $("ad-chroma-focus-value").textContent = state.artDirection.chromaFocus.toFixed(2);
+        $("ad-chroma-taper-value").textContent = state.artDirection.chromaTaper.toFixed(2);
+        $("ad-accent-quota-value").textContent = state.artDirection.accentQuota.toFixed(2);
+        $("ad-neutral-quota-value").textContent = state.artDirection.neutralQuota.toFixed(2);
+      }
+
+      function updateStatus(message, isError) {
+        const el = $("parse-status");
+        el.textContent = message;
+        el.className = "status " + (isError ? "error" : "ok");
+      }
+
+      function renderExport(palette) {
+        const lines = [":root {"];
+        lines.push("  --text: " + formatOklch(palette.text.oklch) + ";" + (state.exportHexComments ? " /* " + palette.text.hex + " */" : ""));
+        palette.tiles.forEach((tile) => {
+          const name = "--bg-" + String(tile.id).padStart(2, "0");
+          const line = "  " + name + ": " + formatOklch(tile.oklch) + ";";
+          lines.push(state.exportHexComments ? line + " /* " + tile.hex + " */" : line);
+        });
+        lines.push("}");
+        $("css-output").value = lines.join("\n");
+        const hexLines = ["Text: " + palette.text.hex];
+        palette.tiles.forEach((tile) => {
+          hexLines.push("bg-" + String(tile.id).padStart(2, "0") + ": " + tile.hex);
+        });
+        $("hex-output").textContent = hexLines.join("\n");
+      }
+
+      function renderGrid(palette) {
+        const grid = $("palette-grid");
+        grid.innerHTML = "";
+        palette.tiles.forEach((tile) => {
+          const node = document.createElement("article");
+          node.className = "tile" + (tile.warn ? " warn" : "");
+          node.style.background = tile.hex;
+          const label = "bg-" + String(tile.id).padStart(2, "0");
+          const passFail = tile.warn ? "FAIL" : "PASS";
+          node.innerHTML =
+            '<div class="tile-head" style="color:' + palette.text.hex + ';">' +
+              '<span>' + label + '</span>' +
+              (tile.warn ? '<span class="warn-badge">WARN</span>' : '') +
+            '</div>' +
+            '<div class="sample" style="color:' + palette.text.hex + ';">' +
+              '<div class="sample-aa">Aa</div>' +
+              '<div class="sample-body">Body text sample</div>' +
+              '<div class="sample-chip">Button</div>' +
+            '</div>' +
+            '<div class="tile-meta">' +
+              '<div>Role ' + tile.role + "</div>" +
+              "<div>OKLCH " + formatOklch(tile.oklch) + "</div>" +
+              "<div>HEX " + tile.hex + "</div>" +
+              "<div>Hue " + tile.hueStyled.toFixed(2) + " (src " + tile.hueInput.toFixed(2) + ")</div>" +
+              "<div>Contrast " + tile.contrast.toFixed(2) + ":1 [" + passFail + "]</div>" +
+              (tile.softGuardAdjusted ? "<div>Soft guard adjusted</div>" : "") +
+              (tile.autoAdjusted ? "<div>L auto-adjusted</div>" : "") +
+              (tile.gamutClipped ? "<div>C gamut-limited</div>" : "") +
+            "</div>";
+          grid.appendChild(node);
+        });
+      }
+
+      function render() {
+        updateStateFromUI();
+        syncPanels();
+        syncReadouts();
+
+        const parsed = parseColorInput(state.textInput);
+        if (parsed.error) {
+          updateStatus(parsed.error, true);
+          $("palette-grid").innerHTML = "";
+          $("css-output").value = "";
+          $("hex-output").textContent = "";
+          return;
+        }
+
+        const palette = generatePalette(parsed.oklch);
+        const warnCount = palette.tiles.filter((tile) => tile.warn).length;
+        const softCount = palette.tiles.filter((tile) => tile.softGuardAdjusted).length;
+        let statusMessage = "Text erkannt: " + formatOklch(palette.text.oklch) + " / " + palette.text.hex;
+        statusMessage += " | Warnungen: " + warnCount + "/" + TARGET_COUNT + " | Soft guard: " + softCount;
+        if (state.flipProcessingHue || Math.abs(state.processingHueOffset) > 0.001) {
+          const offsetLabel = (state.processingHueOffset >= 0 ? "+" : "") + Math.round(state.processingHueOffset) + "deg";
+          statusMessage += " | Processing Hue Shift: " + (state.flipProcessingHue ? "+180deg " : "") + offsetLabel;
+        }
+        if (parsed.source === "oklch" && palette.text.gamutClipped) {
+          statusMessage += " | Hinweis: Text-Chroma wurde fuer sRGB-Gamut reduziert.";
+        }
+
+        updateStatus(statusMessage, false);
+        renderExport(palette);
+        renderGrid(palette);
+      }
+
+      function bindControls() {
+        document.querySelectorAll("[data-control]").forEach((node) => {
+          node.addEventListener("input", render);
+          node.addEventListener("change", render);
+        });
+        $("copy-css").addEventListener("click", async function () {
+          const text = $("css-output").value;
+          if (!text) return;
+          try {
+            await navigator.clipboard.writeText(text);
+            $("copy-status").textContent = "CSS in Zwischenablage kopiert.";
+          } catch (error) {
+            const output = $("css-output");
+            output.focus();
+            output.select();
+            $("copy-status").textContent = "Clipboard API blockiert. Text ist markiert; bitte manuell kopieren.";
+          }
+        });
+      }
+
+      bindControls();
+      render();
+    })();
+  </script>
+</body>
+</html>
