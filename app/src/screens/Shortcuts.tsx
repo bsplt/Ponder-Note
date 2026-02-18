@@ -46,6 +46,10 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     rows: [
       { keys: ['Esc'], action: 'Exit editor' },
       { keys: ['e'], action: 'Switch from preview to edit mode' },
+      {
+        keys: ['o', 'Space'],
+        action: 'Type o at line start (o ); on exit it is replaced with [ ] to create a todo',
+      },
     ],
   },
   {
@@ -73,10 +77,6 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['Enter'], action: 'Open source note' },
       { keys: ['Esc'], action: 'Back to overview' },
     ],
-  },
-  {
-    title: 'Rebuild log modal',
-    rows: [{ keys: ['Esc'], action: 'Close modal' }],
   },
 ]
 

@@ -444,7 +444,7 @@ body {
 }
 
 .shortcutsGroupTitle {
-  margin: 0 0 var(--space-6);
+  margin: 0 0 var(--font-size-sm);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
 }
@@ -458,7 +458,8 @@ body {
   display: grid;
   grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
   gap: var(--space-6);
-  align-items: start;
+  align-items: center;
+  margin-bottom: var(--font-size-sm);
 }
 
 .shortcutKeys {

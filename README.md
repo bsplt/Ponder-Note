@@ -112,6 +112,7 @@ Open the in-app shortcuts page with `h`, `?`, or the `?` button in the Overview 
 
 - `Esc` -> Exit editor
 - `e` -> Switch from preview to edit mode
+- `o` then `Space` at line start (`o `) -> On exit, replaced with `[ ]` to create a todo
 
 ### Editor tag input + autocomplete
 
@@ -132,10 +133,6 @@ Open the in-app shortcuts page with `h`, `?`, or the `?` button in the Overview 
 - `Space` -> Toggle todo
 - `Enter` -> Open source note
 - `Esc` -> Back to overview
-
-### Rebuild Log Modal
-
-- `Esc` -> Close modal
 
 ## Workspace/Data Model
 
