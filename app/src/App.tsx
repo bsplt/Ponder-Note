@@ -3,6 +3,7 @@ import { Overview } from './screens/Overview'
 import { Editor } from './screens/Editor'
 import { Workspaces } from './screens/Workspaces'
 import { TodoList } from './screens/TodoList'
+import { Shortcuts } from './screens/Shortcuts'
 import type { NoteSummary } from './api/workspace'
 import { RebuildLogModal } from './components/RebuildLogModal'
 import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
@@ -16,6 +17,7 @@ function titleForScreen(screen: AppScreen): string {
   if (screen === 'overview') return 'Overview'
   if (screen === 'editor') return 'Editor'
   if (screen === 'todolist') return 'Todos'
+  if (screen === 'shortcuts') return 'Shortcuts'
   return 'Workspaces'
 }
 
@@ -142,6 +144,10 @@ function App() {
     setScreen('overview')
   }, [])
 
+  const handleOpenShortcuts = useCallback(() => {
+    setScreen('shortcuts')
+  }, [])
+
   const handleOpenNoteFromTodoList = useCallback((stem: string) => {
     const note = notes.find((n) => n.stem === stem)
     if (note) handleOpenNote(note, 0)
@@ -185,6 +191,11 @@ function App() {
 
       if (action === 'todolist') {
         setScreen('todolist')
+        return
+      }
+
+      if (action === 'shortcuts') {
+        setScreen('shortcuts')
         return
       }
 
@@ -249,6 +260,7 @@ function App() {
             onExcludeTagsChange={setExcludeTags}
             isCompact={overviewCompact}
             onToggleCompact={() => setOverviewCompact((value) => !value)}
+            onOpenShortcuts={handleOpenShortcuts}
           />
         ) : screen === 'editor' ? (
           activeNoteStem ? (
@@ -268,10 +280,13 @@ function App() {
               onExcludeTagsChange={setExcludeTags}
               isCompact={overviewCompact}
               onToggleCompact={() => setOverviewCompact((value) => !value)}
+              onOpenShortcuts={handleOpenShortcuts}
             />
           )
         ) : screen === 'todolist' ? (
           <TodoList onExit={handleExitTodoList} onOpenNote={handleOpenNoteFromTodoList} />
+        ) : screen === 'shortcuts' ? (
+          <Shortcuts />
         ) : (
           <Workspaces />
         )}

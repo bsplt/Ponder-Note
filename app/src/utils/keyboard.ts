@@ -1,6 +1,6 @@
-export type AppScreen = 'overview' | 'workspaces' | 'editor' | 'todolist'
+export type AppScreen = 'overview' | 'workspaces' | 'editor' | 'todolist' | 'shortcuts'
 
-export type GlobalNavAction = 'overview' | 'workspaces' | 'todolist' | 'new-note'
+export type GlobalNavAction = 'overview' | 'workspaces' | 'todolist' | 'shortcuts' | 'new-note'
 
 type KeyboardLikeTarget = {
   isContentEditable?: boolean
@@ -44,6 +44,7 @@ export function getGlobalNavAction(input: GlobalShortcutInput): GlobalNavAction 
   if (key === 'w') return 'workspaces'
   if (key === 'o') return 'overview'
   if (key === 't') return 'todolist'
+  if (key === 'h' || key === '?') return 'shortcuts'
   if (key === 'n') return 'new-note'
   return null
 }

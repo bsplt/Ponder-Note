@@ -80,12 +80,16 @@ From repo root:
 
 ## Keyboard Shortcuts
 
+Open the in-app shortcuts page with `h`, `?`, or the `?` button in the Overview search bar.
+
 ### Global (outside editor, when not typing)
 
 - `o` -> Overview
 - `w` -> Workspaces
 - `t` -> Todos
 - `n` -> New note
+- `h` -> Shortcuts
+- `?` -> Shortcuts
 
 ### Overview
 
@@ -97,10 +101,30 @@ From repo root:
 - `Cmd/Ctrl + f` -> Focus search
 - `Esc` -> Clear search and tag filters
 
+### Search input (Overview)
+
+- `Esc` -> Clear search + filters and blur
+- `Backspace` (empty input) -> Remove last tag pill
+- `Enter` with `#tag` or `#-tag` -> Create include/exclude tag pill
+- `Space` with `#tag` or `#-tag` -> Create include/exclude tag pill
+
 ### Editor
 
 - `Esc` -> Exit editor
 - `e` -> Switch from preview to edit mode
+
+### Editor tag input + autocomplete
+
+- `Enter` or `,` -> Commit tag pill
+- `Backspace` (empty input) -> Remove last tag
+- `Arrow Up / Arrow Down` -> Navigate autocomplete
+- `Tab` or `Enter` -> Accept autocomplete selection
+- `Esc` -> Close autocomplete
+
+### Editor preview todo rows
+
+- `Enter` -> Toggle todo
+- `Arrow Up / Arrow Down` -> Move todo-row focus
 
 ### Todos
 
@@ -108,6 +132,10 @@ From repo root:
 - `Space` -> Toggle todo
 - `Enter` -> Open source note
 - `Esc` -> Back to overview
+
+### Rebuild Log Modal
+
+- `Esc` -> Close modal
 
 ## Workspace/Data Model
 

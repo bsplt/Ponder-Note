@@ -422,6 +422,84 @@ body {
   color: var(--color-muted);
 }
 
+/* ── Shortcuts ─────────────────────────────────────────────────────── */
+
+.shortcutsPanel {
+  padding: var(--size-touch);
+}
+
+.shortcutsHeader {
+  margin-bottom: var(--space-13);
+}
+
+.shortcutsGroups {
+  display: grid;
+  gap: var(--space-12);
+}
+
+.shortcutsGroup {
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  padding-top: var(--space-8);
+}
+
+.shortcutsGroupTitle {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.shortcutsRows {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.shortcutRow {
+  display: grid;
+  grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.shortcutKeys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.shortcutKeysItem {
+  display: inline-flex;
+}
+
+.shortcutKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-5);
+  min-height: var(--space-14);
+  min-width: var(--space-14);
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--color-button-border);
+  background: var(--color-button-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  text-transform: none;
+}
+
+.shortcutAction {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+}
+
+@media (max-width: 800px) {
+  .shortcutRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}
+
 /* ── Notes list ─────────────────────────────────────────────────────── */
 
 .notesList {
@@ -598,9 +676,18 @@ body {
   background: var(--color-primary-subtle);
 }
 
-.searchBarInput {
+.searchBarInputWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   flex: 1;
   min-width: var(--size-input-min);
+  margin-left: auto;
+}
+
+.searchBarInput {
+  flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   font-size: var(--font-size-base);
@@ -612,6 +699,34 @@ body {
 
 .searchBarInput::placeholder {
   color: var(--color-muted-2);
+}
+
+.searchBarHelpButton {
+  width: var(--size-touch);
+  min-width: var(--size-touch);
+  height: var(--size-touch);
+  border: var(--border-width) solid var(--color-button-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-button-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.searchBarHelpButton:hover {
+  background: var(--color-button-hover-bg);
+  border-color: var(--color-button-hover-border);
+}
+
+.searchBarHelpButton:focus-visible {
+  outline: var(--outline-width) solid var(--color-focus);
+  outline-offset: var(--space-1);
 }
 
 .filterPill, .pill {

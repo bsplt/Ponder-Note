@@ -13,6 +13,7 @@ type OverviewProps = {
   onManageWorkspaces: () => void
   onOpenNote: (note: NoteSummary, scrollTop: number) => void
   onCreateNote: (note: NoteSummary, scrollTop: number) => void
+  onOpenShortcuts: () => void
   restoreScrollTop: number
   restoreFocusStem: string | null
   searchText: string
@@ -57,6 +58,7 @@ export function Overview(props: OverviewProps) {
   const onManageWorkspaces = props.onManageWorkspaces
   const onOpenNote = props.onOpenNote
   const onCreateNote = props.onCreateNote
+  const onOpenShortcuts = props.onOpenShortcuts
   const restoreScrollTop = props.restoreScrollTop
   const restoreFocusStem = props.restoreFocusStem
   const searchText = props.searchText
@@ -394,6 +396,7 @@ export function Overview(props: OverviewProps) {
         onExcludeTagsChange={onExcludeTagsChange}
         placeholder="Search"
         inputRef={searchInputRef}
+        onOpenShortcuts={onOpenShortcuts}
       />
 
       {loading ? (
