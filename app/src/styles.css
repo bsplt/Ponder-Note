@@ -953,6 +953,14 @@ body {
   padding-left: 0;
 }
 
+.editorMarkdown li.editorTodoItem {
+  list-style: none;
+}
+
+.editorMarkdown li.editorTodoItem + li.editorTodoItem {
+  margin-top: var(--space-3);
+}
+
 .editorFooter {
   display: none;
   justify-content: space-between;
@@ -1191,6 +1199,15 @@ body {
 
 .todoRow:hover {
   opacity: 0.8;
+}
+
+.todoRowDisabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.todoRowDisabled:hover {
+  opacity: 0.65;
 }
 
 .todoRowFocused {

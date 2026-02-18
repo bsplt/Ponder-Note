@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { listTodos, toggleTodo, type TodoItem } from '../api/todos'
+import { TodoRow } from '../components/TodoRow'
 import { groupTodosByTags } from '../utils/todoGrouping'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { Toast } from '../components/Toast'
@@ -109,27 +110,16 @@ export function TodoList(props: TodoListProps) {
             const isFocused = globalIndex === focusedIndex
             globalIndex++
             return (
-              <div
+              <TodoRow
                 key={`${group.tag}-${todo.noteStem}-${todo.lineNumber}`}
-                className={`todoRow ${isFocused ? 'todoRowFocused' : ''}`}
-                style={{ '--note-bg': `var(--color-slot-${noteColorSlot(todo.noteStem)})` } as React.CSSProperties}
-                onClick={() => handleToggle(todo)}
-              >
-                <span className="todoCheckbox">{todo.checked ? '■' : ' '}</span>
-                <span className={`todoText ${todo.checked ? 'todoTextChecked' : ''}`}>
-                  {todo.text}
-                </span>
-                <button
-                  type="button"
-                  className="todoOpenBtn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    props.onOpenNote(todo.noteStem)
-                  }}
-                >
-                  →
-                </button>
-              </div>
+                style={{ '--note-bg': `var(--color-slot-${noteColorSlot(todo.noteStem)})` } as CSSProperties}
+                checked={todo.checked}
+                text={todo.text}
+                focused={isFocused}
+                onToggle={() => handleToggle(todo)}
+                showOpenButton
+                onOpen={() => props.onOpenNote(todo.noteStem)}
+              />
             )
           })}
         </div>

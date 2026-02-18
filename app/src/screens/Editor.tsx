@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
+import { toggleTodo } from '../api/todos'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
+import { Toast } from '../components/Toast'
+import { TodoRow } from '../components/TodoRow'
 import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
+import { extractMarkdownTodos, normalizePreviewTodoLines, toggleMarkdownTodoInBody, type MarkdownTodo } from '../utils/markdownTodo'
 import { noteColorSlot } from '../utils/noteColor'
 import { isTypingTarget } from '../utils/keyboard'
 
@@ -46,6 +51,10 @@ function defaultEditorMode(isNew: boolean): EditorMode {
   return isNew ? 'edit' : 'preview'
 }
 
+function todoToggleKey(todo: MarkdownTodo): string {
+  return `${todo.lineNumber}:${todo.charOffset}`
+}
+
 export function Editor(props: EditorProps) {
   const { stem, isNew, onExit } = props
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -56,6 +65,7 @@ export function Editor(props: EditorProps) {
   const lastSavedBodyRef = useRef('')
   const bodyRef = useRef('')
   const saveErrorRef = useRef<string | null>(null)
+  const pendingPreviewToggleKeysRef = useRef(new Set<string>())
 
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(true)
@@ -67,6 +77,8 @@ export function Editor(props: EditorProps) {
   const [workspaceTags, setWorkspaceTags] = useState<string[]>([])
   const [tagSaveError, setTagSaveError] = useState<string | null>(null)
   const [mode, setMode] = useState<EditorMode>(() => defaultEditorMode(isNew))
+  const [previewToastMessage, setPreviewToastMessage] = useState<string | null>(null)
+  const [previewToggleVersion, setPreviewToggleVersion] = useState(0)
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current
@@ -94,6 +106,12 @@ export function Editor(props: EditorProps) {
   useEffect(() => {
     setMode(defaultEditorMode(isNew))
   }, [isNew, stem])
+
+  useEffect(() => {
+    pendingPreviewToggleKeysRef.current.clear()
+    setPreviewToggleVersion((v) => v + 1)
+    setPreviewToastMessage(null)
+  }, [stem])
 
   // Load workspace tags on mount
   useEffect(() => {
@@ -239,6 +257,91 @@ export function Editor(props: EditorProps) {
   }, [mode, syncTextareaHeight])
 
   const saveStatus = useMemo(() => formatTime(lastSavedAt), [lastSavedAt])
+  const previewTodosByLine = useMemo(() => extractMarkdownTodos(body), [body])
+  const previewBody = useMemo(() => normalizePreviewTodoLines(body), [body])
+
+  const handlePreviewTodoToggle = useCallback(
+    async (todo: MarkdownTodo) => {
+      const key = todoToggleKey(todo)
+      if (pendingPreviewToggleKeysRef.current.has(key)) {
+        return
+      }
+
+      pendingPreviewToggleKeysRef.current.add(key)
+      setPreviewToggleVersion((v) => v + 1)
+
+      let nextBody: string
+      try {
+        nextBody = toggleMarkdownTodoInBody(bodyRef.current, todo.lineNumber, todo.charOffset).body
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        setPreviewToastMessage(`Failed to toggle todo: ${message}`)
+        pendingPreviewToggleKeysRef.current.delete(key)
+        setPreviewToggleVersion((v) => v + 1)
+        return
+      }
+
+      setBody(nextBody)
+      bodyRef.current = nextBody
+      lastSavedBodyRef.current = nextBody
+      setSaveError(null)
+
+      try {
+        await toggleTodo(stem, todo.lineNumber, todo.charOffset)
+        setLastSavedAt(Date.now())
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        try {
+          const reloadedBody = await noteRead(stem)
+          setBody(reloadedBody)
+          bodyRef.current = reloadedBody
+          lastSavedBodyRef.current = reloadedBody
+          setPreviewToastMessage(`Failed to toggle todo: ${message}. Note was reloaded.`)
+        } catch (reloadErr) {
+          const reloadMessage = reloadErr instanceof Error ? reloadErr.message : String(reloadErr)
+          setPreviewToastMessage(`Failed to toggle todo: ${message}. Reload failed: ${reloadMessage}`)
+        }
+      } finally {
+        pendingPreviewToggleKeysRef.current.delete(key)
+        setPreviewToggleVersion((v) => v + 1)
+      }
+    },
+    [stem],
+  )
+
+  const markdownComponents = useMemo<Components>(
+    () => ({
+      li: ({ node, children, className, ...props }) => {
+        const startLine = node?.position?.start?.line
+        const todo = typeof startLine === 'number' ? previewTodosByLine.get(startLine - 1) : undefined
+        if (!todo) {
+          return (
+            <li className={className} {...props}>
+              {children}
+            </li>
+          )
+        }
+
+        const pending = pendingPreviewToggleKeysRef.current.has(todoToggleKey(todo))
+        const mergedClassName = className ? `editorTodoItem ${className}` : 'editorTodoItem'
+
+        return (
+          <li className={mergedClassName} {...props}>
+            <TodoRow
+              checked={todo.checked}
+              text={todo.text}
+              onToggle={() => {
+                void handlePreviewTodoToggle(todo)
+              }}
+              disabled={pending}
+              className="editorTodoRow"
+            />
+          </li>
+        )
+      },
+    }),
+    [handlePreviewTodoToggle, previewToggleVersion, previewTodosByLine],
+  )
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -411,7 +514,9 @@ export function Editor(props: EditorProps) {
             />
           ) : (
             <div className="editorMarkdown">
-              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{body}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={markdownComponents}>
+                {previewBody}
+              </ReactMarkdown>
             </div>
           )}
         </div>
@@ -421,6 +526,10 @@ export function Editor(props: EditorProps) {
         <span>ESC to exit</span>
         <span>Autosave is on</span>
       </div>
+
+      {previewToastMessage ? (
+        <Toast message={previewToastMessage} onClose={() => setPreviewToastMessage(null)} />
+      ) : null}
     </section>
   )
 }
