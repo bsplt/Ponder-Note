@@ -1201,6 +1201,11 @@ body {
   opacity: 0.8;
 }
 
+.todoRow:focus-visible {
+  outline: none;
+  background: var(--color-primary-soft);
+}
+
 .todoRowDisabled {
   cursor: wait;
   opacity: 0.65;

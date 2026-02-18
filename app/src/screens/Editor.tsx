@@ -66,6 +66,8 @@ export function Editor(props: EditorProps) {
   const bodyRef = useRef('')
   const saveErrorRef = useRef<string | null>(null)
   const pendingPreviewToggleKeysRef = useRef(new Set<string>())
+  const previewTodoRowRefsRef = useRef(new Map<string, HTMLDivElement>())
+  const restorePreviewFocusKeyRef = useRef<string | null>(null)
 
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(true)
@@ -109,6 +111,8 @@ export function Editor(props: EditorProps) {
 
   useEffect(() => {
     pendingPreviewToggleKeysRef.current.clear()
+    previewTodoRowRefsRef.current.clear()
+    restorePreviewFocusKeyRef.current = null
     setPreviewToggleVersion((v) => v + 1)
     setPreviewToastMessage(null)
   }, [stem])
@@ -259,9 +263,43 @@ export function Editor(props: EditorProps) {
   const saveStatus = useMemo(() => formatTime(lastSavedAt), [lastSavedAt])
   const previewTodosByLine = useMemo(() => extractMarkdownTodos(body), [body])
   const previewBody = useMemo(() => normalizePreviewTodoLines(body), [body])
+  const previewTodoKeysOrdered = useMemo(() => {
+    return Array.from(previewTodosByLine.values())
+      .sort((a, b) => {
+        if (a.lineNumber === b.lineNumber) return a.charOffset - b.charOffset
+        return a.lineNumber - b.lineNumber
+      })
+      .map((todo) => todoToggleKey(todo))
+  }, [previewTodosByLine])
+
+  const previewTodoIndexByKey = useMemo(() => {
+    const map = new Map<string, number>()
+    previewTodoKeysOrdered.forEach((key, index) => {
+      map.set(key, index)
+    })
+    return map
+  }, [previewTodoKeysOrdered])
+
+  const focusPreviewNeighborTodo = useCallback(
+    (currentIndex: number, direction: -1 | 1) => {
+      let index = currentIndex + direction
+
+      while (index >= 0 && index < previewTodoKeysOrdered.length) {
+        const key = previewTodoKeysOrdered[index]
+        if (!pendingPreviewToggleKeysRef.current.has(key)) {
+          const element = previewTodoRowRefsRef.current.get(key)
+          element?.focus()
+          return
+        }
+        index += direction
+      }
+    },
+    [previewTodoKeysOrdered],
+  )
 
   const handlePreviewTodoToggle = useCallback(
-    async (todo: MarkdownTodo) => {
+    async (todo: MarkdownTodo, options: { preserveFocus?: boolean } = {}) => {
+      const preserveFocus = options.preserveFocus ?? false
       const key = todoToggleKey(todo)
       if (pendingPreviewToggleKeysRef.current.has(key)) {
         return
@@ -302,12 +340,31 @@ export function Editor(props: EditorProps) {
           setPreviewToastMessage(`Failed to toggle todo: ${message}. Reload failed: ${reloadMessage}`)
         }
       } finally {
+        if (preserveFocus) {
+          restorePreviewFocusKeyRef.current = key
+        }
         pendingPreviewToggleKeysRef.current.delete(key)
         setPreviewToggleVersion((v) => v + 1)
       }
     },
     [stem],
   )
+
+  useEffect(() => {
+    if (mode !== 'preview') return
+    const key = restorePreviewFocusKeyRef.current
+    if (!key) return
+
+    const id = window.requestAnimationFrame(() => {
+      const element = previewTodoRowRefsRef.current.get(key)
+      if (element) {
+        element.focus()
+      }
+      restorePreviewFocusKeyRef.current = null
+    })
+
+    return () => window.cancelAnimationFrame(id)
+  }, [mode, previewToggleVersion])
 
   const markdownComponents = useMemo<Components>(
     () => ({
@@ -322,8 +379,10 @@ export function Editor(props: EditorProps) {
           )
         }
 
-        const pending = pendingPreviewToggleKeysRef.current.has(todoToggleKey(todo))
+        const todoKey = todoToggleKey(todo)
+        const pending = pendingPreviewToggleKeysRef.current.has(todoKey)
         const mergedClassName = className ? `editorTodoItem ${className}` : 'editorTodoItem'
+        const todoIndex = previewTodoIndexByKey.get(todoKey) ?? -1
 
         return (
           <li className={mergedClassName} {...props}>
@@ -335,12 +394,46 @@ export function Editor(props: EditorProps) {
               }}
               disabled={pending}
               className="editorTodoRow"
+              role="checkbox"
+              ariaLabel={todo.text}
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  if (!pending) {
+                    void handlePreviewTodoToggle(todo, { preserveFocus: true })
+                  }
+                  return
+                }
+
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  if (todoIndex >= 0) {
+                    focusPreviewNeighborTodo(todoIndex, 1)
+                  }
+                  return
+                }
+
+                if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  if (todoIndex >= 0) {
+                    focusPreviewNeighborTodo(todoIndex, -1)
+                  }
+                }
+              }}
+              containerRef={(element) => {
+                if (!element) {
+                  previewTodoRowRefsRef.current.delete(todoKey)
+                  return
+                }
+                previewTodoRowRefsRef.current.set(todoKey, element)
+              }}
             />
           </li>
         )
       },
     }),
-    [handlePreviewTodoToggle, previewToggleVersion, previewTodosByLine],
+    [focusPreviewNeighborTodo, handlePreviewTodoToggle, previewTodoIndexByKey, previewToggleVersion, previewTodosByLine],
   )
 
   const handleChange = useCallback(

@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEventHandler, Ref } from 'react'
 
 type TodoRowProps = {
   checked: boolean
@@ -10,6 +10,11 @@ type TodoRowProps = {
   onOpen?: () => void
   style?: CSSProperties
   className?: string
+  onKeyDown?: KeyboardEventHandler<HTMLDivElement>
+  tabIndex?: number
+  role?: string
+  ariaLabel?: string
+  containerRef?: Ref<HTMLDivElement>
 }
 
 export function TodoRow(props: TodoRowProps) {
@@ -23,6 +28,11 @@ export function TodoRow(props: TodoRowProps) {
     onOpen,
     style,
     className,
+    onKeyDown,
+    tabIndex,
+    role,
+    ariaLabel,
+    containerRef,
   } = props
 
   const classes = [
@@ -35,7 +45,18 @@ export function TodoRow(props: TodoRowProps) {
     .join(' ')
 
   return (
-    <div className={classes} style={style} onClick={disabled ? undefined : onToggle}>
+    <div
+      ref={containerRef}
+      className={classes}
+      style={style}
+      onClick={disabled ? undefined : onToggle}
+      onKeyDown={onKeyDown}
+      tabIndex={tabIndex}
+      role={role}
+      aria-label={ariaLabel}
+      aria-checked={role === 'checkbox' ? checked : undefined}
+      aria-disabled={disabled || undefined}
+    >
       <span className="todoCheckbox">{checked ? '■' : ' '}</span>
       <span className={`todoText ${checked ? 'todoTextChecked' : ''}`}>{text}</span>
       {showOpenButton ? (
