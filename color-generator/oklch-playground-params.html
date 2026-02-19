@@ -67,7 +67,7 @@
     .top-grid {
       margin-top: 12px;
       display: grid;
-      grid-template-columns: 1fr minmax(120px, 160px) minmax(180px, 220px) auto auto;
+      grid-template-columns: 1fr minmax(120px, 160px) minmax(140px, 180px) minmax(180px, 220px) auto auto;
       gap: 10px;
       align-items: end;
     }
@@ -408,6 +408,13 @@
           <select id="hue-steps"></select>
         </label>
         <label class="field">
+          <span>Clamp Gamut</span>
+          <select id="gamut-mode">
+            <option value="srgb">sRGB</option>
+            <option value="p3">Display-P3</option>
+          </select>
+        </label>
+        <label class="field">
           <span>Exclude Angles</span>
           <details id="exclude-dropdown" class="exclude-dropdown">
             <summary id="exclude-summary">None excluded</summary>
@@ -458,11 +465,13 @@
       const STORAGE_KEY = "pondernote.oklchPlaygroundParams.v1";
       const AUTOSAVE_DELAY_MS = 150;
       const STEP_OPTIONS = [5, 6, 8, 10, 12, 14, 16, 18];
+      const GAMUT_OPTIONS = ["srgb", "p3"];
       const OFFSET_EPSILON = 1e-6;
 
       const defaults = {
         textColorInput: "oklch(25% 0.08 260)",
         hueSteps: 12,
+        gamutMode: "srgb",
         excludedOffsets: [],
         sets: [
           { id: "set-1", name: "Set 1", L: 90, C: 0.06 },
@@ -478,6 +487,7 @@
       const state = {
         textColorInput: defaults.textColorInput,
         hueSteps: defaults.hueSteps,
+        gamutMode: defaults.gamutMode,
         excludedOffsets: defaults.excludedOffsets.slice(),
         sets: defaults.sets.map(cloneSet),
         backgrounds: defaults.backgrounds.map(cloneBackground),
@@ -530,6 +540,11 @@
       function sanitizeHueSteps(value) {
         const parsed = Number(value);
         return STEP_OPTIONS.includes(parsed) ? parsed : defaults.hueSteps;
+      }
+
+      function sanitizeGamutMode(value) {
+        const mode = String(value || "").toLowerCase();
+        return GAMUT_OPTIONS.includes(mode) ? mode : defaults.gamutMode;
       }
 
       function getQuantizedOffsets(stepCount) {
@@ -663,44 +678,92 @@
         return "#" + parts.join("");
       }
 
-      function linearSrgbToOklab(linear) {
-        const r = linear[0];
-        const g = linear[1];
-        const b = linear[2];
+      function xyzToOklab(xyz) {
+        const x = xyz[0];
+        const y = xyz[1];
+        const z = xyz[2];
 
-        const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
-        const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
-        const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+        const l = 0.8189330101 * x + 0.3618667424 * y - 0.1288597137 * z;
+        const m = 0.0329845436 * x + 0.9293118715 * y + 0.0361456387 * z;
+        const s = 0.0482003018 * x + 0.2643662691 * y + 0.633851707 * z;
 
         const l3 = Math.cbrt(l);
         const m3 = Math.cbrt(m);
         const s3 = Math.cbrt(s);
 
         return {
-          L: 0.2104542553 * l3 + 0.7936177850 * m3 - 0.0040720468 * s3,
-          a: 1.9779984951 * l3 - 2.4285922050 * m3 + 0.4505937099 * s3,
-          b: 0.0259040371 * l3 + 0.7827717662 * m3 - 0.8086757660 * s3
+          L: 0.2104542553 * l3 + 0.793617785 * m3 - 0.0040720468 * s3,
+          a: 1.9779984951 * l3 - 2.428592205 * m3 + 0.4505937099 * s3,
+          b: 0.0259040371 * l3 + 0.7827717662 * m3 - 0.808675766 * s3
         };
       }
 
-      function oklabToLinearSrgb(oklab) {
-        const L = oklab.L;
-        const a = oklab.a;
-        const b = oklab.b;
-
-        const l3 = L + 0.3963377774 * a + 0.2158037573 * b;
-        const m3 = L - 0.1055613458 * a - 0.0638541728 * b;
-        const s3 = L - 0.0894841775 * a - 1.2914855480 * b;
+      function oklabToXyz(oklab) {
+        const l3 = oklab.L + 0.3963377774 * oklab.a + 0.2158037573 * oklab.b;
+        const m3 = oklab.L - 0.1055613458 * oklab.a - 0.0638541728 * oklab.b;
+        const s3 = oklab.L - 0.0894841775 * oklab.a - 1.291485548 * oklab.b;
 
         const l = l3 * l3 * l3;
         const m = m3 * m3 * m3;
         const s = s3 * s3 * s3;
 
         return [
-          4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-          -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+          1.2270138511 * l - 0.5577999807 * m + 0.281256149 * s,
+          -0.0405801784 * l + 1.1122568696 * m - 0.0716766787 * s,
+          -0.0763812845 * l - 0.4214819784 * m + 1.5861632204 * s
         ];
+      }
+
+      function linearRgbToXyz(linearRgb, gamutMode) {
+        const r = linearRgb[0];
+        const g = linearRgb[1];
+        const b = linearRgb[2];
+        if (gamutMode === "p3") {
+          return [
+            0.4865709486482162 * r + 0.26566769316909306 * g + 0.1982172852343625 * b,
+            0.2289745640697488 * r + 0.6917385218365064 * g + 0.079286914093745 * b,
+            0 * r + 0.04511338185890264 * g + 1.043944368900976 * b
+          ];
+        }
+        return [
+          0.41239079926595 * r + 0.35758433938387 * g + 0.18048078840183 * b,
+          0.21263900587151 * r + 0.71516867876775 * g + 0.07219231536073 * b,
+          0.01933081871559 * r + 0.11919477979462 * g + 0.95053215224966 * b
+        ];
+      }
+
+      function xyzToLinearRgb(xyz, gamutMode) {
+        const x = xyz[0];
+        const y = xyz[1];
+        const z = xyz[2];
+        if (gamutMode === "p3") {
+          return [
+            2.493496911941425 * x - 0.9313836179191239 * y - 0.40271078445071684 * z,
+            -0.8294889695615747 * x + 1.7626640603183463 * y + 0.023624685841943577 * z,
+            0.03584583024378447 * x - 0.07617238926804182 * y + 0.9568845240076872 * z
+          ];
+        }
+        return [
+          3.24096994190452 * x - 1.53738317757009 * y - 0.498610760293 * z,
+          -0.96924363628087 * x + 1.87596750150772 * y + 0.04155505740718 * z,
+          0.05563007969699 * x - 0.20397695888897 * y + 1.05697151424288 * z
+        ];
+      }
+
+      function linearRgbToOklab(linearRgb, gamutMode) {
+        return xyzToOklab(linearRgbToXyz(linearRgb, sanitizeGamutMode(gamutMode)));
+      }
+
+      function oklabToLinearRgb(oklab, gamutMode) {
+        return xyzToLinearRgb(oklabToXyz(oklab), sanitizeGamutMode(gamutMode));
+      }
+
+      function linearSrgbToOklab(linear) {
+        return linearRgbToOklab(linear, "srgb");
+      }
+
+      function oklabToLinearSrgb(oklab) {
+        return oklabToLinearRgb(oklab, "srgb");
       }
 
       function oklabToOklch(oklab) {
@@ -728,9 +791,10 @@
         return linear.every((c) => c >= -epsilon && c <= 1 + epsilon);
       }
 
-      function oklchToSrgbInGamut(oklch) {
+      function oklchToRgbInGamut(oklch, gamutMode) {
+        const mode = sanitizeGamutMode(gamutMode);
         const target = { L: clamp(oklch.L, 0, 1), C: Math.max(0, oklch.C), H: normalizeHue(oklch.H) };
-        const initialLinear = oklabToLinearSrgb(oklchToOklab(target));
+        const initialLinear = oklabToLinearRgb(oklchToOklab(target), mode);
 
         let final = { ...target };
         let clipped = false;
@@ -741,7 +805,7 @@
           let high = target.C;
           for (let i = 0; i < 22; i += 1) {
             const mid = (low + high) / 2;
-            const attempt = oklabToLinearSrgb(oklchToOklab({ L: target.L, C: mid, H: target.H }));
+            const attempt = oklabToLinearRgb(oklchToOklab({ L: target.L, C: mid, H: target.H }), mode);
             if (isLinearInGamut(attempt)) {
               low = mid;
             } else {
@@ -751,10 +815,17 @@
           final.C = low;
         }
 
-        const finalLinear = oklabToLinearSrgb(oklchToOklab(final));
-        const finalSrgb = finalLinear.map((c) => clamp(linearToSrgb(c), 0, 1));
+        const finalLinearInMode = oklabToLinearRgb(oklchToOklab(final), mode);
+        const finalRgbInMode = finalLinearInMode.map((c) => clamp(linearToSrgb(c), 0, 1));
 
-        return { oklch: final, srgb: finalSrgb, hex: srgbToHex(finalSrgb), clipped };
+        const finalLinearSrgb = oklabToLinearRgb(oklchToOklab(final), "srgb");
+        const finalSrgb = finalLinearSrgb.map((c) => clamp(linearToSrgb(c), 0, 1));
+
+        return { oklch: final, rgb: finalRgbInMode, srgb: finalSrgb, hex: srgbToHex(finalSrgb), clipped, gamutMode: mode };
+      }
+
+      function oklchToSrgbInGamut(oklch) {
+        return oklchToRgbInGamut(oklch, "srgb");
       }
 
       function relativeLuminance(srgb) {
@@ -859,6 +930,7 @@
         return {
           textColorInput: state.textColorInput,
           hueSteps: state.hueSteps,
+          gamutMode: state.gamutMode,
           excludedOffsets: state.excludedOffsets.slice(),
           sets: state.sets.map((set) => ({ id: set.id, name: set.name, L: set.L, C: set.C })),
           backgrounds: state.backgrounds.map((bg) => ({ id: bg.id, hueOffset: bg.hueOffset, setId: bg.setId })),
@@ -901,6 +973,7 @@
         const next = {
           textColorInput: defaults.textColorInput,
           hueSteps: defaults.hueSteps,
+          gamutMode: defaults.gamutMode,
           excludedOffsets: defaults.excludedOffsets.slice(),
           sets: defaults.sets.map(cloneSet),
           backgrounds: defaults.backgrounds.map(cloneBackground)
@@ -914,6 +987,10 @@
 
         if (parsed && Object.prototype.hasOwnProperty.call(parsed, "hueSteps")) {
           next.hueSteps = sanitizeHueSteps(parsed.hueSteps);
+        }
+
+        if (parsed && Object.prototype.hasOwnProperty.call(parsed, "gamutMode")) {
+          next.gamutMode = sanitizeGamutMode(parsed.gamutMode);
         }
 
         if (parsed && Object.prototype.hasOwnProperty.call(parsed, "excludedOffsets")) {
@@ -963,6 +1040,7 @@
           const normalized = normalizeLoadedState(parsed);
           state.textColorInput = normalized.textColorInput;
           state.hueSteps = normalized.hueSteps;
+          state.gamutMode = normalized.gamutMode;
           state.excludedOffsets = normalized.excludedOffsets;
           state.sets = normalized.sets;
           state.backgrounds = normalized.backgrounds;
@@ -1025,7 +1103,7 @@
           snapshot.direction = active.selectionDirection || "none";
         }
 
-        if (active.id === "text-input" || active.id === "hex-convert-input" || active.id === "hue-steps") {
+        if (active.id === "text-input" || active.id === "hex-convert-input" || active.id === "hue-steps" || active.id === "gamut-mode") {
           snapshot.kind = "id";
           snapshot.id = active.id;
           return snapshot;
@@ -1267,7 +1345,7 @@
       }
 
       function renderBackgrounds(parsedText, setErrors, backgroundErrors) {
-        const textResolved = parsedText.error ? null : oklchToSrgbInGamut(parsedText.oklch);
+        const textResolved = parsedText.error ? null : oklchToRgbInGamut(parsedText.oklch, state.gamutMode);
         const setMap = new Map(state.sets.map((set) => [set.id, set]));
         const list = $("bg-list");
         list.innerHTML = "";
@@ -1433,7 +1511,7 @@
               C: Math.max(0, selectedSet.C),
               H: normalizeHue(textResolved.oklch.H + bg.hueOffset)
             };
-            const resolvedBg = oklchToSrgbInGamut(generated);
+            const resolvedBg = oklchToRgbInGamut(generated, state.gamutMode);
             const bgCss = formatOklch(resolvedBg.oklch);
             const textCss = formatOklch(textResolved.oklch);
 
@@ -1450,7 +1528,7 @@
               "<div>OKLCH " + formatOklch(resolvedBg.oklch) + "</div>" +
               "<div>HEX " + resolvedBg.hex + "</div>" +
               "<div>Kontrast " + ratio.toFixed(2) + ":1" + (fail ? ' <span class="bad">(unter 4.5)</span>' : "") + "</div>" +
-              (resolvedBg.clipped ? "<div>Hinweis: Chroma fuer Gamut reduziert</div>" : "");
+              (resolvedBg.clipped ? "<div>Hinweis: Chroma fuer Gamut reduziert (" + (state.gamutMode === "p3" ? "Display-P3" : "sRGB") + ")</div>" : "");
           }
 
           row.appendChild(controls);
@@ -1469,6 +1547,12 @@
         hueStepsInput.value = String(state.hueSteps);
         const stepIsValid = STEP_OPTIONS.includes(state.hueSteps);
         hueStepsInput.classList.toggle("invalid", !stepIsValid);
+
+        const gamutModeInput = $("gamut-mode");
+        gamutModeInput.value = state.gamutMode;
+        const gamutIsValid = GAMUT_OPTIONS.includes(state.gamutMode);
+        gamutModeInput.classList.toggle("invalid", !gamutIsValid);
+
         state.excludedOffsets = sanitizeExcludedOffsets(state.excludedOffsets, state.hueSteps);
 
         const parsedText = parseColorInput(state.textColorInput);
@@ -1490,10 +1574,11 @@
 
         const hasSetErrors = Object.keys(setErrors).length > 0;
         const hasBgErrors = Object.keys(backgroundErrors).length > 0;
-        const allValid = stepIsValid && !state.errors.text && state.sets.length > 0 && !hasSetErrors && !hasBgErrors;
+        const allValid = stepIsValid && gamutIsValid && !state.errors.text && state.sets.length > 0 && !hasSetErrors && !hasBgErrors;
 
         let reason = "";
         if (!stepIsValid) reason = "Hue steps ist ungueltig.";
+        else if (!gamutIsValid) reason = "Clamp Gamut ist ungueltig.";
         else if (state.errors.text) reason = "Textfarbe ist ungueltig.";
         else if (state.sets.length === 0) reason = "Mindestens ein Set ist noetig.";
         else if (hasSetErrors) reason = "Mindestens ein Set hat ungueltige Werte.";
@@ -1525,6 +1610,11 @@
           render();
         });
 
+        $("gamut-mode").addEventListener("change", function (event) {
+          state.gamutMode = sanitizeGamutMode(event.target.value);
+          render();
+        });
+
         $("hex-convert-input").addEventListener("input", function () {
           updateHexConverter();
         });
@@ -1549,6 +1639,7 @@
         $("reset-all").addEventListener("click", function () {
           state.textColorInput = defaults.textColorInput;
           state.hueSteps = defaults.hueSteps;
+          state.gamutMode = defaults.gamutMode;
           state.excludedOffsets = defaults.excludedOffsets.slice();
           state.sets = defaults.sets.map(cloneSet);
           state.backgrounds = defaults.backgrounds.map(cloneBackground);
