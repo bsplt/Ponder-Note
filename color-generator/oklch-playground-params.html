@@ -1162,7 +1162,7 @@
           lLabel.textContent = "L (%)";
           const lInput = document.createElement("input");
           lInput.type = "number";
-          lInput.step = "0.1";
+          lInput.step = "1";
           lInput.min = "0";
           lInput.max = "100";
           lInput.value = Number.isFinite(set.L) ? String(set.L) : "";
@@ -1170,7 +1170,7 @@
           if (setErrors[set.id] && setErrors[set.id].L) lInput.classList.add("invalid");
           lInput.addEventListener("input", function (event) {
             const parsed = parseFloat(event.target.value);
-            set.L = Number.isFinite(parsed) ? parsed : NaN;
+            set.L = Number.isFinite(parsed) ? Math.round(parsed) : NaN;
             render();
           });
           lField.appendChild(lLabel);
@@ -1247,7 +1247,7 @@
         state.sets.forEach((set) => {
           const e = { name: false, L: false, C: false };
           if (!String(set.name || "").trim()) e.name = true;
-          if (!Number.isFinite(set.L) || set.L < 0 || set.L > 100) e.L = true;
+          if (!Number.isFinite(set.L) || !Number.isInteger(set.L) || set.L < 0 || set.L > 100) e.L = true;
           if (!Number.isFinite(set.C) || set.C < 0 || set.C > 0.4) e.C = true;
           if (e.name || e.L || e.C) errors[set.id] = e;
         });
@@ -1414,10 +1414,10 @@
 
           if (selectedSetInvalid || bgInvalid || parsedText.error) {
             row.classList.remove("colored");
-            row.style.background = "#ffffff";
-            row.style.color = "#1e1e1e";
-            preview.style.background = "#f2f2f2";
-            preview.style.color = "#8a8a8a";
+            row.style.background = "oklch(100% 0 0)";
+            row.style.color = "oklch(22% 0 0)";
+            preview.style.background = "oklch(96% 0 0)";
+            preview.style.color = "oklch(60% 0 0)";
 
             const parts = [];
             if (parsedText.error) parts.push("Textfarbe ungueltig");
@@ -1434,12 +1434,14 @@
               H: normalizeHue(textResolved.oklch.H + bg.hueOffset)
             };
             const resolvedBg = oklchToSrgbInGamut(generated);
+            const bgCss = formatOklch(resolvedBg.oklch);
+            const textCss = formatOklch(textResolved.oklch);
 
             row.classList.add("colored");
-            row.style.background = resolvedBg.hex;
-            row.style.color = textResolved.hex;
-            preview.style.background = resolvedBg.hex;
-            preview.style.color = textResolved.hex;
+            row.style.background = bgCss;
+            row.style.color = textCss;
+            preview.style.background = bgCss;
+            preview.style.color = textCss;
 
             const ratio = contrastRatio(textResolved.srgb, resolvedBg.srgb);
             const fail = ratio < 4.5;
