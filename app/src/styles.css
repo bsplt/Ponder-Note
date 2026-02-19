@@ -42,28 +42,29 @@
   --margin: 2;
 
   /* ── Palette: note background slots (swap these to retheme) ─────── */
-  --color-slot-1:  #ffd35c;  /* gold      */
-  --color-slot-2:  #bfb2b0;  /* taupe     */
-  --color-slot-3:  #ffbcf2;  /* pink      */
-  --color-slot-4:  #85a0d9;  /* blue      */
-  --color-slot-5:  #a8d8b9;  /* sage      */
-  --color-slot-6:  #f4a261;  /* peach     */
-  --color-slot-7:  #c8b6ff;  /* lavender  */
-  --color-slot-8:  #ffc6c6;  /* coral     */
-  --color-slot-9:  #b8e0d2;  /* mint      */
-  --color-slot-10: #eac4d5;  /* rose      */
-  --color-slot-11: #d4e09b;  /* lime      */
-  --color-slot-12: #f6bd60;  /* amber     */
-  --color-slot-13: #a2d2ff;  /* sky       */
-  --color-slot-14: #d5c4a1;  /* sand      */
-  --color-slot-15: #cdb4db;  /* mauve     */
-  --color-slot-16: #f9c74f;  /* sunflower */
-
+  --color-slot-1:  oklch(95.00% 0.1500 105.00);
+  --color-slot-2:  oklch(97.00% 0.0164 285.00);
+  --color-slot-3:  oklch(95.00% 0.0274 285.00);
+  --color-slot-4:  oklch(86.00% 0.0700 285.00);
+  --color-slot-5:  oklch(83.00% 0.0968 285.00);
+  --color-slot-6:  oklch(80.00% 0.1000 285.00);
+  --color-slot-7:  oklch(97.00% 0.0200 315.00);
+  --color-slot-8:  oklch(95.00% 0.0389 315.00);
+  --color-slot-9:  oklch(86.00% 0.0700 315.00);
+  --color-slot-10:  oklch(83.00% 0.1000 315.00);
+  --color-slot-11:  oklch(80.00% 0.1000 315.00);
+  --color-slot-12:  oklch(97.00% 0.0200 165.00);
+  --color-slot-13:  oklch(95.00% 0.0833 165.00);
+  --color-slot-14:  oklch(86.00% 0.0700 165.00);
+  --color-slot-15:  oklch(83.00% 0.1000 165.00);
+  --color-slot-16:  oklch(80.00% 0.1000 165.00);
+  --color-slot-17:  oklch(97.00% 0.0200 105.00);
+  
   /* ── Colours (light / warm theme) ──────────────────────────────── */
   --color-bg: var(--color-slot-1);
   --color-panel: transparent;
   --color-panel-border: transparent;
-  --color-text: #000000;
+  --color-text: oklch(40% 0.06 285);
   --color-muted: rgba(0, 0, 0, 0.50);
   --color-muted-2: rgba(0, 0, 0, 0.35);
   --color-focus: rgba(0, 0, 0, 0.70);
