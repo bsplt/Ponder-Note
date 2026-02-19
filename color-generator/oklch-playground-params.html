@@ -67,7 +67,7 @@
     .top-grid {
       margin-top: 12px;
       display: grid;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 1fr minmax(120px, 160px) auto auto;
       gap: 10px;
       align-items: end;
     }
@@ -352,6 +352,10 @@
           <span>Textfarbe (`oklch(...)` oder `#RRGGBB`)</span>
           <input id="text-input" type="text" spellcheck="false" placeholder="oklch(25% 0.08 260)">
         </label>
+        <label class="field">
+          <span>Hue Steps</span>
+          <select id="hue-steps"></select>
+        </label>
         <button id="add-bg" class="button" type="button">Add Background</button>
         <button id="reset-all" class="button danger" type="button">Reset</button>
       </div>
@@ -394,10 +398,12 @@
 
       const STORAGE_KEY = "pondernote.oklchPlaygroundParams.v1";
       const AUTOSAVE_DELAY_MS = 150;
-      const HUE_OFFSETS = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180];
+      const STEP_OPTIONS = [5, 6, 8, 10, 12, 14, 16, 18];
+      const OFFSET_EPSILON = 1e-6;
 
       const defaults = {
         textColorInput: "oklch(25% 0.08 260)",
+        hueSteps: 12,
         sets: [
           { id: "set-1", name: "Set 1", L: 90, C: 0.06 },
           { id: "set-2", name: "Set 2", L: 80, C: 0.10 }
@@ -411,6 +417,7 @@
 
       const state = {
         textColorInput: defaults.textColorInput,
+        hueSteps: defaults.hueSteps,
         sets: defaults.sets.map(cloneSet),
         backgrounds: defaults.backgrounds.map(cloneBackground),
         cDrafts: {},
@@ -441,6 +448,103 @@
         let h = deg % 360;
         if (h < 0) h += 360;
         return h;
+      }
+
+      function canonicalOffset(value) {
+        return Math.round(Number(value) * 1000000) / 1000000;
+      }
+
+      function areOffsetsEqual(a, b) {
+        return Math.abs(Number(a) - Number(b)) <= OFFSET_EPSILON;
+      }
+
+      function formatOffsetDeg(value) {
+        const roundedInt = Math.round(value);
+        if (Math.abs(value - roundedInt) <= OFFSET_EPSILON) {
+          return String(roundedInt);
+        }
+        return value.toFixed(2).replace(/\.?0+$/, "");
+      }
+
+      function sanitizeHueSteps(value) {
+        const parsed = Number(value);
+        return STEP_OPTIONS.includes(parsed) ? parsed : defaults.hueSteps;
+      }
+
+      function getQuantizedOffsets(stepCount) {
+        const steps = sanitizeHueSteps(stepCount);
+        const stepDeg = 360 / steps;
+        const values = [];
+        const seen = new Set();
+
+        function addUnique(raw) {
+          const value = canonicalOffset(raw);
+          const key = value.toFixed(6);
+          if (seen.has(key)) return;
+          seen.add(key);
+          values.push(value);
+        }
+
+        addUnique(0);
+
+        const maxIndex = Math.floor(180 / stepDeg + 1e-9);
+        for (let index = 1; index <= maxIndex; index += 1) {
+          const angle = canonicalOffset(index * stepDeg);
+          if (angle > 180 + OFFSET_EPSILON) continue;
+          if (Math.abs(angle - 180) <= OFFSET_EPSILON) {
+            addUnique(180);
+          } else {
+            addUnique(-angle);
+            addUnique(angle);
+          }
+        }
+
+        values.sort((a, b) => a - b);
+        return values;
+      }
+
+      function circularDistanceDeg(a, b) {
+        return Math.abs((((a - b + 540) % 360) - 180));
+      }
+
+      function snapOffsetToAllowed(offset, allowedOffsets) {
+        if (!allowedOffsets || allowedOffsets.length === 0) return 0;
+        let best = allowedOffsets[0];
+        let bestDistance = circularDistanceDeg(offset, best);
+        for (let index = 1; index < allowedOffsets.length; index += 1) {
+          const candidate = allowedOffsets[index];
+          const distance = circularDistanceDeg(offset, candidate);
+          if (distance < bestDistance - OFFSET_EPSILON) {
+            best = candidate;
+            bestDistance = distance;
+            continue;
+          }
+          if (Math.abs(distance - bestDistance) > OFFSET_EPSILON) continue;
+          const candidateMagnitude = Math.abs(candidate);
+          const bestMagnitude = Math.abs(best);
+          if (candidateMagnitude < bestMagnitude - OFFSET_EPSILON) {
+            best = candidate;
+            bestDistance = distance;
+            continue;
+          }
+          if (Math.abs(candidateMagnitude - bestMagnitude) <= OFFSET_EPSILON && candidate > best + OFFSET_EPSILON) {
+            best = candidate;
+            bestDistance = distance;
+          }
+        }
+        return canonicalOffset(best);
+      }
+
+      function isAllowedOffset(offset, allowedOffsets) {
+        return allowedOffsets.some((candidate) => areOffsetsEqual(candidate, offset));
+      }
+
+      function snapAllBackgroundOffsets() {
+        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+        state.backgrounds = state.backgrounds.map((bg) => ({
+          ...bg,
+          hueOffset: snapOffsetToAllowed(bg.hueOffset, allowedOffsets)
+        }));
       }
 
       function srgbToLinear(v) {
@@ -663,6 +767,7 @@
       function savePayload() {
         return {
           textColorInput: state.textColorInput,
+          hueSteps: state.hueSteps,
           sets: state.sets.map((set) => ({ id: set.id, name: set.name, L: set.L, C: set.C })),
           backgrounds: state.backgrounds.map((bg) => ({ id: bg.id, hueOffset: bg.hueOffset, setId: bg.setId })),
           updatedAt: new Date().toISOString()
@@ -703,6 +808,7 @@
       function normalizeLoadedState(parsed) {
         const next = {
           textColorInput: defaults.textColorInput,
+          hueSteps: defaults.hueSteps,
           sets: defaults.sets.map(cloneSet),
           backgrounds: defaults.backgrounds.map(cloneBackground)
         };
@@ -711,6 +817,10 @@
 
         if (typeof parsed.textColorInput === "string") {
           next.textColorInput = parsed.textColorInput;
+        }
+
+        if (parsed && Object.prototype.hasOwnProperty.call(parsed, "hueSteps")) {
+          next.hueSteps = sanitizeHueSteps(parsed.hueSteps);
         }
 
         if (Array.isArray(parsed.sets)) {
@@ -729,11 +839,12 @@
 
         if (Array.isArray(parsed.backgrounds)) {
           const setIds = new Set(next.sets.map((set) => set.id));
+          const allowedOffsets = getQuantizedOffsets(next.hueSteps);
           const loadedBgs = parsed.backgrounds
             .filter((v) => v && typeof v === "object")
             .map((v) => {
               const offset = Number(v.hueOffset);
-              const safeOffset = HUE_OFFSETS.includes(offset) ? offset : 0;
+              const safeOffset = snapOffsetToAllowed(Number.isFinite(offset) ? offset : 0, allowedOffsets);
               const setId = typeof v.setId === "string" && setIds.has(v.setId) ? v.setId : next.sets[0].id;
               return {
                 id: typeof v.id === "string" && v.id.trim() ? v.id : makeId("bg"),
@@ -754,10 +865,12 @@
           const parsed = JSON.parse(raw);
           const normalized = normalizeLoadedState(parsed);
           state.textColorInput = normalized.textColorInput;
+          state.hueSteps = normalized.hueSteps;
           state.sets = normalized.sets;
           state.backgrounds = normalized.backgrounds;
           state.cDrafts = {};
           ensureSetFallbackReferences();
+          snapAllBackgroundOffsets();
 
           const allIds = [];
           state.sets.forEach((set) => allIds.push(set.id));
@@ -814,7 +927,7 @@
           snapshot.direction = active.selectionDirection || "none";
         }
 
-        if (active.id === "text-input" || active.id === "hex-convert-input") {
+        if (active.id === "text-input" || active.id === "hex-convert-input" || active.id === "hue-steps") {
           snapshot.kind = "id";
           snapshot.id = active.id;
           return snapshot;
@@ -862,11 +975,13 @@
       function createHueOffsetSelect(selectedOffset, bgId) {
         const select = document.createElement("select");
         select.dataset.focusKey = "bg-offset:" + bgId;
-        HUE_OFFSETS.forEach((offset) => {
+        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+        const snappedSelectedOffset = snapOffsetToAllowed(selectedOffset, allowedOffsets);
+        allowedOffsets.forEach((offset) => {
           const option = document.createElement("option");
-          option.value = String(offset);
-          option.textContent = (offset > 0 ? "+" : "") + String(offset) + "deg";
-          if (offset === selectedOffset) option.selected = true;
+          option.value = String(canonicalOffset(offset));
+          option.textContent = (offset > 0 ? "+" : "") + formatOffsetDeg(offset) + "deg";
+          if (areOffsetsEqual(offset, snappedSelectedOffset)) option.selected = true;
           select.appendChild(option);
         });
         return select;
@@ -994,10 +1109,10 @@
         return errors;
       }
 
-      function validateBackgrounds(setIdSet) {
+      function validateBackgrounds(setIdSet, allowedOffsets) {
         const errors = {};
         state.backgrounds.forEach((bg) => {
-          const badOffset = !HUE_OFFSETS.includes(bg.hueOffset);
+          const badOffset = !isAllowedOffset(bg.hueOffset, allowedOffsets);
           const badSet = !setIdSet.has(bg.setId);
           if (badOffset || badSet) {
             errors[bg.id] = { offset: badOffset, setId: badSet };
@@ -1037,8 +1152,9 @@
           const offsetSelect = createHueOffsetSelect(bg.hueOffset, bg.id);
           if (backgroundErrors[bg.id] && backgroundErrors[bg.id].offset) offsetSelect.classList.add("invalid");
           offsetSelect.addEventListener("change", function (event) {
-            const offset = parseInt(event.target.value, 10);
-            bg.hueOffset = Number.isFinite(offset) ? offset : bg.hueOffset;
+            const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+            const offset = parseFloat(event.target.value);
+            bg.hueOffset = snapOffsetToAllowed(Number.isFinite(offset) ? offset : bg.hueOffset, allowedOffsets);
             render();
           });
           offsetField.appendChild(offsetLabel);
@@ -1183,7 +1299,7 @@
             const ratio = contrastRatio(textResolved.srgb, resolvedBg.srgb);
             const fail = ratio < 4.5;
             meta.innerHTML =
-              "<div>Set " + selectedSet.name + " | Offset " + (bg.hueOffset > 0 ? "+" : "") + bg.hueOffset + "deg</div>" +
+              "<div>Set " + selectedSet.name + " | Offset " + (bg.hueOffset > 0 ? "+" : "") + formatOffsetDeg(bg.hueOffset) + "deg</div>" +
               "<div>OKLCH " + formatOklch(resolvedBg.oklch) + "</div>" +
               "<div>HEX " + resolvedBg.hex + "</div>" +
               "<div>Kontrast " + ratio.toFixed(2) + ":1" + (fail ? ' <span class="bad">(unter 4.5)</span>' : "") + "</div>" +
@@ -1202,6 +1318,11 @@
         const textInput = $("text-input");
         textInput.value = state.textColorInput;
 
+        const hueStepsInput = $("hue-steps");
+        hueStepsInput.value = String(state.hueSteps);
+        const stepIsValid = STEP_OPTIONS.includes(state.hueSteps);
+        hueStepsInput.classList.toggle("invalid", !stepIsValid);
+
         const parsedText = parseColorInput(state.textColorInput);
         state.errors.text = parsedText.error || null;
         textInput.classList.toggle("invalid", Boolean(state.errors.text));
@@ -1209,8 +1330,9 @@
         const setErrors = validateSets();
         state.errors.sets = setErrors;
 
+        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
         const setIdSet = new Set(state.sets.map((set) => set.id));
-        const backgroundErrors = validateBackgrounds(setIdSet);
+        const backgroundErrors = validateBackgrounds(setIdSet, allowedOffsets);
         state.errors.backgrounds = backgroundErrors;
 
         renderSets(setErrors);
@@ -1219,10 +1341,11 @@
 
         const hasSetErrors = Object.keys(setErrors).length > 0;
         const hasBgErrors = Object.keys(backgroundErrors).length > 0;
-        const allValid = !state.errors.text && state.sets.length > 0 && !hasSetErrors && !hasBgErrors;
+        const allValid = stepIsValid && !state.errors.text && state.sets.length > 0 && !hasSetErrors && !hasBgErrors;
 
         let reason = "";
-        if (state.errors.text) reason = "Textfarbe ist ungueltig.";
+        if (!stepIsValid) reason = "Hue steps ist ungueltig.";
+        else if (state.errors.text) reason = "Textfarbe ist ungueltig.";
         else if (state.sets.length === 0) reason = "Mindestens ein Set ist noetig.";
         else if (hasSetErrors) reason = "Mindestens ein Set hat ungueltige Werte.";
         else if (hasBgErrors) reason = "Mindestens eine Background-Zeile ist ungueltig.";
@@ -1232,8 +1355,23 @@
       }
 
       function wireGlobalEvents() {
+        const hueStepsInput = $("hue-steps");
+        hueStepsInput.innerHTML = "";
+        STEP_OPTIONS.forEach((steps) => {
+          const option = document.createElement("option");
+          option.value = String(steps);
+          option.textContent = String(steps);
+          hueStepsInput.appendChild(option);
+        });
+
         $("text-input").addEventListener("input", function (event) {
           state.textColorInput = event.target.value;
+          render();
+        });
+
+        $("hue-steps").addEventListener("change", function (event) {
+          state.hueSteps = sanitizeHueSteps(event.target.value);
+          snapAllBackgroundOffsets();
           render();
         });
 
@@ -1260,10 +1398,12 @@
 
         $("reset-all").addEventListener("click", function () {
           state.textColorInput = defaults.textColorInput;
+          state.hueSteps = defaults.hueSteps;
           state.sets = defaults.sets.map(cloneSet);
           state.backgrounds = defaults.backgrounds.map(cloneBackground);
           state.cDrafts = {};
           ensureSetFallbackReferences();
+          snapAllBackgroundOffsets();
           render();
         });
       }
