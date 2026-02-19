@@ -67,7 +67,7 @@
     .top-grid {
       margin-top: 12px;
       display: grid;
-      grid-template-columns: 1fr minmax(120px, 160px) auto auto;
+      grid-template-columns: 1fr minmax(120px, 160px) minmax(180px, 220px) auto auto;
       gap: 10px;
       align-items: end;
     }
@@ -90,6 +90,57 @@
       color: var(--muted);
       font-weight: 600;
       letter-spacing: 0.01em;
+    }
+
+    .exclude-dropdown {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+
+    .exclude-dropdown > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 10px;
+      user-select: none;
+      color: var(--text);
+    }
+
+    .exclude-dropdown > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .exclude-dropdown[open] > summary {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .exclude-options {
+      max-height: 180px;
+      overflow: auto;
+      padding: 6px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .exclude-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 4px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      color: #333;
+    }
+
+    .exclude-item:hover {
+      background: #f5f5f5;
+    }
+
+    .exclude-note {
+      padding: 4px 8px 8px;
+      color: #666;
+      font-size: 0.75rem;
     }
 
     input[type="text"],
@@ -356,6 +407,14 @@
           <span>Hue Steps</span>
           <select id="hue-steps"></select>
         </label>
+        <label class="field">
+          <span>Exclude Angles</span>
+          <details id="exclude-dropdown" class="exclude-dropdown">
+            <summary id="exclude-summary">None excluded</summary>
+            <div id="exclude-options" class="exclude-options"></div>
+            <div class="exclude-note">Resets automatically when Hue Steps change.</div>
+          </details>
+        </label>
         <button id="add-bg" class="button" type="button">Add Background</button>
         <button id="reset-all" class="button danger" type="button">Reset</button>
       </div>
@@ -404,6 +463,7 @@
       const defaults = {
         textColorInput: "oklch(25% 0.08 260)",
         hueSteps: 12,
+        excludedOffsets: [],
         sets: [
           { id: "set-1", name: "Set 1", L: 90, C: 0.06 },
           { id: "set-2", name: "Set 2", L: 80, C: 0.10 }
@@ -418,6 +478,7 @@
       const state = {
         textColorInput: defaults.textColorInput,
         hueSteps: defaults.hueSteps,
+        excludedOffsets: defaults.excludedOffsets.slice(),
         sets: defaults.sets.map(cloneSet),
         backgrounds: defaults.backgrounds.map(cloneBackground),
         cDrafts: {},
@@ -539,8 +600,38 @@
         return allowedOffsets.some((candidate) => areOffsetsEqual(candidate, offset));
       }
 
+      function sanitizeExcludedOffsets(rawExcludedOffsets, stepCount) {
+        const quantized = getQuantizedOffsets(stepCount);
+        const seen = new Set();
+        const filtered = [];
+
+        (Array.isArray(rawExcludedOffsets) ? rawExcludedOffsets : []).forEach((offset) => {
+          const value = canonicalOffset(offset);
+          if (!isAllowedOffset(value, quantized)) return;
+          const key = value.toFixed(6);
+          if (seen.has(key)) return;
+          seen.add(key);
+          filtered.push(value);
+        });
+
+        if (filtered.length >= quantized.length) {
+          return [];
+        }
+
+        return filtered;
+      }
+
+      function getAvailableOffsets(stepCount, excludedOffsets) {
+        const quantized = getQuantizedOffsets(stepCount);
+        const safeExcluded = sanitizeExcludedOffsets(excludedOffsets, stepCount);
+        const available = quantized.filter((offset) => !safeExcluded.some((excluded) => areOffsetsEqual(excluded, offset)));
+        if (available.length > 0) return available;
+        return quantized;
+      }
+
       function snapAllBackgroundOffsets() {
-        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+        state.excludedOffsets = sanitizeExcludedOffsets(state.excludedOffsets, state.hueSteps);
+        const allowedOffsets = getAvailableOffsets(state.hueSteps, state.excludedOffsets);
         state.backgrounds = state.backgrounds.map((bg) => ({
           ...bg,
           hueOffset: snapOffsetToAllowed(bg.hueOffset, allowedOffsets)
@@ -768,6 +859,7 @@
         return {
           textColorInput: state.textColorInput,
           hueSteps: state.hueSteps,
+          excludedOffsets: state.excludedOffsets.slice(),
           sets: state.sets.map((set) => ({ id: set.id, name: set.name, L: set.L, C: set.C })),
           backgrounds: state.backgrounds.map((bg) => ({ id: bg.id, hueOffset: bg.hueOffset, setId: bg.setId })),
           updatedAt: new Date().toISOString()
@@ -809,6 +901,7 @@
         const next = {
           textColorInput: defaults.textColorInput,
           hueSteps: defaults.hueSteps,
+          excludedOffsets: defaults.excludedOffsets.slice(),
           sets: defaults.sets.map(cloneSet),
           backgrounds: defaults.backgrounds.map(cloneBackground)
         };
@@ -821,6 +914,10 @@
 
         if (parsed && Object.prototype.hasOwnProperty.call(parsed, "hueSteps")) {
           next.hueSteps = sanitizeHueSteps(parsed.hueSteps);
+        }
+
+        if (parsed && Object.prototype.hasOwnProperty.call(parsed, "excludedOffsets")) {
+          next.excludedOffsets = sanitizeExcludedOffsets(parsed.excludedOffsets, next.hueSteps);
         }
 
         if (Array.isArray(parsed.sets)) {
@@ -866,6 +963,7 @@
           const normalized = normalizeLoadedState(parsed);
           state.textColorInput = normalized.textColorInput;
           state.hueSteps = normalized.hueSteps;
+          state.excludedOffsets = normalized.excludedOffsets;
           state.sets = normalized.sets;
           state.backgrounds = normalized.backgrounds;
           state.cDrafts = {};
@@ -975,7 +1073,7 @@
       function createHueOffsetSelect(selectedOffset, bgId) {
         const select = document.createElement("select");
         select.dataset.focusKey = "bg-offset:" + bgId;
-        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+        const allowedOffsets = getAvailableOffsets(state.hueSteps, state.excludedOffsets);
         const snappedSelectedOffset = snapOffsetToAllowed(selectedOffset, allowedOffsets);
         allowedOffsets.forEach((offset) => {
           const option = document.createElement("option");
@@ -985,6 +1083,53 @@
           select.appendChild(option);
         });
         return select;
+      }
+
+      function renderExcludedOffsetsField() {
+        const summary = $("exclude-summary");
+        const options = $("exclude-options");
+        const quantized = getQuantizedOffsets(state.hueSteps);
+        state.excludedOffsets = sanitizeExcludedOffsets(state.excludedOffsets, state.hueSteps);
+
+        if (state.excludedOffsets.length === 0) {
+          summary.textContent = "None excluded";
+        } else {
+          summary.textContent = state.excludedOffsets.length + " excluded";
+        }
+
+        options.innerHTML = "";
+        quantized.forEach((offset) => {
+          const key = canonicalOffset(offset).toFixed(6);
+          const checked = state.excludedOffsets.some((item) => areOffsetsEqual(item, offset));
+
+          const label = document.createElement("label");
+          label.className = "exclude-item";
+
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.dataset.focusKey = "exclude-offset:" + key;
+          input.checked = checked;
+          input.addEventListener("change", function (event) {
+            const next = state.excludedOffsets.slice();
+            if (event.target.checked) {
+              if (!next.some((item) => areOffsetsEqual(item, offset))) next.push(offset);
+            } else {
+              for (let i = next.length - 1; i >= 0; i -= 1) {
+                if (areOffsetsEqual(next[i], offset)) next.splice(i, 1);
+              }
+            }
+            state.excludedOffsets = sanitizeExcludedOffsets(next, state.hueSteps);
+            snapAllBackgroundOffsets();
+            render();
+          });
+
+          const text = document.createElement("span");
+          text.textContent = (offset > 0 ? "+" : "") + formatOffsetDeg(offset) + "deg";
+
+          label.appendChild(input);
+          label.appendChild(text);
+          options.appendChild(label);
+        });
       }
 
       function renderSets(setErrors) {
@@ -1152,7 +1297,7 @@
           const offsetSelect = createHueOffsetSelect(bg.hueOffset, bg.id);
           if (backgroundErrors[bg.id] && backgroundErrors[bg.id].offset) offsetSelect.classList.add("invalid");
           offsetSelect.addEventListener("change", function (event) {
-            const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+            const allowedOffsets = getAvailableOffsets(state.hueSteps, state.excludedOffsets);
             const offset = parseFloat(event.target.value);
             bg.hueOffset = snapOffsetToAllowed(Number.isFinite(offset) ? offset : bg.hueOffset, allowedOffsets);
             render();
@@ -1322,6 +1467,7 @@
         hueStepsInput.value = String(state.hueSteps);
         const stepIsValid = STEP_OPTIONS.includes(state.hueSteps);
         hueStepsInput.classList.toggle("invalid", !stepIsValid);
+        state.excludedOffsets = sanitizeExcludedOffsets(state.excludedOffsets, state.hueSteps);
 
         const parsedText = parseColorInput(state.textColorInput);
         state.errors.text = parsedText.error || null;
@@ -1330,12 +1476,13 @@
         const setErrors = validateSets();
         state.errors.sets = setErrors;
 
-        const allowedOffsets = getQuantizedOffsets(state.hueSteps);
+        const allowedOffsets = getAvailableOffsets(state.hueSteps, state.excludedOffsets);
         const setIdSet = new Set(state.sets.map((set) => set.id));
         const backgroundErrors = validateBackgrounds(setIdSet, allowedOffsets);
         state.errors.backgrounds = backgroundErrors;
 
         renderSets(setErrors);
+        renderExcludedOffsetsField();
         renderBackgrounds(parsedText, setErrors, backgroundErrors);
         updateHexConverter();
 
@@ -1371,6 +1518,7 @@
 
         $("hue-steps").addEventListener("change", function (event) {
           state.hueSteps = sanitizeHueSteps(event.target.value);
+          state.excludedOffsets = [];
           snapAllBackgroundOffsets();
           render();
         });
@@ -1399,6 +1547,7 @@
         $("reset-all").addEventListener("click", function () {
           state.textColorInput = defaults.textColorInput;
           state.hueSteps = defaults.hueSteps;
+          state.excludedOffsets = defaults.excludedOffsets.slice();
           state.sets = defaults.sets.map(cloneSet);
           state.backgrounds = defaults.backgrounds.map(cloneBackground);
           state.cDrafts = {};
