@@ -1,0 +1,128 @@
+/* 1 */
+
+{
+  "textColorInput": "oklch(40% 0.06 285)",
+  "hueSteps": 12,
+  "gamutMode": "p3",
+  "excludedOffsets": [-30, -60, -90, 60, -150, 150, 90, 120],
+  "sets": [
+    {
+      "id": "set-11",
+      "name": "Accent",
+      "L": 95,
+      "C": 0.15
+    },
+    {
+      "id": "set-15",
+      "name": "Dark",
+      "L": 80,
+      "C": 0.1
+    },
+    {
+      "id": "set-25",
+      "name": "Light",
+      "L": 86,
+      "C": 0.07
+    },
+    {
+      "id": "set-26",
+      "name": "Middle",
+      "L": 83,
+      "C": 0.1
+    },
+    {
+      "id": "set-47",
+      "name": "Pale",
+      "L": 97,
+      "C": 0.02
+    }
+  ],
+  "backgrounds": [
+    {
+      "id": "bg-1",
+      "hueOffset": 0,
+      "setId": "set-47"
+    },
+    {
+      "id": "bg-50",
+      "hueOffset": 0,
+      "setId": "set-11"
+    },
+    {
+      "id": "bg-28",
+      "hueOffset": 0,
+      "setId": "set-25"
+    },
+    {
+      "id": "bg-39",
+      "hueOffset": 0,
+      "setId": "set-26"
+    },
+    {
+      "id": "bg-40",
+      "hueOffset": 0,
+      "setId": "set-15"
+    },
+    {
+      "id": "bg-29",
+      "hueOffset": 30,
+      "setId": "set-47"
+    },
+    {
+      "id": "bg-49",
+      "hueOffset": 30,
+      "setId": "set-11"
+    },
+    {
+      "id": "bg-30",
+      "hueOffset": 30,
+      "setId": "set-25"
+    },
+    {
+      "id": "bg-43",
+      "hueOffset": 30,
+      "setId": "set-26"
+    },
+    {
+      "id": "bg-44",
+      "hueOffset": 30,
+      "setId": "set-15"
+    },
+    {
+      "id": "bg-46",
+      "hueOffset": -120,
+      "setId": "set-47"
+    },
+    {
+      "id": "bg-36",
+      "hueOffset": -120,
+      "setId": "set-11"
+    },
+    {
+      "id": "bg-45",
+      "hueOffset": -120,
+      "setId": "set-25"
+    },
+    {
+      "id": "bg-37",
+      "hueOffset": -120,
+      "setId": "set-26"
+    },
+    {
+      "id": "bg-38",
+      "hueOffset": -120,
+      "setId": "set-15"
+    },
+    {
+      "id": "bg-2",
+      "hueOffset": 180,
+      "setId": "set-47"
+    },
+    {
+      "id": "bg-48",
+      "hueOffset": 180,
+      "setId": "set-11"
+    }
+  ],
+  "updatedAt": "2026-02-19T10:22:01.873Z"
+}

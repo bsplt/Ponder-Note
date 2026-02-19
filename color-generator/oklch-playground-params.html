@@ -369,9 +369,62 @@
       font-size: 0.8rem;
     }
 
+    .io-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .io-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .io-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .io-title {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #555;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .io-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mono-area {
+      width: 100%;
+      min-height: 140px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: #2a2a2a;
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      resize: vertical;
+    }
+
     @media (max-width: 930px) {
       .top-grid,
       .converter-grid,
+      .io-grid,
       .set-row,
       .row-grid {
         grid-template-columns: 1fr;
@@ -438,6 +491,35 @@
       </div>
 
       <div id="save-status" class="status" aria-live="polite">Ready.</div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>Import / Export</h2>
+        </div>
+        <div class="io-grid">
+          <div class="io-card">
+            <div class="io-head">
+              <p class="io-title">JSON (All Values)</p>
+              <div class="io-actions">
+                <button id="export-json" class="button mini" type="button">Export JSON</button>
+                <button id="import-json" class="button mini" type="button">Import JSON</button>
+                <button id="copy-json" class="button mini" type="button">Copy</button>
+              </div>
+            </div>
+            <textarea id="json-io" class="mono-area" spellcheck="false" placeholder='{"textColorInput":"oklch(...)","hueSteps":12,...}'></textarea>
+          </div>
+          <div class="io-card">
+            <div class="io-head">
+              <p class="io-title">Color Slot Export</p>
+              <div class="io-actions">
+                <button id="export-slots" class="button mini" type="button">Generate</button>
+                <button id="copy-slots" class="button mini" type="button">Copy</button>
+              </div>
+            </div>
+            <textarea id="slot-export" class="mono-area" spellcheck="false" readonly></textarea>
+          </div>
+        </div>
+      </div>
 
       <div class="section">
         <div class="section-head">
@@ -938,6 +1020,102 @@
         };
       }
 
+      function formatColorSlotLine(index, oklch) {
+        return "--color-slot-" + String(index) + ":  " + formatOklch(oklch) + ";";
+      }
+
+      function resolvePaletteRowsForExport() {
+        const parsedText = parseColorInput(state.textColorInput);
+        if (parsedText.error) return { error: "Textfarbe ist ungueltig." };
+
+        const setErrors = validateSets();
+        if (Object.keys(setErrors).length > 0) return { error: "Mindestens ein Set ist ungueltig." };
+
+        const allowedOffsets = getAvailableOffsets(state.hueSteps, state.excludedOffsets);
+        const setIdSet = new Set(state.sets.map((set) => set.id));
+        const backgroundErrors = validateBackgrounds(setIdSet, allowedOffsets);
+        if (Object.keys(backgroundErrors).length > 0) return { error: "Mindestens eine Background-Zeile ist ungueltig." };
+
+        if (state.backgrounds.length === 0) return { error: "Keine Background-Zeilen vorhanden." };
+
+        const textResolved = oklchToRgbInGamut(parsedText.oklch, state.gamutMode);
+        const setMap = new Map(state.sets.map((set) => [set.id, set]));
+        const rows = [];
+
+        state.backgrounds.forEach((bg) => {
+          const selectedSet = setMap.get(bg.setId);
+          if (!selectedSet) return;
+          const generated = {
+            L: clamp(selectedSet.L / 100, 0, 1),
+            C: Math.max(0, selectedSet.C),
+            H: normalizeHue(textResolved.oklch.H + bg.hueOffset)
+          };
+          rows.push(oklchToRgbInGamut(generated, state.gamutMode));
+        });
+
+        if (rows.length !== state.backgrounds.length) return { error: "Konnte nicht alle Zeilen aufloesen." };
+        return { rows, text: textResolved };
+      }
+
+      function buildColorSlotExportText() {
+        const resolved = resolvePaletteRowsForExport();
+        if (resolved.error) return { error: resolved.error };
+        const lines = resolved.rows.map((entry, index) => formatColorSlotLine(index + 1, entry.oklch));
+        return { text: lines.join("\n") };
+      }
+
+      function syncNextIdFromState() {
+        const allIds = [];
+        state.sets.forEach((set) => allIds.push(set.id));
+        state.backgrounds.forEach((bg) => allIds.push(bg.id));
+        allIds.forEach((id) => {
+          const m = String(id).match(/-(\d+)$/);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (Number.isFinite(n)) {
+              state.nextId = Math.max(state.nextId, n);
+            }
+          }
+        });
+      }
+
+      function applyNormalizedState(normalized) {
+        state.textColorInput = normalized.textColorInput;
+        state.hueSteps = normalized.hueSteps;
+        state.gamutMode = normalized.gamutMode;
+        state.excludedOffsets = normalized.excludedOffsets;
+        state.sets = normalized.sets;
+        state.backgrounds = normalized.backgrounds;
+        state.cDrafts = {};
+        ensureSetFallbackReferences();
+        snapAllBackgroundOffsets();
+        syncNextIdFromState();
+      }
+
+      function copyTextToClipboard(text) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function (resolve, reject) {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.setAttribute("readonly", "true");
+          area.style.position = "fixed";
+          area.style.left = "-9999px";
+          document.body.appendChild(area);
+          area.select();
+          try {
+            const ok = document.execCommand("copy");
+            document.body.removeChild(area);
+            if (ok) resolve();
+            else reject(new Error("Copy command fehlgeschlagen."));
+          } catch (error) {
+            document.body.removeChild(area);
+            reject(error);
+          }
+        });
+      }
+
       function scheduleSave(valid, reason) {
         if (state.saveTimer) {
           clearTimeout(state.saveTimer);
@@ -1038,28 +1216,7 @@
           if (!raw) return;
           const parsed = JSON.parse(raw);
           const normalized = normalizeLoadedState(parsed);
-          state.textColorInput = normalized.textColorInput;
-          state.hueSteps = normalized.hueSteps;
-          state.gamutMode = normalized.gamutMode;
-          state.excludedOffsets = normalized.excludedOffsets;
-          state.sets = normalized.sets;
-          state.backgrounds = normalized.backgrounds;
-          state.cDrafts = {};
-          ensureSetFallbackReferences();
-          snapAllBackgroundOffsets();
-
-          const allIds = [];
-          state.sets.forEach((set) => allIds.push(set.id));
-          state.backgrounds.forEach((bg) => allIds.push(bg.id));
-          allIds.forEach((id) => {
-            const m = String(id).match(/-(\d+)$/);
-            if (m) {
-              const n = parseInt(m[1], 10);
-              if (Number.isFinite(n)) {
-                state.nextId = Math.max(state.nextId, n);
-              }
-            }
-          });
+          applyNormalizedState(normalized);
         } catch (error) {
           setStatus("error", "Gespeicherte Daten konnten nicht gelesen werden. Defaults aktiv.");
         }
@@ -1103,7 +1260,14 @@
           snapshot.direction = active.selectionDirection || "none";
         }
 
-        if (active.id === "text-input" || active.id === "hex-convert-input" || active.id === "hue-steps" || active.id === "gamut-mode") {
+        if (
+          active.id === "text-input" ||
+          active.id === "hex-convert-input" ||
+          active.id === "hue-steps" ||
+          active.id === "gamut-mode" ||
+          active.id === "json-io" ||
+          active.id === "slot-export"
+        ) {
           snapshot.kind = "id";
           snapshot.id = active.id;
           return snapshot;
@@ -1617,6 +1781,65 @@
 
         $("hex-convert-input").addEventListener("input", function () {
           updateHexConverter();
+        });
+
+        $("export-json").addEventListener("click", function () {
+          $("json-io").value = JSON.stringify(savePayload(), null, 2);
+          setStatus("ok", "JSON exportiert.");
+        });
+
+        $("import-json").addEventListener("click", function () {
+          const raw = $("json-io").value.trim();
+          if (!raw) {
+            setStatus("error", "JSON-Import fehlgeschlagen: Feld ist leer.");
+            return;
+          }
+          try {
+            const parsed = JSON.parse(raw);
+            const normalized = normalizeLoadedState(parsed);
+            applyNormalizedState(normalized);
+            render();
+            setStatus("ok", "JSON importiert.");
+          } catch (error) {
+            setStatus("error", "JSON-Import fehlgeschlagen: " + (error && error.message ? error.message : "ungueltiges JSON"));
+          }
+        });
+
+        $("copy-json").addEventListener("click", function () {
+          const field = $("json-io");
+          if (!field.value.trim()) field.value = JSON.stringify(savePayload(), null, 2);
+          copyTextToClipboard(field.value).then(function () {
+            setStatus("ok", "JSON kopiert.");
+          }).catch(function (error) {
+            setStatus("error", "Kopieren fehlgeschlagen: " + (error && error.message ? error.message : "unbekannter Fehler"));
+          });
+        });
+
+        $("export-slots").addEventListener("click", function () {
+          const result = buildColorSlotExportText();
+          if (result.error) {
+            setStatus("error", result.error);
+            return;
+          }
+          $("slot-export").value = result.text;
+          setStatus("ok", "Color-Slots exportiert.");
+        });
+
+        $("copy-slots").addEventListener("click", function () {
+          const field = $("slot-export");
+          if (!field.value.trim()) {
+            const result = buildColorSlotExportText();
+            if (result.error) {
+              setStatus("error", result.error);
+              return;
+            }
+            field.value = result.text;
+          }
+          copyTextToClipboard(field.value).then(function () {
+            setStatus("ok", "Color-Slots kopiert.");
+          }).catch(function (error) {
+            setStatus("error", "Kopieren fehlgeschlagen: " + (error && error.message ? error.message : "unbekannter Fehler"));
+          });
         });
 
         $("add-set").addEventListener("click", function () {
