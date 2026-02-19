@@ -60,7 +60,7 @@
   --color-slot-16:  oklch(80.00% 0.1000 165.00);
   --color-slot-17:  oklch(97.00% 0.0200 105.00);
   
-  /* ── Colours (light / warm theme) ──────────────────────────────── */
+  /* ── Colours ──────────────────────────────── */
   --color-bg: var(--color-slot-1);
   --color-text: oklch(35% 0.06 285);
   --color-muted: oklch(from var(--color-text) l c h / 0.50);
@@ -68,19 +68,19 @@
   --color-focus: oklch(from var(--color-text) l c h / 0.70);
   --color-primary: oklch(from var(--color-text) l c h / 0.08);
   --color-primary-border: oklch(from var(--color-text) l c h / 0.25);
-  --color-primary-soft: rgba(255, 255, 255, 0.10);
+  --color-primary-soft: oklch(0.99 0.01 285 / 0.1);
   --color-primary-subtle: oklch(from var(--color-text) l c h / 0.04);
   --color-primary-chip: oklch(from var(--color-text) l c h / 0.12);
   --color-primary-text: oklch(from var(--color-text) l c h / 0.80);
-  --color-danger: rgba(200, 40, 40, 0.14);
-  --color-danger-border: rgba(200, 40, 40, 0.50);
-  --color-danger-text: rgba(180, 30, 30, 0.95);
-  --color-warn: rgba(180, 100, 20, 0.16);
-  --color-warn-border: rgba(180, 100, 20, 0.50);
-  --color-warn-text: rgba(160, 80, 0, 0.95);
+  --color-danger: oklch(from var(--color-warn-text) l c h / 0.14);
+  --color-danger-border: oklch(from var(--color-warn-text) l c h / 0.5);
+  --color-danger-text: oklch(from var(--color-warn-text) l c h / 0.95);
+  --color-warn: oklch(from var(--color-warn-text) l c h / 0.15);
+  --color-warn-border: oklch(from var(--color-warn-text) l c h / 0.5);
+  --color-warn-text: oklch(50% 0.15 15);
   --color-surface: oklch(from var(--color-text) l c h / 0.06);
   --color-surface-hover: oklch(from var(--color-text) l c h / 0.10);
-  --color-surface-strong: rgba(255, 255, 255, 0.35);
+  --color-surface-strong: oklch(0.99 0.01 285 / 0.15);
   --color-surface-soft: oklch(from var(--color-text) l c h / 0.04);
   --color-border: oklch(from var(--color-text) l c h / 0.12);
   --color-border-strong: oklch(from var(--color-text) l c h / 0.22);
@@ -92,16 +92,16 @@
   --color-slot-number-bg: oklch(from var(--color-text) l c h / 0.08);
   --color-slot-number-border: oklch(from var(--color-text) l c h / 0.14);
   --color-chip-bg: oklch(from var(--color-text) l c h / 0.10);
-  --color-autocomplete-bg: rgba(255, 255, 255, 0.96);
+  --color-autocomplete-bg: oklch(0.99 0.01 285);
   --color-autocomplete-border: oklch(from var(--color-text) l c h / 0.14);
   --color-autocomplete-hover: oklch(from var(--color-text) l c h / 0.08);
   --color-header-bg: transparent;
-  --color-toast-bg: rgba(255, 255, 255, 0.85);
+  --color-toast-bg: oklch(0.99 0.01 285);
 
   /* ── Note row focus overlay ────────────────────────────────────── */
   --color-note-focus-overlay: linear-gradient(
-    rgba(255, 255, 255, 0.20),
-    rgba(255, 255, 255, 0.20)
+    oklch(0.99 0.01 285 / 0.2),
+    oklch(0.99 0.01 285 / 0.2)
   );
 
   /* ── Typography ────────────────────────────────────────────────── */
@@ -1346,6 +1346,7 @@ body {
   font-size: var(--font-size-base);
   line-height: var(--line-height-relaxed);
   word-wrap: break-word;
+  font-family: var(--font-mono);
 }
 
 .todoTextChecked {
