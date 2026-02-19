@@ -1,0 +1,1277 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OKLCH Playground Params</title>
+  <style>
+    :root {
+      --bg: #f3f3f3;
+      --panel: #ffffff;
+      --border: #d7d7d7;
+      --text: #1e1e1e;
+      --muted: #606060;
+      --button: #ececec;
+      --button-hover: #e3e3e3;
+      --danger: #8f2f2f;
+      --ok: #2e6b3f;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.28rem;
+      letter-spacing: 0.01em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .top-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .converter-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .field > span {
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+    }
+
+    input[type="text"].invalid,
+    input[type="number"].invalid,
+    select.invalid {
+      border-color: color-mix(in srgb, var(--danger) 58%, #ffffff);
+      background: #fff7f7;
+    }
+
+    input[type="text"][readonly] {
+      background: #f7f7f7;
+      color: #555;
+    }
+
+    .button {
+      border: 1px solid #c8c8c8;
+      background: var(--button);
+      color: #222;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      background: var(--button-hover);
+    }
+
+    .button.danger {
+      border-color: #dcb3b3;
+      color: var(--danger);
+      background: #fff6f6;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .status.ok {
+      border-color: #c9decf;
+      color: var(--ok);
+      background: #f1f8f3;
+    }
+
+    .status.error {
+      border-color: #efc8c8;
+      color: var(--danger);
+      background: #fff4f4;
+    }
+
+    .section {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sets,
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .set-row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(160px, 1fr) 120px 120px auto;
+      align-items: end;
+    }
+
+    .row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(320px, 1fr) minmax(280px, 360px);
+      align-items: stretch;
+      background: #fff;
+    }
+
+    .row.colored {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .row.colored .field > span,
+    .row.colored .meta,
+    .row.colored .preview-head {
+      color: inherit;
+      opacity: 0.92;
+    }
+
+    .row.colored .button {
+      color: inherit;
+      border-color: color-mix(in srgb, currentColor 30%, #ffffff);
+      background: color-mix(in srgb, #ffffff 72%, transparent);
+    }
+
+    .row-controls {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .row-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mini {
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .meta {
+      display: grid;
+      gap: 2px;
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.74rem;
+      color: #4f4f4f;
+      line-height: 1.35;
+    }
+
+    .meta .bad {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .preview {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 150px;
+      gap: 8px;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .preview-head {
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
+    }
+
+    .sample {
+      align-self: center;
+      display: grid;
+      gap: 6px;
+    }
+
+    .sample-aa {
+      font-size: 1.5rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sample-body {
+      font-size: 0.9rem;
+    }
+
+    .sample-chip {
+      width: max-content;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      background: #fafafa;
+    }
+
+    .footer-line {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 930px) {
+      .top-grid,
+      .converter-grid,
+      .set-row,
+      .row-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .row-actions .button,
+      .section-head .button {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>OKLCH Playground (Parameter)</h1>
+      <p class="subtitle">Backgrounds werden aus Textfarbe + Hue-Offset + L/C-Set generiert. Autosave laeuft lokal im Browser.</p>
+
+      <div class="top-grid">
+        <label class="field">
+          <span>Textfarbe (`oklch(...)` oder `#RRGGBB`)</span>
+          <input id="text-input" type="text" spellcheck="false" placeholder="oklch(25% 0.08 260)">
+        </label>
+        <button id="add-bg" class="button" type="button">Add Background</button>
+        <button id="reset-all" class="button danger" type="button">Reset</button>
+      </div>
+
+      <div class="converter-grid">
+        <label class="field">
+          <span>HEX to OKLCH</span>
+          <input id="hex-convert-input" type="text" spellcheck="false" placeholder="#1e2a6d">
+        </label>
+        <label class="field">
+          <span>OKLCH Output</span>
+          <input id="hex-convert-output" type="text" readonly value="">
+        </label>
+      </div>
+
+      <div id="save-status" class="status" aria-live="polite">Ready.</div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>L/C Sets</h2>
+          <button id="add-set" class="button" type="button">Add Set</button>
+        </div>
+        <div id="set-list" class="sets"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <h2>Background Rows</h2>
+        </div>
+        <div id="bg-list" class="list"></div>
+      </div>
+
+      <div class="footer-line">Storage-Key: <code>pondernote.oklchPlaygroundParams.v1</code></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "pondernote.oklchPlaygroundParams.v1";
+      const AUTOSAVE_DELAY_MS = 150;
+      const HUE_OFFSETS = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180];
+
+      const defaults = {
+        textColorInput: "oklch(25% 0.08 260)",
+        sets: [
+          { id: "set-1", name: "Set 1", L: 90, C: 0.06 },
+          { id: "set-2", name: "Set 2", L: 80, C: 0.10 }
+        ],
+        backgrounds: [
+          { id: "bg-1", hueOffset: 0, setId: "set-1" },
+          { id: "bg-2", hueOffset: 0, setId: "set-2" },
+          { id: "bg-3", hueOffset: 0, setId: "set-1" }
+        ]
+      };
+
+      const state = {
+        textColorInput: defaults.textColorInput,
+        sets: defaults.sets.map(cloneSet),
+        backgrounds: defaults.backgrounds.map(cloneBackground),
+        cDrafts: {},
+        errors: {
+          text: null,
+          sets: {},
+          backgrounds: {}
+        },
+        saveTimer: null,
+        nextId: 10
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function cloneSet(set) {
+        return { id: String(set.id), name: String(set.name), L: Number(set.L), C: Number(set.C) };
+      }
+
+      function cloneBackground(bg) {
+        return { id: String(bg.id), hueOffset: Number(bg.hueOffset), setId: String(bg.setId) };
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function normalizeHue(deg) {
+        let h = deg % 360;
+        if (h < 0) h += 360;
+        return h;
+      }
+
+      function srgbToLinear(v) {
+        if (v <= 0.04045) return v / 12.92;
+        return Math.pow((v + 0.055) / 1.055, 2.4);
+      }
+
+      function linearToSrgb(v) {
+        if (v <= 0.0031308) return 12.92 * v;
+        return 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+      }
+
+      function hexToSrgb(hex) {
+        const clean = hex.trim().replace(/^#/, "");
+        const int = parseInt(clean, 16);
+        const r = ((int >> 16) & 255) / 255;
+        const g = ((int >> 8) & 255) / 255;
+        const b = (int & 255) / 255;
+        return [r, g, b];
+      }
+
+      function srgbToHex(srgb) {
+        const values = srgb.map((c) => clamp(c, 0, 1));
+        const parts = values.map((c) => Math.round(c * 255).toString(16).padStart(2, "0"));
+        return "#" + parts.join("");
+      }
+
+      function linearSrgbToOklab(linear) {
+        const r = linear[0];
+        const g = linear[1];
+        const b = linear[2];
+
+        const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+        const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+        const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+        const l3 = Math.cbrt(l);
+        const m3 = Math.cbrt(m);
+        const s3 = Math.cbrt(s);
+
+        return {
+          L: 0.2104542553 * l3 + 0.7936177850 * m3 - 0.0040720468 * s3,
+          a: 1.9779984951 * l3 - 2.4285922050 * m3 + 0.4505937099 * s3,
+          b: 0.0259040371 * l3 + 0.7827717662 * m3 - 0.8086757660 * s3
+        };
+      }
+
+      function oklabToLinearSrgb(oklab) {
+        const L = oklab.L;
+        const a = oklab.a;
+        const b = oklab.b;
+
+        const l3 = L + 0.3963377774 * a + 0.2158037573 * b;
+        const m3 = L - 0.1055613458 * a - 0.0638541728 * b;
+        const s3 = L - 0.0894841775 * a - 1.2914855480 * b;
+
+        const l = l3 * l3 * l3;
+        const m = m3 * m3 * m3;
+        const s = s3 * s3 * s3;
+
+        return [
+          4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+          -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+        ];
+      }
+
+      function oklabToOklch(oklab) {
+        const C = Math.sqrt(oklab.a * oklab.a + oklab.b * oklab.b);
+        const H = normalizeHue(Math.atan2(oklab.b, oklab.a) * (180 / Math.PI));
+        return { L: oklab.L, C: C, H: H };
+      }
+
+      function oklchToOklab(oklch) {
+        const angle = oklch.H * Math.PI / 180;
+        return {
+          L: oklch.L,
+          a: oklch.C * Math.cos(angle),
+          b: oklch.C * Math.sin(angle)
+        };
+      }
+
+      function srgbToOklch(srgb) {
+        const linear = srgb.map(srgbToLinear);
+        return oklabToOklch(linearSrgbToOklab(linear));
+      }
+
+      function isLinearInGamut(linear) {
+        const epsilon = 1e-7;
+        return linear.every((c) => c >= -epsilon && c <= 1 + epsilon);
+      }
+
+      function oklchToSrgbInGamut(oklch) {
+        const target = { L: clamp(oklch.L, 0, 1), C: Math.max(0, oklch.C), H: normalizeHue(oklch.H) };
+        const initialLinear = oklabToLinearSrgb(oklchToOklab(target));
+
+        let final = { ...target };
+        let clipped = false;
+
+        if (!isLinearInGamut(initialLinear)) {
+          clipped = true;
+          let low = 0;
+          let high = target.C;
+          for (let i = 0; i < 22; i += 1) {
+            const mid = (low + high) / 2;
+            const attempt = oklabToLinearSrgb(oklchToOklab({ L: target.L, C: mid, H: target.H }));
+            if (isLinearInGamut(attempt)) {
+              low = mid;
+            } else {
+              high = mid;
+            }
+          }
+          final.C = low;
+        }
+
+        const finalLinear = oklabToLinearSrgb(oklchToOklab(final));
+        const finalSrgb = finalLinear.map((c) => clamp(linearToSrgb(c), 0, 1));
+
+        return { oklch: final, srgb: finalSrgb, hex: srgbToHex(finalSrgb), clipped };
+      }
+
+      function relativeLuminance(srgb) {
+        const [r, g, b] = srgb.map(srgbToLinear);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(srgbA, srgbB) {
+        const l1 = relativeLuminance(srgbA);
+        const l2 = relativeLuminance(srgbB);
+        const hi = Math.max(l1, l2);
+        const lo = Math.min(l1, l2);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      function formatOklch(oklch) {
+        return "oklch(" + (oklch.L * 100).toFixed(2) + "% " + oklch.C.toFixed(4) + " " + normalizeHue(oklch.H).toFixed(2) + ")";
+      }
+
+      function parseColorInput(raw) {
+        const value = String(raw || "").trim();
+        if (!value) return { error: "Leere Farbeingabe." };
+
+        const hexMatch = value.match(/^#?([0-9a-fA-F]{6})$/);
+        if (hexMatch) {
+          const hex = "#" + hexMatch[1].toLowerCase();
+          return { source: "hex", oklch: srgbToOklch(hexToSrgb(hex)), original: hex };
+        }
+
+        if (/^oklch\(/i.test(value)) {
+          const contentMatch = value.match(/^oklch\((.*)\)$/i);
+          if (!contentMatch) return { error: "Ungueltiges oklch-Format." };
+
+          const body = contentMatch[1].split("/")[0].replace(/,/g, " ").trim();
+          const parts = body.split(/\s+/).filter(Boolean);
+          if (parts.length < 3) return { error: "OKLCH erwartet L C H." };
+
+          const Lraw = parts[0];
+          const Craw = parts[1];
+          const Hraw = parts[2];
+
+          const Lnum = parseFloat(Lraw);
+          const Cnum = parseFloat(Craw);
+          const Hnum = parseFloat(Hraw);
+
+          if (!Number.isFinite(Lnum) || !Number.isFinite(Cnum) || !Number.isFinite(Hnum)) {
+            return { error: "OKLCH enthaelt ungueltige Zahlen." };
+          }
+
+          let L = Lraw.endsWith("%") ? Lnum / 100 : Lnum;
+          if (!Lraw.endsWith("%") && L > 1) L = L / 100;
+
+          return {
+            source: "oklch",
+            original: value,
+            oklch: {
+              L: clamp(L, 0, 1),
+              C: Math.max(0, Cnum),
+              H: normalizeHue(Hnum)
+            }
+          };
+        }
+
+        return { error: "Erlaubt: #RRGGBB oder oklch(L C H)." };
+      }
+
+      function convertHexToOklch(raw) {
+        const value = String(raw || "").trim();
+        if (!value) return { error: "HEX fehlt." };
+        const hexMatch = value.match(/^#?([0-9a-fA-F]{6})$/);
+        if (!hexMatch) return { error: "Bitte HEX als #RRGGBB eingeben." };
+        const hex = "#" + hexMatch[1].toLowerCase();
+        const oklch = srgbToOklch(hexToSrgb(hex));
+        return { hex, oklch, formatted: formatOklch(oklch) };
+      }
+
+      function updateHexConverter() {
+        const input = $("hex-convert-input");
+        const output = $("hex-convert-output");
+        const result = convertHexToOklch(input.value);
+        if (result.error) {
+          output.value = result.error;
+          input.classList.toggle("invalid", input.value.trim().length > 0);
+          return;
+        }
+        output.value = result.formatted;
+        input.classList.remove("invalid");
+      }
+
+      function makeId(prefix) {
+        state.nextId += 1;
+        return prefix + "-" + String(state.nextId);
+      }
+
+      function setStatus(kind, message) {
+        const el = $("save-status");
+        el.textContent = message;
+        el.className = "status" + (kind === "ok" ? " ok" : kind === "error" ? " error" : "");
+      }
+
+      function savePayload() {
+        return {
+          textColorInput: state.textColorInput,
+          sets: state.sets.map((set) => ({ id: set.id, name: set.name, L: set.L, C: set.C })),
+          backgrounds: state.backgrounds.map((bg) => ({ id: bg.id, hueOffset: bg.hueOffset, setId: bg.setId })),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function scheduleSave(valid, reason) {
+        if (state.saveTimer) {
+          clearTimeout(state.saveTimer);
+          state.saveTimer = null;
+        }
+
+        if (!valid) {
+          setStatus("error", "Nicht gespeichert: " + reason);
+          return;
+        }
+
+        state.saveTimer = setTimeout(function () {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savePayload()));
+            setStatus("ok", "Gespeichert (localStorage). " + new Date().toLocaleTimeString("de-DE"));
+          } catch (error) {
+            setStatus("error", "Speichern fehlgeschlagen: " + (error && error.message ? error.message : "unbekannter Fehler"));
+          }
+        }, AUTOSAVE_DELAY_MS);
+      }
+
+      function ensureSetFallbackReferences() {
+        if (state.sets.length === 0) return;
+        const firstSetId = state.sets[0].id;
+        const setIds = new Set(state.sets.map((set) => set.id));
+        state.backgrounds = state.backgrounds.map((bg) => {
+          if (setIds.has(bg.setId)) return bg;
+          return { ...bg, setId: firstSetId };
+        });
+      }
+
+      function normalizeLoadedState(parsed) {
+        const next = {
+          textColorInput: defaults.textColorInput,
+          sets: defaults.sets.map(cloneSet),
+          backgrounds: defaults.backgrounds.map(cloneBackground)
+        };
+
+        if (!parsed || typeof parsed !== "object") return next;
+
+        if (typeof parsed.textColorInput === "string") {
+          next.textColorInput = parsed.textColorInput;
+        }
+
+        if (Array.isArray(parsed.sets)) {
+          const loadedSets = parsed.sets
+            .filter((v) => v && typeof v === "object")
+            .map((v, index) => ({
+              id: typeof v.id === "string" && v.id.trim() ? v.id : makeId("set"),
+              name: typeof v.name === "string" && v.name.trim() ? v.name : "Set " + String(index + 1),
+              L: Number(v.L),
+              C: Number(v.C)
+            }));
+          if (loadedSets.length > 0) {
+            next.sets = loadedSets;
+          }
+        }
+
+        if (Array.isArray(parsed.backgrounds)) {
+          const setIds = new Set(next.sets.map((set) => set.id));
+          const loadedBgs = parsed.backgrounds
+            .filter((v) => v && typeof v === "object")
+            .map((v) => {
+              const offset = Number(v.hueOffset);
+              const safeOffset = HUE_OFFSETS.includes(offset) ? offset : 0;
+              const setId = typeof v.setId === "string" && setIds.has(v.setId) ? v.setId : next.sets[0].id;
+              return {
+                id: typeof v.id === "string" && v.id.trim() ? v.id : makeId("bg"),
+                hueOffset: safeOffset,
+                setId: setId
+              };
+            });
+          next.backgrounds = loadedBgs;
+        }
+
+        return next;
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          const normalized = normalizeLoadedState(parsed);
+          state.textColorInput = normalized.textColorInput;
+          state.sets = normalized.sets;
+          state.backgrounds = normalized.backgrounds;
+          state.cDrafts = {};
+          ensureSetFallbackReferences();
+
+          const allIds = [];
+          state.sets.forEach((set) => allIds.push(set.id));
+          state.backgrounds.forEach((bg) => allIds.push(bg.id));
+          allIds.forEach((id) => {
+            const m = String(id).match(/-(\d+)$/);
+            if (m) {
+              const n = parseInt(m[1], 10);
+              if (Number.isFinite(n)) {
+                state.nextId = Math.max(state.nextId, n);
+              }
+            }
+          });
+        } catch (error) {
+          setStatus("error", "Gespeicherte Daten konnten nicht gelesen werden. Defaults aktiv.");
+        }
+      }
+
+      function moveBackground(index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= state.backgrounds.length) return;
+        const copy = state.backgrounds.slice();
+        const tmp = copy[index];
+        copy[index] = copy[target];
+        copy[target] = tmp;
+        state.backgrounds = copy;
+      }
+
+      function removeSetWithFallback(setId) {
+        if (state.sets.length <= 1) return;
+        const remaining = state.sets.filter((set) => set.id !== setId);
+        if (remaining.length === 0) return;
+        const fallbackId = remaining[0].id;
+        state.sets = remaining;
+        state.backgrounds = state.backgrounds.map((bg) => (bg.setId === setId ? { ...bg, setId: fallbackId } : bg));
+      }
+
+      function getFocusSnapshot() {
+        const active = document.activeElement;
+        if (!active) return null;
+
+        const snapshot = {
+          kind: "",
+          id: "",
+          focusKey: "",
+          start: null,
+          end: null,
+          direction: "none"
+        };
+
+        if (typeof active.selectionStart === "number" && typeof active.selectionEnd === "number") {
+          snapshot.start = active.selectionStart;
+          snapshot.end = active.selectionEnd;
+          snapshot.direction = active.selectionDirection || "none";
+        }
+
+        if (active.id === "text-input" || active.id === "hex-convert-input") {
+          snapshot.kind = "id";
+          snapshot.id = active.id;
+          return snapshot;
+        }
+
+        if (active.dataset && active.dataset.focusKey) {
+          snapshot.kind = "focusKey";
+          snapshot.focusKey = active.dataset.focusKey;
+          return snapshot;
+        }
+
+        return null;
+      }
+
+      function restoreFocusSnapshot(snapshot) {
+        if (!snapshot) return;
+
+        let target = null;
+        if (snapshot.kind === "id") {
+          target = $(snapshot.id);
+        } else if (snapshot.kind === "focusKey") {
+          target = document.querySelector('[data-focus-key="' + snapshot.focusKey + '"]');
+        }
+
+        if (!target) return;
+
+        try {
+          target.focus({ preventScroll: true });
+        } catch (_error) {
+          target.focus();
+        }
+
+        if (typeof snapshot.start === "number" && typeof target.setSelectionRange === "function") {
+          const length = target.value.length;
+          const start = clamp(snapshot.start, 0, length);
+          const end = clamp(snapshot.end, 0, length);
+          try {
+            target.setSelectionRange(start, end, snapshot.direction);
+          } catch (_error) {
+            target.setSelectionRange(start, end);
+          }
+        }
+      }
+
+      function createHueOffsetSelect(selectedOffset, bgId) {
+        const select = document.createElement("select");
+        select.dataset.focusKey = "bg-offset:" + bgId;
+        HUE_OFFSETS.forEach((offset) => {
+          const option = document.createElement("option");
+          option.value = String(offset);
+          option.textContent = (offset > 0 ? "+" : "") + String(offset) + "deg";
+          if (offset === selectedOffset) option.selected = true;
+          select.appendChild(option);
+        });
+        return select;
+      }
+
+      function renderSets(setErrors) {
+        const list = $("set-list");
+        list.innerHTML = "";
+
+        state.sets.forEach((set, index) => {
+          const row = document.createElement("article");
+          row.className = "set-row";
+
+          const nameField = document.createElement("label");
+          nameField.className = "field";
+          const nameLabel = document.createElement("span");
+          nameLabel.textContent = "Set Name";
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.value = set.name;
+          nameInput.dataset.focusKey = "set-name:" + set.id;
+          if (setErrors[set.id] && setErrors[set.id].name) nameInput.classList.add("invalid");
+          nameInput.addEventListener("input", function (event) {
+            set.name = event.target.value;
+            render();
+          });
+          nameField.appendChild(nameLabel);
+          nameField.appendChild(nameInput);
+
+          const lField = document.createElement("label");
+          lField.className = "field";
+          const lLabel = document.createElement("span");
+          lLabel.textContent = "L (%)";
+          const lInput = document.createElement("input");
+          lInput.type = "number";
+          lInput.step = "0.1";
+          lInput.min = "0";
+          lInput.max = "100";
+          lInput.value = Number.isFinite(set.L) ? String(set.L) : "";
+          lInput.dataset.focusKey = "set-l:" + set.id;
+          if (setErrors[set.id] && setErrors[set.id].L) lInput.classList.add("invalid");
+          lInput.addEventListener("input", function (event) {
+            const parsed = parseFloat(event.target.value);
+            set.L = Number.isFinite(parsed) ? parsed : NaN;
+            render();
+          });
+          lField.appendChild(lLabel);
+          lField.appendChild(lInput);
+
+          const cField = document.createElement("label");
+          cField.className = "field";
+          const cLabel = document.createElement("span");
+          cLabel.textContent = "C";
+          const cInput = document.createElement("input");
+          cInput.type = "number";
+          cInput.step = "0.01";
+          cInput.min = "0";
+          cInput.max = "0.4";
+          const cFocusKey = "set-c:" + set.id;
+          const hasCDraft = Object.prototype.hasOwnProperty.call(state.cDrafts, cFocusKey);
+          cInput.value = hasCDraft ? state.cDrafts[cFocusKey] : (Number.isFinite(set.C) ? String(set.C) : "");
+          cInput.dataset.focusKey = cFocusKey;
+          if (setErrors[set.id] && setErrors[set.id].C) cInput.classList.add("invalid");
+          cInput.addEventListener("input", function (event) {
+            const raw = event.target.value;
+            state.cDrafts[cFocusKey] = raw;
+            const parsed = parseFloat(String(raw).replace(",", "."));
+            set.C = Number.isFinite(parsed) ? parsed : NaN;
+          });
+          let committed = false;
+          const commitC = function () {
+            if (committed) return;
+            committed = true;
+            const raw = Object.prototype.hasOwnProperty.call(state.cDrafts, cFocusKey) ? state.cDrafts[cFocusKey] : cInput.value;
+            const parsed = parseFloat(String(raw).replace(",", "."));
+            set.C = Number.isFinite(parsed) ? parsed : NaN;
+            delete state.cDrafts[cFocusKey];
+            render();
+          };
+          cInput.addEventListener("change", commitC);
+          cInput.addEventListener("blur", commitC);
+          cInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              cInput.blur();
+            }
+          });
+          cField.appendChild(cLabel);
+          cField.appendChild(cInput);
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "button mini danger";
+          removeBtn.textContent = "Remove";
+          removeBtn.disabled = state.sets.length <= 1;
+          removeBtn.addEventListener("click", function () {
+            removeSetWithFallback(set.id);
+            render();
+          });
+
+          row.appendChild(nameField);
+          row.appendChild(lField);
+          row.appendChild(cField);
+          row.appendChild(removeBtn);
+          list.appendChild(row);
+        });
+
+        if (state.sets.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No sets. Add one set to continue.";
+          list.appendChild(empty);
+        }
+      }
+
+      function validateSets() {
+        const errors = {};
+        state.sets.forEach((set) => {
+          const e = { name: false, L: false, C: false };
+          if (!String(set.name || "").trim()) e.name = true;
+          if (!Number.isFinite(set.L) || set.L < 0 || set.L > 100) e.L = true;
+          if (!Number.isFinite(set.C) || set.C < 0 || set.C > 0.4) e.C = true;
+          if (e.name || e.L || e.C) errors[set.id] = e;
+        });
+        return errors;
+      }
+
+      function validateBackgrounds(setIdSet) {
+        const errors = {};
+        state.backgrounds.forEach((bg) => {
+          const badOffset = !HUE_OFFSETS.includes(bg.hueOffset);
+          const badSet = !setIdSet.has(bg.setId);
+          if (badOffset || badSet) {
+            errors[bg.id] = { offset: badOffset, setId: badSet };
+          }
+        });
+        return errors;
+      }
+
+      function renderBackgrounds(parsedText, setErrors, backgroundErrors) {
+        const textResolved = parsedText.error ? null : oklchToSrgbInGamut(parsedText.oklch);
+        const setMap = new Map(state.sets.map((set) => [set.id, set]));
+        const list = $("bg-list");
+        list.innerHTML = "";
+
+        if (state.backgrounds.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No background rows. Use 'Add Background'.";
+          list.appendChild(empty);
+          return;
+        }
+
+        state.backgrounds.forEach((bg, index) => {
+          const row = document.createElement("article");
+          row.className = "row";
+
+          const controls = document.createElement("div");
+          controls.className = "row-controls";
+
+          const grid = document.createElement("div");
+          grid.className = "row-grid";
+
+          const offsetField = document.createElement("label");
+          offsetField.className = "field";
+          const offsetLabel = document.createElement("span");
+          offsetLabel.textContent = "Hue Offset";
+          const offsetSelect = createHueOffsetSelect(bg.hueOffset, bg.id);
+          if (backgroundErrors[bg.id] && backgroundErrors[bg.id].offset) offsetSelect.classList.add("invalid");
+          offsetSelect.addEventListener("change", function (event) {
+            const offset = parseInt(event.target.value, 10);
+            bg.hueOffset = Number.isFinite(offset) ? offset : bg.hueOffset;
+            render();
+          });
+          offsetField.appendChild(offsetLabel);
+          offsetField.appendChild(offsetSelect);
+
+          const setField = document.createElement("label");
+          setField.className = "field";
+          const setLabel = document.createElement("span");
+          setLabel.textContent = "L/C Set";
+          const setSelect = document.createElement("select");
+          setSelect.dataset.focusKey = "bg-set:" + bg.id;
+          state.sets.forEach((set) => {
+            const option = document.createElement("option");
+            option.value = set.id;
+            option.textContent = set.name;
+            if (set.id === bg.setId) option.selected = true;
+            setSelect.appendChild(option);
+          });
+          if (backgroundErrors[bg.id] && backgroundErrors[bg.id].setId) setSelect.classList.add("invalid");
+          setSelect.addEventListener("change", function (event) {
+            bg.setId = event.target.value;
+            render();
+          });
+          setField.appendChild(setLabel);
+          setField.appendChild(setSelect);
+
+          grid.appendChild(offsetField);
+          grid.appendChild(setField);
+
+          const actions = document.createElement("div");
+          actions.className = "row-actions";
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "button mini";
+          upBtn.textContent = "Up";
+          upBtn.disabled = index === 0;
+          upBtn.addEventListener("click", function () {
+            moveBackground(index, -1);
+            render();
+          });
+
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.className = "button mini";
+          downBtn.textContent = "Down";
+          downBtn.disabled = index === state.backgrounds.length - 1;
+          downBtn.addEventListener("click", function () {
+            moveBackground(index, 1);
+            render();
+          });
+
+          const duplicateBtn = document.createElement("button");
+          duplicateBtn.type = "button";
+          duplicateBtn.className = "button mini";
+          duplicateBtn.textContent = "Duplicate";
+          duplicateBtn.addEventListener("click", function () {
+            state.backgrounds.splice(index + 1, 0, {
+              id: makeId("bg"),
+              hueOffset: bg.hueOffset,
+              setId: bg.setId
+            });
+            render();
+          });
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "button mini danger";
+          removeBtn.textContent = "Remove";
+          removeBtn.addEventListener("click", function () {
+            state.backgrounds.splice(index, 1);
+            render();
+          });
+
+          actions.appendChild(upBtn);
+          actions.appendChild(downBtn);
+          actions.appendChild(duplicateBtn);
+          actions.appendChild(removeBtn);
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+
+          controls.appendChild(grid);
+          controls.appendChild(actions);
+          controls.appendChild(meta);
+
+          const preview = document.createElement("div");
+          preview.className = "preview";
+          const head = document.createElement("div");
+          head.className = "preview-head";
+          head.textContent = "Preview";
+          const sample = document.createElement("div");
+          sample.className = "sample";
+          const aa = document.createElement("div");
+          aa.className = "sample-aa";
+          aa.textContent = "Aa";
+          const body = document.createElement("div");
+          body.className = "sample-body";
+          body.textContent = "Body text sample";
+          const chip = document.createElement("div");
+          chip.className = "sample-chip";
+          chip.textContent = "Button";
+          sample.appendChild(aa);
+          sample.appendChild(body);
+          sample.appendChild(chip);
+          preview.appendChild(head);
+          preview.appendChild(sample);
+
+          const selectedSet = setMap.get(bg.setId);
+          const selectedSetInvalid = !selectedSet || Boolean(setErrors[bg.setId]);
+          const bgInvalid = Boolean(backgroundErrors[bg.id]);
+
+          if (selectedSetInvalid || bgInvalid || parsedText.error) {
+            row.classList.remove("colored");
+            row.style.background = "#ffffff";
+            row.style.color = "#1e1e1e";
+            preview.style.background = "#f2f2f2";
+            preview.style.color = "#8a8a8a";
+
+            const parts = [];
+            if (parsedText.error) parts.push("Textfarbe ungueltig");
+            if (selectedSetInvalid) parts.push("Set ungueltig oder fehlt");
+            if (bgInvalid) {
+              if (backgroundErrors[bg.id].offset) parts.push("Hue offset ungueltig");
+              if (backgroundErrors[bg.id].setId) parts.push("Set referenz ungueltig");
+            }
+            meta.innerHTML = '<div class="bad">' + parts.join("; ") + "</div>";
+          } else {
+            const generated = {
+              L: clamp(selectedSet.L / 100, 0, 1),
+              C: Math.max(0, selectedSet.C),
+              H: normalizeHue(textResolved.oklch.H + bg.hueOffset)
+            };
+            const resolvedBg = oklchToSrgbInGamut(generated);
+
+            row.classList.add("colored");
+            row.style.background = resolvedBg.hex;
+            row.style.color = textResolved.hex;
+            preview.style.background = resolvedBg.hex;
+            preview.style.color = textResolved.hex;
+
+            const ratio = contrastRatio(textResolved.srgb, resolvedBg.srgb);
+            const fail = ratio < 4.5;
+            meta.innerHTML =
+              "<div>Set " + selectedSet.name + " | Offset " + (bg.hueOffset > 0 ? "+" : "") + bg.hueOffset + "deg</div>" +
+              "<div>OKLCH " + formatOklch(resolvedBg.oklch) + "</div>" +
+              "<div>HEX " + resolvedBg.hex + "</div>" +
+              "<div>Kontrast " + ratio.toFixed(2) + ":1" + (fail ? ' <span class="bad">(unter 4.5)</span>' : "") + "</div>" +
+              (resolvedBg.clipped ? "<div>Hinweis: Chroma fuer Gamut reduziert</div>" : "");
+          }
+
+          row.appendChild(controls);
+          row.appendChild(preview);
+          list.appendChild(row);
+        });
+      }
+
+      function render() {
+        const focusSnapshot = getFocusSnapshot();
+
+        const textInput = $("text-input");
+        textInput.value = state.textColorInput;
+
+        const parsedText = parseColorInput(state.textColorInput);
+        state.errors.text = parsedText.error || null;
+        textInput.classList.toggle("invalid", Boolean(state.errors.text));
+
+        const setErrors = validateSets();
+        state.errors.sets = setErrors;
+
+        const setIdSet = new Set(state.sets.map((set) => set.id));
+        const backgroundErrors = validateBackgrounds(setIdSet);
+        state.errors.backgrounds = backgroundErrors;
+
+        renderSets(setErrors);
+        renderBackgrounds(parsedText, setErrors, backgroundErrors);
+        updateHexConverter();
+
+        const hasSetErrors = Object.keys(setErrors).length > 0;
+        const hasBgErrors = Object.keys(backgroundErrors).length > 0;
+        const allValid = !state.errors.text && state.sets.length > 0 && !hasSetErrors && !hasBgErrors;
+
+        let reason = "";
+        if (state.errors.text) reason = "Textfarbe ist ungueltig.";
+        else if (state.sets.length === 0) reason = "Mindestens ein Set ist noetig.";
+        else if (hasSetErrors) reason = "Mindestens ein Set hat ungueltige Werte.";
+        else if (hasBgErrors) reason = "Mindestens eine Background-Zeile ist ungueltig.";
+
+        scheduleSave(allValid, reason || "Ungueltige Eingaben.");
+        restoreFocusSnapshot(focusSnapshot);
+      }
+
+      function wireGlobalEvents() {
+        $("text-input").addEventListener("input", function (event) {
+          state.textColorInput = event.target.value;
+          render();
+        });
+
+        $("hex-convert-input").addEventListener("input", function () {
+          updateHexConverter();
+        });
+
+        $("add-set").addEventListener("click", function () {
+          state.sets.push({
+            id: makeId("set"),
+            name: "Set " + String(state.sets.length + 1),
+            L: 90,
+            C: 0.06
+          });
+          ensureSetFallbackReferences();
+          render();
+        });
+
+        $("add-bg").addEventListener("click", function () {
+          const setId = state.sets.length > 0 ? state.sets[0].id : "";
+          state.backgrounds.push({ id: makeId("bg"), hueOffset: 0, setId: setId });
+          render();
+        });
+
+        $("reset-all").addEventListener("click", function () {
+          state.textColorInput = defaults.textColorInput;
+          state.sets = defaults.sets.map(cloneSet);
+          state.backgrounds = defaults.backgrounds.map(cloneBackground);
+          state.cDrafts = {};
+          ensureSetFallbackReferences();
+          render();
+        });
+      }
+
+      loadState();
+      wireGlobalEvents();
+      render();
+    })();
+  </script>
+</body>
+</html>
