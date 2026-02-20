@@ -10,6 +10,10 @@ import { useWorkspaceStore, workspaceActions } from './stores/workspaceStore'
 import { applyEditorChrome, resetEditorChrome } from './utils/editorChrome'
 import { getGlobalNavAction, isTypingTarget, type AppScreen } from './utils/keyboard'
 import { noteColorSlot } from './utils/noteColor'
+import {
+  readOverviewCompactPreference,
+  writeOverviewCompactPreference,
+} from './utils/overviewCompactPreference'
 import { restoreAppInputFocus } from './utils/windowFocus'
 import './styles.css'
 
@@ -31,7 +35,7 @@ function App() {
   const [activeNoteIsNew, setActiveNoteIsNew] = useState(false)
   const [overviewScrollTop, setOverviewScrollTop] = useState(0)
   const [overviewFocusStem, setOverviewFocusStem] = useState<string | null>(null)
-  const [overviewCompact, setOverviewCompact] = useState(false)
+  const [overviewCompact, setOverviewCompact] = useState(() => readOverviewCompactPreference())
   const [rebuildLogOpen, setRebuildLogOpen] = useState(false)
   const appMainRef = useRef<HTMLElement | null>(null)
   const previousScreenRef = useRef<AppScreen>('overview')
@@ -107,6 +111,10 @@ function App() {
       void resetEditorChrome()
     }
   }, [])
+
+  useEffect(() => {
+    writeOverviewCompactPreference(overviewCompact)
+  }, [overviewCompact])
 
   const openEditor = useCallback(
     (note: NoteSummary, isNew: boolean, scrollTop: number) => {
