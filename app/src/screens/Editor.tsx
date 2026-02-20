@@ -51,6 +51,18 @@ function defaultEditorMode(isNew: boolean): EditorMode {
   return isNew ? 'edit' : 'preview'
 }
 
+function normalizeTags(tags: string[]): string[] {
+  return tags
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0)
+    .sort((a, b) => a.localeCompare(b))
+}
+
+function areTagsEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
+}
+
 function todoToggleKey(todo: MarkdownTodo): string {
   return `${todo.lineNumber}:${todo.charOffset}`
 }
@@ -64,7 +76,10 @@ export function Editor(props: EditorProps) {
   const pendingSaveRef = useRef(false)
   const lastSavedBodyRef = useRef('')
   const bodyRef = useRef('')
+  const tagsRef = useRef<string[]>([])
+  const lastSavedTagsRef = useRef<string[]>([])
   const saveErrorRef = useRef<string | null>(null)
+  const tagSaveErrorRef = useRef<string | null>(null)
   const pendingPreviewToggleKeysRef = useRef(new Set<string>())
   const previewTodoRowRefsRef = useRef(new Map<string, HTMLDivElement>())
   const restorePreviewFocusKeyRef = useRef<string | null>(null)
@@ -106,6 +121,10 @@ export function Editor(props: EditorProps) {
   }, [saveError])
 
   useEffect(() => {
+    tagSaveErrorRef.current = tagSaveError
+  }, [tagSaveError])
+
+  useEffect(() => {
     setMode(defaultEditorMode(isNew))
   }, [isNew, stem])
 
@@ -139,10 +158,14 @@ export function Editor(props: EditorProps) {
       setBody(initialBody)
       lastSavedBodyRef.current = initialBody
       bodyRef.current = initialBody
-      
+
       // Load note tags from workspace notes list
       const note = notes.find((n) => n.stem === stem)
-      setTags(note?.tags || [])
+      const initialTags = note?.tags || []
+      setTags(initialTags)
+      tagsRef.current = initialTags
+      lastSavedTagsRef.current = normalizeTags(initialTags)
+      setTagSaveError(null)
 
       setLoading(false)
     } catch (err) {
@@ -446,6 +469,41 @@ export function Editor(props: EditorProps) {
     [scheduleSave],
   )
 
+  const persistTags = useCallback(async (nextTags: string[], options: { force?: boolean } = {}) => {
+    if (!stem) return true
+    const normalizedTags = normalizeTags(nextTags)
+    const force = options.force ?? false
+
+    if (!force && areTagsEqual(normalizedTags, lastSavedTagsRef.current) && !tagSaveErrorRef.current) {
+      return true
+    }
+
+    try {
+      await workspaceUpdateNoteTags(stem, normalizedTags)
+      lastSavedTagsRef.current = normalizedTags
+      setTagSaveError(null)
+      return true
+    } catch (err) {
+      setTagSaveError('Failed to save tags')
+      console.error('Tag save error:', err)
+      return false
+    }
+  }, [stem])
+
+  const handleTagsChange = useCallback((nextTags: string[]) => {
+    tagsRef.current = nextTags
+    setTags(nextTags)
+    setTagSaveError(null)
+  }, [])
+
+  const handleTagBlur = useCallback((nextTags: string[]) => {
+    tagsRef.current = nextTags
+    setTags(nextTags)
+    void (async () => {
+      await persistTags(nextTags)
+    })()
+  }, [persistTags])
+
   const handleExit = useCallback(async () => {
     if (isExiting) return
     setIsExiting(true)
@@ -470,6 +528,17 @@ export function Editor(props: EditorProps) {
     }
 
     if (mode === 'preview') {
+      const tagsOk = await persistTags(tagsRef.current, { force: true })
+      if (!tagsOk) {
+        const confirmExit = window.confirm(
+          'Latest tag save failed. Exit anyway? Tag changes may be lost.',
+        )
+        if (!confirmExit) {
+          setIsExiting(false)
+          return
+        }
+      }
+
       await workspaceActions.refreshNotes()
       onExit({ stem, discarded: false })
       return
@@ -490,9 +559,20 @@ export function Editor(props: EditorProps) {
       }
     }
 
+    const tagsOk = await persistTags(tagsRef.current, { force: true })
+    if (!tagsOk) {
+      const confirmExit = window.confirm(
+        'Latest tag save failed. Exit anyway? Tag changes may be lost.',
+      )
+      if (!confirmExit) {
+        setIsExiting(false)
+        return
+      }
+    }
+
     await workspaceActions.refreshNotes()
     onExit({ stem, discarded: false })
-  }, [isExiting, isNew, mode, onExit, performSave, stem])
+  }, [isExiting, isNew, mode, onExit, performSave, persistTags, stem])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -522,20 +602,6 @@ export function Editor(props: EditorProps) {
   const handleRetrySave = useCallback(() => {
     void performSave({ force: true })
   }, [performSave])
-
-  const handleTagBlur = useCallback(() => {
-    void (async () => {
-      if (!stem) return
-      try {
-        await workspaceUpdateNoteTags(stem, tags)
-        setTagSaveError(null)
-        // Note: refreshNotes() is called on editor exit, so tags will appear in overview then
-      } catch (err) {
-        setTagSaveError('Failed to save tags')
-        console.error('Tag save error:', err)
-      }
-    })()
-  }, [stem, tags])
 
   if (loading) {
     return (
@@ -586,7 +652,7 @@ export function Editor(props: EditorProps) {
       <div className="editorTagSection">
         <PillInput
           values={tags}
-          onChange={setTags}
+          onChange={handleTagsChange}
           onBlur={handleTagBlur}
           suggestions={workspaceTags}
           placeholder="Tags"

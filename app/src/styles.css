@@ -659,21 +659,21 @@ body {
   overflow: hidden;
 }
 
-.overviewPanel:not(.overviewPanelCompact) .noteRowMain {
+.overviewPanel .noteRowMain {
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.overviewPanel:not(.overviewPanelCompact) .noteName {
+.overviewPanel .noteName {
   min-width: 0;
   flex: 1 1 0;
 }
 
-.overviewPanel:not(.overviewPanelCompact) .noteTags {
+.overviewPanel .noteTags {
   flex: 0 0 auto;
 }
 
-.overviewPanel:not(.overviewPanelCompact) .noteTag {
+.overviewPanel .noteTag {
   flex: 0 0 auto;
 }
 

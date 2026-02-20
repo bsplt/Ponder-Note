@@ -10,7 +10,7 @@ import { TagAutocomplete } from './TagAutocomplete'
 export type PillInputProps = {
   values: string[]
   onChange: (values: string[]) => void
-  onBlur?: () => void
+  onBlur?: (values: string[]) => void
   suggestions?: string[]
   placeholder?: string
 }
@@ -34,16 +34,18 @@ export function PillInput(props: PillInputProps) {
   const [showAutocomplete, setShowAutocomplete] = useState(false)
 
   const addPill = useCallback(
-    (text: string) => {
+    (text: string): string[] => {
       const trimmed = text.trim()
-      if (!trimmed) return
+      if (!trimmed) return values
       // Silently deduplicate
       if (values.includes(trimmed)) {
         setInputValue('')
-        return
+        return values
       }
-      onChange([...values, trimmed])
+      const nextValues = [...values, trimmed]
+      onChange(nextValues)
       setInputValue('')
+      return nextValues
     },
     [onChange, values],
   )
@@ -91,15 +93,10 @@ export function PillInput(props: PillInputProps) {
   }, [])
 
   const handleBlur = useCallback(() => {
-    // Delay to allow click on autocomplete item
-    setTimeout(() => {
-      // Create pill from any remaining input text on blur
-      if (inputValue.trim()) {
-        addPill(inputValue)
-      }
-      setShowAutocomplete(false)
-      onBlur?.()
-    }, 150)
+    // Create pill from any remaining input text on blur.
+    const nextValues = addPill(inputValue)
+    setShowAutocomplete(false)
+    onBlur?.(nextValues)
   }, [addPill, inputValue, onBlur])
 
   const handleAutocompleteSelect = useCallback(
