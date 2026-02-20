@@ -9,6 +9,7 @@ import {
   workspaceGetState,
   workspaceListNotes,
   workspaceSwitchSlot,
+  workspaceUnassignSlot,
 } from '../api/workspace'
 
 export type ActiveWorkspaceStatus = 'ok' | 'unassigned' | 'missing' | 'unreadable'
@@ -189,6 +190,27 @@ function createWorkspaceStore() {
     }
   }
 
+  const unassignSlot = async (slot: number) => {
+    setState({ loading: true, errorMessage: null, problemSlot: null, problemKind: null })
+    try {
+      const ws = await workspaceUnassignSlot(slot)
+      applyWorkspaceState(ws)
+      setState({ loading: false })
+      if (mapActiveStatus(ws.slots.find((s) => s.slot === ws.activeSlot)?.status) === 'ok') {
+        await refreshNotes()
+      } else {
+        setState({ notes: [] })
+      }
+      return true
+    } catch (err) {
+      setState({
+        loading: false,
+        errorMessage: err instanceof Error ? err.message : 'Unknown error',
+      })
+      return false
+    }
+  }
+
   const createNote = async () => {
     setState({ loading: true, errorMessage: null, problemSlot: null, problemKind: null })
     try {
@@ -226,7 +248,7 @@ function createWorkspaceStore() {
       return () => listeners.delete(listener)
     },
     getSnapshot: () => state,
-    actions: { boot, refreshNotes, assignSlot, switchSlot, createNote },
+    actions: { boot, refreshNotes, assignSlot, unassignSlot, switchSlot, createNote },
   }
 }
 

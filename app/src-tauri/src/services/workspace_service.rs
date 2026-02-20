@@ -136,6 +136,12 @@ impl WorkspaceService {
         self.get_state()
     }
 
+    pub fn unassign_slot(&mut self, slot: u8) -> Result<WorkspaceState, WorkspaceServiceError> {
+        self.apply_unassign_slot(slot)?;
+        self.repo.save(&self.cfg)?;
+        self.get_state()
+    }
+
     pub fn switch_slot(&mut self, slot: u8) -> Result<WorkspaceState, WorkspaceServiceError> {
         if slot == self.cfg.active_slot {
             return self.get_state();
@@ -751,6 +757,19 @@ impl WorkspaceService {
         Ok(self.cfg.workspaces[idx].clone())
     }
 
+    fn apply_unassign_slot(&mut self, slot: u8) -> Result<(), WorkspaceServiceError> {
+        let idx = slot_index(slot)?;
+        self.cfg.workspaces[idx] = None;
+
+        if self.cfg.active_slot == slot {
+            if let Some(fallback_slot) = self.compute_fallback_slot()? {
+                self.cfg.active_slot = fallback_slot;
+            }
+        }
+
+        Ok(())
+    }
+
     fn compute_fallback_slot(&self) -> Result<Option<u8>, WorkspaceServiceError> {
         for slot in 1..=9 {
             let Some(path) = self.slot_path(slot)? else {
@@ -1271,6 +1290,7 @@ mod tests {
     use super::*;
     use crate::domain::workspace::AppConfig;
     use std::collections::BTreeMap;
+    use std::path::PathBuf;
 
     fn service_for_workspace(path: &Path) -> WorkspaceService {
         let mut workspaces: [Option<String>; 9] = Default::default();
@@ -1284,6 +1304,21 @@ mod tests {
                 extra: BTreeMap::new(),
             },
         }
+    }
+
+    fn empty_service_with_active_slot(active_slot: u8) -> WorkspaceService {
+        WorkspaceService {
+            repo: AppConfigRepo,
+            cfg: AppConfig {
+                workspaces: Default::default(),
+                active_slot,
+                extra: BTreeMap::new(),
+            },
+        }
+    }
+
+    fn assigned_slot_path(path: PathBuf) -> Option<String> {
+        Some(path.to_string_lossy().to_string())
     }
 
     #[test]
@@ -1444,6 +1479,58 @@ mod tests {
                 assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
             }
             _ => panic!("Expected InvalidInput Io error for traversal stem"),
+        }
+    }
+
+    #[test]
+    fn unassign_non_active_slot_clears_path_and_keeps_active_slot() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let ws2 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+        svc.cfg.workspaces[1] = assigned_slot_path(ws2.path().to_path_buf());
+
+        svc.apply_unassign_slot(2).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 1);
+        assert!(svc.cfg.workspaces[1].is_none());
+        assert!(svc.cfg.workspaces[0].is_some());
+    }
+
+    #[test]
+    fn unassign_active_slot_switches_to_valid_fallback() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let ws2 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+        svc.cfg.workspaces[1] = assigned_slot_path(ws2.path().to_path_buf());
+
+        svc.apply_unassign_slot(1).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 2);
+        assert!(svc.cfg.workspaces[0].is_none());
+        assert!(svc.cfg.workspaces[1].is_some());
+    }
+
+    #[test]
+    fn unassign_active_slot_with_no_valid_fallback_becomes_unassigned() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+
+        svc.apply_unassign_slot(1).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 1);
+        assert!(svc.cfg.workspaces[0].is_none());
+    }
+
+    #[test]
+    fn unassign_slot_rejects_invalid_slot() {
+        let mut svc = empty_service_with_active_slot(1);
+        let err = svc.apply_unassign_slot(10).unwrap_err();
+        match err {
+            WorkspaceServiceError::InvalidSlot { slot } => assert_eq!(slot, 10),
+            _ => panic!("Expected InvalidSlot error"),
         }
     }
 }

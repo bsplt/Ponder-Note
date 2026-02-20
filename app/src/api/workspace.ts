@@ -84,6 +84,11 @@ export async function workspaceAssignSlot(slot: number, path: string): Promise<W
   return unwrap(res)
 }
 
+export async function workspaceUnassignSlot(slot: number): Promise<WorkspaceState> {
+  const res = await invoke<CommandResult<WorkspaceState>>('workspace_unassign_slot', { slot })
+  return unwrap(res)
+}
+
 export async function workspaceSwitchSlot(slot: number): Promise<WorkspaceState> {
   const res = await invoke<CommandResult<WorkspaceState>>('workspace_switch_slot', { slot })
   return unwrap(res)

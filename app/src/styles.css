@@ -1150,11 +1150,10 @@ body {
   gap: var(--space-5);
 }
 
-.slot {
+.slotCard {
   display: flex;
-  gap: var(--space-6);
+  gap: var(--space-4);
   align-items: center;
-  text-align: left;
   width: 100%;
   padding: var(--space-6);
   border-radius: var(--radius-md);
@@ -1163,14 +1162,29 @@ body {
   color: var(--color-text);
 }
 
-.slot:hover {
+.slotCard:hover {
   border-color: var(--color-button-hover-border);
   background: var(--color-surface-hover);
 }
 
-.slot:focus-visible {
+.slotMain {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.slotMain:focus-visible {
   outline: var(--outline-width) solid var(--color-focus);
-  outline-offset: var(--space-1);
+  outline-offset: var(--space-2);
 }
 
 .slotNumber {
@@ -1235,9 +1249,20 @@ body {
   background: var(--color-surface-soft);
 }
 
-.slot:disabled {
+.slotDisabled {
   cursor: not-allowed;
   opacity: 0.75;
+}
+
+.slotMain:disabled {
+  cursor: not-allowed;
+}
+
+.slotUnassign {
+  flex: 0 0 auto;
+  min-width: var(--space-14);
+  min-height: var(--space-14);
+  padding: var(--space-3) var(--space-4);
 }
 
 .inlineError {
@@ -1285,7 +1310,6 @@ body {
   );
  }
 }
-
 /* ── Todo List ──────────────────────────────────────────────────────── */
 
 .todoList {

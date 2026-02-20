@@ -57,6 +57,32 @@ pub fn workspace_assign_slot(
 }
 
 #[tauri::command]
+pub fn workspace_unassign_slot(
+    service: tauri::State<'_, Mutex<WorkspaceService>>,
+    slot: u8,
+) -> CommandResult<WorkspaceState> {
+    let mut svc = match service.lock() {
+        Ok(s) => s,
+        Err(_) => {
+            return CommandResult::err(
+                "internal_lock_poisoned",
+                "Workspace state is temporarily unavailable",
+            )
+        }
+    };
+
+    match svc.unassign_slot(slot) {
+        Ok(state) => {
+            if active_workspace_ok(&state) {
+                let _ = svc.rebuild_active_workspace();
+            }
+            CommandResult::ok(state)
+        }
+        Err(e) => CommandResult::err(map_error_code(&e), e.to_string()),
+    }
+}
+
+#[tauri::command]
 pub fn workspace_switch_slot(
     service: tauri::State<'_, Mutex<WorkspaceService>>,
     slot: u8,

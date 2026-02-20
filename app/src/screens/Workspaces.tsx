@@ -36,22 +36,43 @@ export function Workspaces() {
     [/* stable */],
   )
 
-  const onClickSlot = useCallback(
-    async (slot: number, existingPath: string | null) => {
+  const onSwitchSlot = useCallback(
+    async (slot: number, isActive: boolean) => {
       if (loading) return
+      if (isActive) return
+      await workspaceActions.switchSlot(slot)
+    },
+    [loading],
+  )
 
+  const onClickSlot = useCallback(
+    async (slot: number, existingPath: string | null, isActive: boolean) => {
+      if (loading) return
       try {
         if (existingPath) {
-          const ok = await confirmReplace(`Replace the folder assigned to slot ${slot}?`)
-          if (!ok) return
+          await onSwitchSlot(slot, isActive)
+        } else {
+          await onPickAndAssign(slot)
         }
-
-        await onPickAndAssign(slot)
       } finally {
         await restoreAppInputFocus()
       }
     },
-    [loading, onPickAndAssign],
+    [loading, onPickAndAssign, onSwitchSlot],
+  )
+
+  const onUnassignSlot = useCallback(
+    async (slot: number) => {
+      if (loading) return
+      try {
+        const ok = await confirmReplace(`Unassign folder from workspace slot ${slot}?`)
+        if (!ok) return
+        await workspaceActions.unassignSlot(slot)
+      } finally {
+        await restoreAppInputFocus()
+      }
+    },
+    [loading],
   )
 
   return (
@@ -64,7 +85,9 @@ export function Workspaces() {
           The last active workspace can’t be opened. Choose a different slot or assign a new folder.
         </p>
       ) : (
-        <p className="panelSubtitle">Pick a slot to assign or replace its workspace folder.</p>
+        <p className="panelSubtitle">
+          Click an assigned slot to switch workspaces, or click an unassigned slot to pick a folder.
+        </p>
       )}
 
       {errorMessage ? <div className="inlineError">{errorMessage}</div> : null}
@@ -81,10 +104,11 @@ export function Workspaces() {
           const isFallback = relaunchInvalid && fallbackSlot === s.slot
 
           const className = [
-            'slot',
+            'slotCard',
             isActive ? 'slotActive' : null,
             isError ? 'slotError' : null,
             isFallback ? 'slotFallback' : null,
+            loading ? 'slotDisabled' : null,
           ]
             .filter(Boolean)
             .join(' ')
@@ -107,25 +131,39 @@ export function Workspaces() {
             isError ? 'slotBadge slotBadgeError' : isFallback ? 'slotBadge slotBadgeHint' : 'slotBadge'
 
           return (
-            <button
+            <div
               key={s.slot}
-              type="button"
               className={className}
               role="listitem"
-              disabled={loading}
-              onClick={() => void onClickSlot(s.slot, s.path)}
             >
-              <div className="slotNumber">{s.slot}</div>
-              <div className="slotBody">
-                <div className="slotNameRow">
-                  <div className="slotName">{name}</div>
-                  {statusBadge ? <div className={statusBadgeClass}>{statusBadge}</div> : null}
+              <button
+                type="button"
+                className="slotMain"
+                disabled={loading}
+                onClick={() => void onClickSlot(s.slot, s.path, isActive)}
+              >
+                <div className="slotNumber">{s.slot}</div>
+                <div className="slotBody">
+                  <div className="slotNameRow">
+                    <div className="slotName">{name}</div>
+                    {statusBadge ? <div className={statusBadgeClass}>{statusBadge}</div> : null}
+                  </div>
+                  <div className="slotPath path" title={title}>
+                    {subtitle}
+                  </div>
                 </div>
-                <div className="slotPath path" title={title}>
-                  {subtitle}
-                </div>
-              </div>
-            </button>
+              </button>
+              {s.path ? (
+                <button
+                  type="button"
+                  className="btn slotUnassign"
+                  disabled={loading}
+                  onClick={() => void onUnassignSlot(s.slot)}
+                >
+                  Unassign
+                </button>
+              ) : null}
+            </div>
           )
         })}
       </div>
