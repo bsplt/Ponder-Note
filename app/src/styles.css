@@ -1306,12 +1306,12 @@ body {
 }
 
 .todoRow:hover {
-  opacity: 0.8;
+  filter: brightness(0.96);
 }
 
 .todoRow:focus-visible {
   outline: none;
-  background: var(--color-primary-soft);
+  background-image: var(--color-note-focus-overlay);
 }
 
 .todoRowDisabled {
@@ -1321,10 +1321,11 @@ body {
 
 .todoRowDisabled:hover {
   opacity: 0.65;
+  filter: none;
 }
 
 .todoRowFocused {
-  background: var(--color-primary-soft);
+  background-image: var(--color-note-focus-overlay);
 }
 
 .todoCheckbox {
