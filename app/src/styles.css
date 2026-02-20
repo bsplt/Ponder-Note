@@ -659,6 +659,24 @@ body {
   overflow: hidden;
 }
 
+.overviewPanel:not(.overviewPanelCompact) .noteRowMain {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.overviewPanel:not(.overviewPanelCompact) .noteName {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.overviewPanel:not(.overviewPanelCompact) .noteTags {
+  flex: 0 0 auto;
+}
+
+.overviewPanel:not(.overviewPanelCompact) .noteTag {
+  flex: 0 0 auto;
+}
+
 .noteTag:hover {
   background: oklch(from var(--color-text) l c h / 0.18);
 }
