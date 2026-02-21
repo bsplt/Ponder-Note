@@ -1152,8 +1152,9 @@ body {
 
 .slotCard {
   display: flex;
+  flex-direction: column;
   gap: var(--space-4);
-  align-items: center;
+  align-items: stretch;
   width: 100%;
   padding: var(--space-6);
   border-radius: var(--radius-md);
@@ -1163,8 +1164,11 @@ body {
 }
 
 .slotCard:hover {
-  border-color: var(--color-button-hover-border);
-  background: var(--color-surface-hover);
+  filter: brightness(0.96);
+}
+
+.slotCard:focus-within {
+  background-image: var(--color-note-focus-overlay);
 }
 
 .slotMain {
@@ -1182,9 +1186,13 @@ body {
   cursor: pointer;
 }
 
+.slotCard:hover {
+  filter: brightness(0.96);
+}
+
 .slotMain:focus-visible {
-  outline: var(--outline-width) solid var(--color-focus);
-  outline-offset: var(--space-2);
+  outline: none;
+  background-image: var(--color-note-focus-overlay);
 }
 
 .slotNumber {
@@ -1254,15 +1262,44 @@ body {
   opacity: 0.75;
 }
 
+.slotDisabled:hover {
+  filter: none;
+}
+
 .slotMain:disabled {
   cursor: not-allowed;
 }
 
 .slotUnassign {
+  appearance: none;
+  color: var(--color-muted);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  line-height: var(--font-size-lg);
+  text-align: left;
+  cursor: pointer;
   flex: 0 0 auto;
   min-width: var(--space-14);
   min-height: var(--space-14);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-8);
+  align-self: flex-start;
+}
+
+.slotUnassign:hover {
+  filter: brightness(0.96);
+}
+
+.slotUnassign:focus-visible {
+  outline: none;
+  background-image: var(--color-note-focus-overlay);
+}
+
+.slotUnassign:disabled {
+  cursor: not-allowed;
+}
+
+.slotUnassign:disabled:hover {
+  filter: none;
 }
 
 .inlineError {
