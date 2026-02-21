@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { confirmReplace, pickDirectory } from '../api/tauri'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
+import { restoreAppInputFocus } from '../utils/windowFocus'
 
 function basename(path: string): string {
   const normalized = path.replace(/\\/g, '/')
@@ -13,11 +14,7 @@ function slotSubtitle(path: string | null): string {
   return path ?? '(no folder)'
 }
 
-type WorkspacesProps = {
-  onGoToOverview: () => void
-}
-
-export function Workspaces({ onGoToOverview }: WorkspacesProps) {
+export function Workspaces() {
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
   const activeStatus = useWorkspaceStore((s) => s.activeStatus)
@@ -39,34 +36,47 @@ export function Workspaces({ onGoToOverview }: WorkspacesProps) {
     [/* stable */],
   )
 
-  const onClickSlot = useCallback(
-    async (slot: number, existingPath: string | null) => {
+  const onSwitchSlot = useCallback(
+    async (slot: number, isActive: boolean) => {
       if (loading) return
-
-      if (existingPath) {
-        const ok = await confirmReplace(`Replace the folder assigned to slot ${slot}?`)
-        if (!ok) return
-      }
-
-      await onPickAndAssign(slot)
+      if (isActive) return
+      await workspaceActions.switchSlot(slot)
     },
-    [loading, onPickAndAssign],
+    [loading],
   )
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
-      if (e.key === 'O' || e.key === 'o') {
-        e.preventDefault()
-        onGoToOverview()
+  const onClickSlot = useCallback(
+    async (slot: number, existingPath: string | null, isActive: boolean) => {
+      if (loading) return
+      try {
+        if (existingPath) {
+          await onSwitchSlot(slot, isActive)
+        } else {
+          await onPickAndAssign(slot)
+        }
+      } finally {
+        await restoreAppInputFocus()
       }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onGoToOverview])
+    },
+    [loading, onPickAndAssign, onSwitchSlot],
+  )
+
+  const onUnassignSlot = useCallback(
+    async (slot: number) => {
+      if (loading) return
+      try {
+        const ok = await confirmReplace(`Unassign folder from workspace slot ${slot}?`)
+        if (!ok) return
+        await workspaceActions.unassignSlot(slot)
+      } finally {
+        await restoreAppInputFocus()
+      }
+    },
+    [loading],
+  )
 
   return (
-    <section className="panel">
+    <section className="panel workspacesPanel">
       <h2 className="panelTitle">Workspace slots</h2>
       {!hasAssigned ? (
         <p className="panelSubtitle">Assign a folder to any slot to get started.</p>
@@ -75,7 +85,9 @@ export function Workspaces({ onGoToOverview }: WorkspacesProps) {
           The last active workspace can’t be opened. Choose a different slot or assign a new folder.
         </p>
       ) : (
-        <p className="panelSubtitle">Pick a slot to assign or replace its workspace folder.</p>
+        <p className="panelSubtitle">
+          Click an assigned slot to switch workspaces, or click an unassigned slot to pick a folder.
+        </p>
       )}
 
       {errorMessage ? <div className="inlineError">{errorMessage}</div> : null}
@@ -92,10 +104,11 @@ export function Workspaces({ onGoToOverview }: WorkspacesProps) {
           const isFallback = relaunchInvalid && fallbackSlot === s.slot
 
           const className = [
-            'slot',
+            'slotCard',
             isActive ? 'slotActive' : null,
             isError ? 'slotError' : null,
             isFallback ? 'slotFallback' : null,
+            loading ? 'slotDisabled' : null,
           ]
             .filter(Boolean)
             .join(' ')
@@ -118,25 +131,39 @@ export function Workspaces({ onGoToOverview }: WorkspacesProps) {
             isError ? 'slotBadge slotBadgeError' : isFallback ? 'slotBadge slotBadgeHint' : 'slotBadge'
 
           return (
-            <button
+            <div
               key={s.slot}
-              type="button"
               className={className}
               role="listitem"
-              disabled={loading}
-              onClick={() => void onClickSlot(s.slot, s.path)}
             >
-              <div className="slotNumber">{s.slot}</div>
-              <div className="slotBody">
-                <div className="slotNameRow">
-                  <div className="slotName">{name}</div>
-                  {statusBadge ? <div className={statusBadgeClass}>{statusBadge}</div> : null}
+              <button
+                type="button"
+                className="slotMain"
+                disabled={loading}
+                onClick={() => void onClickSlot(s.slot, s.path, isActive)}
+              >
+                <div className="slotNumber">{s.slot}</div>
+                <div className="slotBody">
+                  <div className="slotNameRow">
+                    <div className="slotName">{name}</div>
+                    {statusBadge ? <div className={statusBadgeClass}>{statusBadge}</div> : null}
+                  </div>
+                  <div className="slotPath path" title={title}>
+                    {subtitle}
+                  </div>
                 </div>
-                <div className="slotPath path" title={title}>
-                  {subtitle}
-                </div>
-              </div>
-            </button>
+              </button>
+              {s.path ? (
+                <button
+                  type="button"
+                  className="btn slotUnassign"
+                  disabled={loading}
+                  onClick={() => void onUnassignSlot(s.slot)}
+                >
+                  Unassign
+                </button>
+              ) : null}
+            </div>
           )
         })}
       </div>

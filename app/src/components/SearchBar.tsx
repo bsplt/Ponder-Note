@@ -9,6 +9,7 @@ export type SearchBarProps = {
   onExcludeTagsChange: (tags: string[]) => void
   placeholder?: string
   inputRef?: React.RefObject<HTMLInputElement | null>
+  onOpenShortcuts?: () => void
 }
 
 /**
@@ -32,6 +33,7 @@ export function SearchBar(props: SearchBarProps) {
     onExcludeTagsChange,
     placeholder = 'Search notes...',
     inputRef,
+    onOpenShortcuts,
   } = props
 
   const removeIncludeTag = useCallback(
@@ -50,6 +52,16 @@ export function SearchBar(props: SearchBarProps) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
+      // Escape: clear everything and blur
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onSearchTextChange('')
+        onIncludeTagsChange([])
+        onExcludeTagsChange([])
+        e.currentTarget.blur()
+        return
+      }
+
       // Backspace when input is empty: remove last pill
       if (e.key === 'Backspace' && searchText === '') {
         e.preventDefault()
@@ -165,15 +177,26 @@ export function SearchBar(props: SearchBarProps) {
           </button>
         </span>
       ))}
-      <input
-        ref={inputRef}
-        type="text"
-        value={searchText}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={hasPills ? '' : placeholder}
-        className="searchBarInput"
-      />
+      <div className="searchBarInputWrap">
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchText}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={hasPills ? '' : placeholder}
+          className="searchBarInput"
+        />
+        <button
+          type="button"
+          className="searchBarHelpButton"
+          aria-label="Open keyboard shortcuts"
+          title="Keyboard shortcuts (H or ?)"
+          onClick={onOpenShortcuts}
+        >
+          ?
+        </button>
+      </div>
     </div>
   )
 }

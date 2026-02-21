@@ -1,14 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
+import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
+import { toggleTodo } from '../api/todos'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
 import { PillInput } from '../components/PillInput'
+import { Toast } from '../components/Toast'
+import { TodoRow } from '../components/TodoRow'
 import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
+import { extractMarkdownTodos, normalizePreviewTodoLines, toggleMarkdownTodoInBody, type MarkdownTodo } from '../utils/markdownTodo'
+import { noteColorSlot } from '../utils/noteColor'
+import { isTypingTarget } from '../utils/keyboard'
 
 type EditorProps = {
   stem: string
   isNew: boolean
   onExit: (result: { stem: string; discarded: boolean }) => void
 }
+
+type EditorMode = 'preview' | 'edit'
 
 const AUTO_SAVE_DELAY_MS = 500
 const AUTO_RETRY_DELAY_MS = 4500
@@ -35,6 +47,26 @@ function cursorStartPosition(body: string, isNew: boolean): number {
   return 0
 }
 
+function defaultEditorMode(isNew: boolean): EditorMode {
+  return isNew ? 'edit' : 'preview'
+}
+
+function normalizeTags(tags: string[]): string[] {
+  return tags
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0)
+    .sort((a, b) => a.localeCompare(b))
+}
+
+function areTagsEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
+}
+
+function todoToggleKey(todo: MarkdownTodo): string {
+  return `${todo.lineNumber}:${todo.charOffset}`
+}
+
 export function Editor(props: EditorProps) {
   const { stem, isNew, onExit } = props
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -44,7 +76,13 @@ export function Editor(props: EditorProps) {
   const pendingSaveRef = useRef(false)
   const lastSavedBodyRef = useRef('')
   const bodyRef = useRef('')
+  const tagsRef = useRef<string[]>([])
+  const lastSavedTagsRef = useRef<string[]>([])
   const saveErrorRef = useRef<string | null>(null)
+  const tagSaveErrorRef = useRef<string | null>(null)
+  const pendingPreviewToggleKeysRef = useRef(new Set<string>())
+  const previewTodoRowRefsRef = useRef(new Map<string, HTMLDivElement>())
+  const restorePreviewFocusKeyRef = useRef<string | null>(null)
 
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(true)
@@ -55,14 +93,48 @@ export function Editor(props: EditorProps) {
   const [tags, setTags] = useState<string[]>([])
   const [workspaceTags, setWorkspaceTags] = useState<string[]>([])
   const [tagSaveError, setTagSaveError] = useState<string | null>(null)
+  const [mode, setMode] = useState<EditorMode>(() => defaultEditorMode(isNew))
+  const [previewToastMessage, setPreviewToastMessage] = useState<string | null>(null)
+  const [previewToggleVersion, setPreviewToggleVersion] = useState(0)
+
+  const syncTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+    const availableContainerHeight = textarea.parentElement?.clientHeight ?? 0
+    const nextHeight = Math.max(textarea.scrollHeight, availableContainerHeight)
+    textarea.style.height = `${nextHeight}px`
+  }, [])
 
   useEffect(() => {
     bodyRef.current = body
   }, [body])
 
+  useLayoutEffect(() => {
+    if (mode !== 'edit') return
+    syncTextareaHeight()
+  }, [body, mode, syncTextareaHeight])
+
   useEffect(() => {
     saveErrorRef.current = saveError
   }, [saveError])
+
+  useEffect(() => {
+    tagSaveErrorRef.current = tagSaveError
+  }, [tagSaveError])
+
+  useEffect(() => {
+    setMode(defaultEditorMode(isNew))
+  }, [isNew, stem])
+
+  useEffect(() => {
+    pendingPreviewToggleKeysRef.current.clear()
+    previewTodoRowRefsRef.current.clear()
+    restorePreviewFocusKeyRef.current = null
+    setPreviewToggleVersion((v) => v + 1)
+    setPreviewToastMessage(null)
+  }, [stem])
 
   // Load workspace tags on mount
   useEffect(() => {
@@ -86,19 +158,16 @@ export function Editor(props: EditorProps) {
       setBody(initialBody)
       lastSavedBodyRef.current = initialBody
       bodyRef.current = initialBody
-      
+
       // Load note tags from workspace notes list
       const note = notes.find((n) => n.stem === stem)
-      setTags(note?.tags || [])
-      
+      const initialTags = note?.tags || []
+      setTags(initialTags)
+      tagsRef.current = initialTags
+      lastSavedTagsRef.current = normalizeTags(initialTags)
+      setTagSaveError(null)
+
       setLoading(false)
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current
-        if (!textarea) return
-        textarea.focus()
-        const pos = cursorStartPosition(initialBody, isNew)
-        textarea.setSelectionRange(pos, pos)
-      })
     } catch (err) {
       setLoading(false)
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load note')
@@ -108,6 +177,20 @@ export function Editor(props: EditorProps) {
   useEffect(() => {
     void loadNote()
   }, [loadNote])
+
+  useEffect(() => {
+    if (loading || errorMessage || mode !== 'edit') return
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      syncTextareaHeight()
+      textarea.focus()
+
+      const pos = cursorStartPosition(bodyRef.current, isNew)
+      textarea.setSelectionRange(pos, pos)
+    })
+  }, [errorMessage, isNew, loading, mode, syncTextareaHeight, stem])
 
   const performSave = useCallback(
     async (options: { force?: boolean; rewriteOnExit?: boolean } = {}) => {
@@ -190,7 +273,191 @@ export function Editor(props: EditorProps) {
     }
   }, [])
 
+  useEffect(() => {
+    const onResize = () => {
+      if (mode !== 'edit') return
+      syncTextareaHeight()
+    }
+
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [mode, syncTextareaHeight])
+
   const saveStatus = useMemo(() => formatTime(lastSavedAt), [lastSavedAt])
+  const previewTodosByLine = useMemo(() => extractMarkdownTodos(body), [body])
+  const previewBody = useMemo(() => normalizePreviewTodoLines(body), [body])
+  const previewTodoKeysOrdered = useMemo(() => {
+    return Array.from(previewTodosByLine.values())
+      .sort((a, b) => {
+        if (a.lineNumber === b.lineNumber) return a.charOffset - b.charOffset
+        return a.lineNumber - b.lineNumber
+      })
+      .map((todo) => todoToggleKey(todo))
+  }, [previewTodosByLine])
+
+  const previewTodoIndexByKey = useMemo(() => {
+    const map = new Map<string, number>()
+    previewTodoKeysOrdered.forEach((key, index) => {
+      map.set(key, index)
+    })
+    return map
+  }, [previewTodoKeysOrdered])
+
+  const focusPreviewNeighborTodo = useCallback(
+    (currentIndex: number, direction: -1 | 1) => {
+      let index = currentIndex + direction
+
+      while (index >= 0 && index < previewTodoKeysOrdered.length) {
+        const key = previewTodoKeysOrdered[index]
+        if (!pendingPreviewToggleKeysRef.current.has(key)) {
+          const element = previewTodoRowRefsRef.current.get(key)
+          element?.focus()
+          return
+        }
+        index += direction
+      }
+    },
+    [previewTodoKeysOrdered],
+  )
+
+  const handlePreviewTodoToggle = useCallback(
+    async (todo: MarkdownTodo, options: { preserveFocus?: boolean } = {}) => {
+      const preserveFocus = options.preserveFocus ?? false
+      const key = todoToggleKey(todo)
+      if (pendingPreviewToggleKeysRef.current.has(key)) {
+        return
+      }
+
+      pendingPreviewToggleKeysRef.current.add(key)
+      setPreviewToggleVersion((v) => v + 1)
+
+      let nextBody: string
+      try {
+        nextBody = toggleMarkdownTodoInBody(bodyRef.current, todo.lineNumber, todo.charOffset).body
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        setPreviewToastMessage(`Failed to toggle todo: ${message}`)
+        pendingPreviewToggleKeysRef.current.delete(key)
+        setPreviewToggleVersion((v) => v + 1)
+        return
+      }
+
+      setBody(nextBody)
+      bodyRef.current = nextBody
+      lastSavedBodyRef.current = nextBody
+      setSaveError(null)
+
+      try {
+        await toggleTodo(stem, todo.lineNumber, todo.charOffset)
+        setLastSavedAt(Date.now())
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        try {
+          const reloadedBody = await noteRead(stem)
+          setBody(reloadedBody)
+          bodyRef.current = reloadedBody
+          lastSavedBodyRef.current = reloadedBody
+          setPreviewToastMessage(`Failed to toggle todo: ${message}. Note was reloaded.`)
+        } catch (reloadErr) {
+          const reloadMessage = reloadErr instanceof Error ? reloadErr.message : String(reloadErr)
+          setPreviewToastMessage(`Failed to toggle todo: ${message}. Reload failed: ${reloadMessage}`)
+        }
+      } finally {
+        if (preserveFocus) {
+          restorePreviewFocusKeyRef.current = key
+        }
+        pendingPreviewToggleKeysRef.current.delete(key)
+        setPreviewToggleVersion((v) => v + 1)
+      }
+    },
+    [stem],
+  )
+
+  useEffect(() => {
+    if (mode !== 'preview') return
+    const key = restorePreviewFocusKeyRef.current
+    if (!key) return
+
+    const id = window.requestAnimationFrame(() => {
+      const element = previewTodoRowRefsRef.current.get(key)
+      if (element) {
+        element.focus()
+      }
+      restorePreviewFocusKeyRef.current = null
+    })
+
+    return () => window.cancelAnimationFrame(id)
+  }, [mode, previewToggleVersion])
+
+  const markdownComponents = useMemo<Components>(
+    () => ({
+      li: ({ node, children, className, ...props }) => {
+        const startLine = node?.position?.start?.line
+        const todo = typeof startLine === 'number' ? previewTodosByLine.get(startLine - 1) : undefined
+        if (!todo) {
+          return (
+            <li className={className} {...props}>
+              {children}
+            </li>
+          )
+        }
+
+        const todoKey = todoToggleKey(todo)
+        const pending = pendingPreviewToggleKeysRef.current.has(todoKey)
+        const mergedClassName = className ? `editorTodoItem ${className}` : 'editorTodoItem'
+        const todoIndex = previewTodoIndexByKey.get(todoKey) ?? -1
+
+        return (
+          <li className={mergedClassName} {...props}>
+            <TodoRow
+              checked={todo.checked}
+              text={todo.text}
+              onToggle={() => {
+                void handlePreviewTodoToggle(todo)
+              }}
+              disabled={pending}
+              className="editorTodoRow"
+              role="checkbox"
+              ariaLabel={todo.text}
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                  event.preventDefault()
+                  if (!pending) {
+                    void handlePreviewTodoToggle(todo, { preserveFocus: true })
+                  }
+                  return
+                }
+
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  if (todoIndex >= 0) {
+                    focusPreviewNeighborTodo(todoIndex, 1)
+                  }
+                  return
+                }
+
+                if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  if (todoIndex >= 0) {
+                    focusPreviewNeighborTodo(todoIndex, -1)
+                  }
+                }
+              }}
+              containerRef={(element) => {
+                if (!element) {
+                  previewTodoRowRefsRef.current.delete(todoKey)
+                  return
+                }
+                previewTodoRowRefsRef.current.set(todoKey, element)
+              }}
+            />
+          </li>
+        )
+      },
+    }),
+    [focusPreviewNeighborTodo, handlePreviewTodoToggle, previewTodoIndexByKey, previewToggleVersion, previewTodosByLine],
+  )
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -201,6 +468,41 @@ export function Editor(props: EditorProps) {
     },
     [scheduleSave],
   )
+
+  const persistTags = useCallback(async (nextTags: string[], options: { force?: boolean } = {}) => {
+    if (!stem) return true
+    const normalizedTags = normalizeTags(nextTags)
+    const force = options.force ?? false
+
+    if (!force && areTagsEqual(normalizedTags, lastSavedTagsRef.current) && !tagSaveErrorRef.current) {
+      return true
+    }
+
+    try {
+      await workspaceUpdateNoteTags(stem, normalizedTags)
+      lastSavedTagsRef.current = normalizedTags
+      setTagSaveError(null)
+      return true
+    } catch (err) {
+      setTagSaveError('Failed to save tags')
+      console.error('Tag save error:', err)
+      return false
+    }
+  }, [stem])
+
+  const handleTagsChange = useCallback((nextTags: string[]) => {
+    tagsRef.current = nextTags
+    setTags(nextTags)
+    setTagSaveError(null)
+  }, [])
+
+  const handleTagBlur = useCallback((nextTags: string[]) => {
+    tagsRef.current = nextTags
+    setTags(nextTags)
+    void (async () => {
+      await persistTags(nextTags)
+    })()
+  }, [persistTags])
 
   const handleExit = useCallback(async () => {
     if (isExiting) return
@@ -225,6 +527,23 @@ export function Editor(props: EditorProps) {
       }
     }
 
+    if (mode === 'preview') {
+      const tagsOk = await persistTags(tagsRef.current, { force: true })
+      if (!tagsOk) {
+        const confirmExit = window.confirm(
+          'Latest tag save failed. Exit anyway? Tag changes may be lost.',
+        )
+        if (!confirmExit) {
+          setIsExiting(false)
+          return
+        }
+      }
+
+      await workspaceActions.refreshNotes()
+      onExit({ stem, discarded: false })
+      return
+    }
+
     if (saveInFlightRef.current) {
       await saveInFlightRef.current
     }
@@ -240,12 +559,37 @@ export function Editor(props: EditorProps) {
       }
     }
 
+    const tagsOk = await persistTags(tagsRef.current, { force: true })
+    if (!tagsOk) {
+      const confirmExit = window.confirm(
+        'Latest tag save failed. Exit anyway? Tag changes may be lost.',
+      )
+      if (!confirmExit) {
+        setIsExiting(false)
+        return
+      }
+    }
+
     await workspaceActions.refreshNotes()
     onExit({ stem, discarded: false })
-  }, [isExiting, isNew, onExit, performSave, stem])
+  }, [isExiting, isNew, mode, onExit, performSave, persistTags, stem])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        mode === 'preview' &&
+        !event.repeat &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !isTypingTarget(event.target) &&
+        (event.key === 'e' || event.key === 'E')
+      ) {
+        event.preventDefault()
+        setMode('edit')
+        return
+      }
+
       if (event.key !== 'Escape') return
       event.preventDefault()
       void handleExit()
@@ -253,25 +597,11 @@ export function Editor(props: EditorProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [handleExit])
+  }, [handleExit, mode])
 
   const handleRetrySave = useCallback(() => {
     void performSave({ force: true })
   }, [performSave])
-
-  const handleTagBlur = useCallback(() => {
-    void (async () => {
-      if (!stem) return
-      try {
-        await workspaceUpdateNoteTags(stem, tags)
-        setTagSaveError(null)
-        // Note: refreshNotes() is called on editor exit, so tags will appear in overview then
-      } catch (err) {
-        setTagSaveError('Failed to save tags')
-        console.error('Tag save error:', err)
-      }
-    })()
-  }, [stem, tags])
 
   if (loading) {
     return (
@@ -297,10 +627,10 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <section className="panel editorPanel">
+    <section className="panel editorPanel" style={{ '--note-bg': `var(--color-slot-${noteColorSlot(stem)})` } as CSSProperties}>
       <div className="editorHeader">
         <div>
-          <h2 className="panelTitle">Editing note</h2>
+          <h2 className="panelTitle">{mode === 'edit' ? 'Editing note' : 'Viewing note'}</h2>
           <div className="editorMeta">Last saved: {saveStatus}</div>
         </div>
         <button type="button" className="btn" onClick={handleExit} disabled={isExiting}>
@@ -322,23 +652,32 @@ export function Editor(props: EditorProps) {
       <div className="editorTagSection">
         <PillInput
           values={tags}
-          onChange={setTags}
+          onChange={handleTagsChange}
           onBlur={handleTagBlur}
           suggestions={workspaceTags}
-          placeholder="Add tags"
+          placeholder="Tags"
         />
         {tagSaveError && <div className="editorTagError">{tagSaveError}</div>}
+        <div className="editorModeHint">{mode === 'preview' ? 'Press E to edit' : 'Editing mode'}</div>
       </div>
 
       <div className="editorBody">
         <div className="editorContent">
-          <textarea
-            ref={textareaRef}
-            className="editorTextarea"
-            value={body}
-            onChange={handleChange}
-            spellCheck={false}
-          />
+          {mode === 'edit' ? (
+            <textarea
+              ref={textareaRef}
+              className="editorTextarea"
+              value={body}
+              onChange={handleChange}
+              spellCheck={false}
+            />
+          ) : (
+            <div className="editorMarkdown">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={markdownComponents}>
+                {previewBody}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
       </div>
 
@@ -346,6 +685,10 @@ export function Editor(props: EditorProps) {
         <span>ESC to exit</span>
         <span>Autosave is on</span>
       </div>
+
+      {previewToastMessage ? (
+        <Toast message={previewToastMessage} onClose={() => setPreviewToastMessage(null)} />
+      ) : null}
     </section>
   )
 }

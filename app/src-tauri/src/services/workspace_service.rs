@@ -136,6 +136,12 @@ impl WorkspaceService {
         self.get_state()
     }
 
+    pub fn unassign_slot(&mut self, slot: u8) -> Result<WorkspaceState, WorkspaceServiceError> {
+        self.apply_unassign_slot(slot)?;
+        self.repo.save(&self.cfg)?;
+        self.get_state()
+    }
+
     pub fn switch_slot(&mut self, slot: u8) -> Result<WorkspaceState, WorkspaceServiceError> {
         if slot == self.cfg.active_slot {
             return self.get_state();
@@ -561,7 +567,7 @@ impl WorkspaceService {
         let (_slot, workspace_path) = self.active_workspace_path()?;
 
         // Source note path
-        let note_path = workspace_path.join(format!("{stem}.md"));
+        let note_path = self.note_path_from_stem(&workspace_path, stem)?;
         if !note_path.exists() {
             return Err(WorkspaceServiceError::NoteNotFound);
         }
@@ -713,7 +719,7 @@ impl WorkspaceService {
         char_offset: usize,
     ) -> Result<bool, WorkspaceServiceError> {
         let workspace_dir = self.workspace_dir()?;
-        let note_path = workspace_dir.join(format!("{}.md", stem));
+        let note_path = self.note_path_from_stem(&workspace_dir, stem)?;
         
         if !note_path.exists() {
             return Err(WorkspaceServiceError::NoteNotFound);
@@ -749,6 +755,19 @@ impl WorkspaceService {
     fn slot_path(&self, slot: u8) -> Result<Option<String>, WorkspaceServiceError> {
         let idx = slot_index(slot)?;
         Ok(self.cfg.workspaces[idx].clone())
+    }
+
+    fn apply_unassign_slot(&mut self, slot: u8) -> Result<(), WorkspaceServiceError> {
+        let idx = slot_index(slot)?;
+        self.cfg.workspaces[idx] = None;
+
+        if self.cfg.active_slot == slot {
+            if let Some(fallback_slot) = self.compute_fallback_slot()? {
+                self.cfg.active_slot = fallback_slot;
+            }
+        }
+
+        Ok(())
     }
 
     fn compute_fallback_slot(&self) -> Result<Option<u8>, WorkspaceServiceError> {
@@ -1269,6 +1288,38 @@ fn current_unix_ms() -> Result<i64, WorkspaceServiceError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::workspace::AppConfig;
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    fn service_for_workspace(path: &Path) -> WorkspaceService {
+        let mut workspaces: [Option<String>; 9] = Default::default();
+        workspaces[0] = Some(path.to_string_lossy().to_string());
+
+        WorkspaceService {
+            repo: AppConfigRepo,
+            cfg: AppConfig {
+                workspaces,
+                active_slot: 1,
+                extra: BTreeMap::new(),
+            },
+        }
+    }
+
+    fn empty_service_with_active_slot(active_slot: u8) -> WorkspaceService {
+        WorkspaceService {
+            repo: AppConfigRepo,
+            cfg: AppConfig {
+                workspaces: Default::default(),
+                active_slot,
+                extra: BTreeMap::new(),
+            },
+        }
+    }
+
+    fn assigned_slot_path(path: PathBuf) -> Option<String> {
+        Some(path.to_string_lossy().to_string())
+    }
 
     #[test]
     fn atomic_write_note_creates_new_file() {
@@ -1401,5 +1452,85 @@ mod tests {
         let result = do_note_delete(ws.path(), "9999999999");
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::NotFound);
+    }
+
+    #[test]
+    fn note_delete_rejects_path_traversal_stem() {
+        let ws = tempfile::tempdir().unwrap();
+        let svc = service_for_workspace(ws.path());
+
+        let result = svc.note_delete("../outside");
+        match result {
+            Err(WorkspaceServiceError::Io(err)) => {
+                assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+            }
+            _ => panic!("Expected InvalidInput Io error for traversal stem"),
+        }
+    }
+
+    #[test]
+    fn toggle_todo_rejects_path_traversal_stem() {
+        let ws = tempfile::tempdir().unwrap();
+        let svc = service_for_workspace(ws.path());
+
+        let result = svc.toggle_todo("../outside", 0, 0);
+        match result {
+            Err(WorkspaceServiceError::Io(err)) => {
+                assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+            }
+            _ => panic!("Expected InvalidInput Io error for traversal stem"),
+        }
+    }
+
+    #[test]
+    fn unassign_non_active_slot_clears_path_and_keeps_active_slot() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let ws2 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+        svc.cfg.workspaces[1] = assigned_slot_path(ws2.path().to_path_buf());
+
+        svc.apply_unassign_slot(2).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 1);
+        assert!(svc.cfg.workspaces[1].is_none());
+        assert!(svc.cfg.workspaces[0].is_some());
+    }
+
+    #[test]
+    fn unassign_active_slot_switches_to_valid_fallback() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let ws2 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+        svc.cfg.workspaces[1] = assigned_slot_path(ws2.path().to_path_buf());
+
+        svc.apply_unassign_slot(1).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 2);
+        assert!(svc.cfg.workspaces[0].is_none());
+        assert!(svc.cfg.workspaces[1].is_some());
+    }
+
+    #[test]
+    fn unassign_active_slot_with_no_valid_fallback_becomes_unassigned() {
+        let ws1 = tempfile::tempdir().unwrap();
+        let mut svc = empty_service_with_active_slot(1);
+        svc.cfg.workspaces[0] = assigned_slot_path(ws1.path().to_path_buf());
+
+        svc.apply_unassign_slot(1).unwrap();
+
+        assert_eq!(svc.cfg.active_slot, 1);
+        assert!(svc.cfg.workspaces[0].is_none());
+    }
+
+    #[test]
+    fn unassign_slot_rejects_invalid_slot() {
+        let mut svc = empty_service_with_active_slot(1);
+        let err = svc.apply_unassign_slot(10).unwrap_err();
+        match err {
+            WorkspaceServiceError::InvalidSlot { slot } => assert_eq!(slot, 10),
+            _ => panic!("Expected InvalidSlot error"),
+        }
     }
 }

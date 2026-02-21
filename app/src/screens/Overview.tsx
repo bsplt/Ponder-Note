@@ -5,11 +5,15 @@ import type { NoteSummary } from '../api/workspace'
 import { deleteNote } from '../api/workspace'
 import { useWorkspaceStore, workspaceActions } from '../stores/workspaceStore'
 import { filterNotes } from '../utils/search'
+import { isTypingTarget } from '../utils/keyboard'
+import { noteColorSlot } from '../utils/noteColor'
+import { useNoteRowHeight } from '../hooks/useNoteRowHeight'
 
 type OverviewProps = {
   onManageWorkspaces: () => void
   onOpenNote: (note: NoteSummary, scrollTop: number) => void
   onCreateNote: (note: NoteSummary, scrollTop: number) => void
+  onOpenShortcuts: () => void
   restoreScrollTop: number
   restoreFocusStem: string | null
   searchText: string
@@ -18,15 +22,8 @@ type OverviewProps = {
   onIncludeTagsChange: (tags: string[]) => void
   excludeTags: string[]
   onExcludeTagsChange: (tags: string[]) => void
-  onOpenTodoList: () => void
-}
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null
-  if (!el) return false
-  if (el.isContentEditable) return true
-  const tag = el.tagName?.toLowerCase()
-  return tag === 'input' || tag === 'textarea' || tag === 'select'
+  isCompact: boolean
+  onToggleCompact: () => void
 }
 
 function formatNoteTimestamp(note: NoteSummary): string {
@@ -61,6 +58,7 @@ export function Overview(props: OverviewProps) {
   const onManageWorkspaces = props.onManageWorkspaces
   const onOpenNote = props.onOpenNote
   const onCreateNote = props.onCreateNote
+  const onOpenShortcuts = props.onOpenShortcuts
   const restoreScrollTop = props.restoreScrollTop
   const restoreFocusStem = props.restoreFocusStem
   const searchText = props.searchText
@@ -69,7 +67,8 @@ export function Overview(props: OverviewProps) {
   const onIncludeTagsChange = props.onIncludeTagsChange
   const excludeTags = props.excludeTags
   const onExcludeTagsChange = props.onExcludeTagsChange
-  const onOpenTodoList = props.onOpenTodoList
+  const isCompact = props.isCompact
+  const onToggleCompact = props.onToggleCompact
 
   const slots = useWorkspaceStore((s) => s.slots)
   const activeSlot = useWorkspaceStore((s) => s.activeSlot)
@@ -93,6 +92,9 @@ export function Overview(props: OverviewProps) {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
+
+  const layoutMode: 'normal' | 'compact' = isCompact ? 'compact' : 'normal'
+  const { setRowRef: setNoteRowRef, scrollRowIntoView } = useNoteRowHeight(focusedIndex, layoutMode)
   const [deleteConfirmStem, setDeleteConfirmStem] = useState<string | null>(null)
   const deleteConfirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -266,15 +268,35 @@ export function Overview(props: OverviewProps) {
         setDeleteConfirmStem(null)
       }
 
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onSearchTextChange('')
+        onIncludeTagsChange([])
+        onExcludeTagsChange([])
+        return
+      }
+
       if (event.key === 'ArrowDown') {
         event.preventDefault()
-        setFocusedIndex((prev) => clampIndex(prev + 1))
+        setFocusedIndex((prev) => {
+          const nextIndex = clampIndex(prev + 1)
+          if (nextIndex !== prev) {
+            scrollRowIntoView(nextIndex, { durationMs: 100, settleDelayMs: 110 })
+          }
+          return nextIndex
+        })
         return
       }
 
       if (event.key === 'ArrowUp') {
         event.preventDefault()
-        setFocusedIndex((prev) => clampIndex(prev - 1))
+        setFocusedIndex((prev) => {
+          const nextIndex = clampIndex(prev - 1)
+          if (nextIndex !== prev) {
+            scrollRowIntoView(nextIndex, { durationMs: 100, settleDelayMs: 110 })
+          }
+          return nextIndex
+        })
         return
       }
 
@@ -284,21 +306,9 @@ export function Overview(props: OverviewProps) {
         return
       }
 
-      if (event.key === 'T' || event.key === 't') {
+      if (event.key === 'c' || event.key === 'C') {
         event.preventDefault()
-        onOpenTodoList()
-        return
-      }
-
-      if (event.key === 'W' || event.key === 'w') {
-        event.preventDefault()
-        onManageWorkspaces()
-        return
-      }
-
-      if (event.key === 'N' || event.key === 'n') {
-        event.preventDefault()
-        onNewNote()
+        onToggleCompact()
         return
       }
 
@@ -324,7 +334,7 @@ export function Overview(props: OverviewProps) {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clampIndex, openFocused, onOpenTodoList, onManageWorkspaces, onNewNote, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote])
+  }, [clampIndex, openFocused, focusedIndex, filteredNotes, deleteConfirmStem, onDeleteNote, onSearchTextChange, onIncludeTagsChange, onExcludeTagsChange, onToggleCompact, scrollRowIntoView])
 
   if (activeStatus !== 'ok' || !activePath) {
     const title =
@@ -354,7 +364,7 @@ export function Overview(props: OverviewProps) {
   }
 
   return (
-    <section className="panel">
+    <section className={`panel overviewPanel${isCompact ? ' overviewPanelCompact' : ''}`}>
       <div className="overviewHeader">
         <div>
           <h2 className="panelTitle">Workspace {activeSlot}</h2>
@@ -384,8 +394,9 @@ export function Overview(props: OverviewProps) {
         onIncludeTagsChange={onIncludeTagsChange}
         excludeTags={excludeTags}
         onExcludeTagsChange={onExcludeTagsChange}
-        placeholder="Search notes (Cmd+F)"
+        placeholder="Search"
         inputRef={searchInputRef}
+        onOpenShortcuts={onOpenShortcuts}
       />
 
       {loading ? (
@@ -395,15 +406,18 @@ export function Overview(props: OverviewProps) {
           <ul className="notesList" ref={listRef} tabIndex={0}>
             <li
               key="new-note"
+              ref={(el) => setNoteRowRef(0, el)}
               className={`noteRow noteRowInteractive noteRowNew${
                 focusedIndex === 0 ? ' noteRowFocused' : ''
               }`}
               onClick={() => setFocusedIndex(0)}
               onDoubleClick={onNewNote}
             >
-              <div className="noteRowMain">
-                <div className="noteName">+ New Note</div>
-                <div className="noteTimestamp">Enter to create</div>
+              <div className="noteRowContent">
+                <div className="noteRowMain">
+                  <div className="noteName">New Note</div>
+                  <div className="noteTimestamp">Enter to create</div>
+                </div>
               </div>
             </li>
             {filteredNotes.map((note, idx) => {
@@ -413,63 +427,70 @@ export function Overview(props: OverviewProps) {
             return (
               <li
                 key={note.stem}
+                ref={(el) => setNoteRowRef(rowIndex, el)}
                 className={`noteRow noteRowInteractive${isFocused ? ' noteRowFocused' : ''}${isDeleteWarning ? ' noteRowDeleteWarning' : ''}`}
+                style={{ '--note-bg': `var(--color-slot-${noteColorSlot(note.stem)})` } as React.CSSProperties}
                 onClick={() => {
                   setFocusedIndex(rowIndex)
                   setDeleteConfirmStem(null)
                 }}
                 onDoubleClick={() => onOpenNote(note, scrollTop())}
               >
-                <div className="noteRowMain">
-                  <div className="noteName">{isDeleteWarning ? 'Press d again to delete' : displayNoteTitle(note)}</div>
-                  <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
-                </div>
-                {note.tags && note.tags.length > 0 && (
-                  <div className="noteTags">
-                    {[...note.tags].sort().map((tag) => (
-                      <span
-                        key={tag}
-                        className="noteTag"
-                        onClick={(e) => {
-                          e.stopPropagation() // Don't trigger row click
-                          if (e.metaKey || e.ctrlKey) {
-                            // Exclude tag
-                            onExcludeTagsChange(excludeTags.includes(tag) ? excludeTags : [...excludeTags, tag])
-                          } else {
-                            // Include tag
-                            onIncludeTagsChange(includeTags.includes(tag) ? includeTags : [...includeTags, tag])
-                          }
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                <div className="noteRowContent">
+                  <div className="noteRowMain">
+                    <div className="noteName">{isDeleteWarning ? 'Press d again to delete' : displayNoteTitle(note)}</div>
+                    <div className="noteTimestamp">{formatNoteTimestamp(note)}</div>
                   </div>
-                )}
+                  {note.tags && note.tags.length > 0 && (
+                    <div className="noteTags">
+                      {[...note.tags].sort().map((tag) => (
+                        <span
+                          key={tag}
+                          className="noteTag"
+                          onClick={(e) => {
+                            e.stopPropagation() // Don't trigger row click
+                            if (e.metaKey || e.ctrlKey) {
+                              // Exclude tag
+                              onExcludeTagsChange(excludeTags.includes(tag) ? excludeTags : [...excludeTags, tag])
+                            } else {
+                              // Include tag
+                              onIncludeTagsChange(includeTags.includes(tag) ? includeTags : [...includeTags, tag])
+                            }
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </li>
             )
           })}
           </ul>
           {filteredNotes.length === 0 && notes.length > 0 && (
-            <div className="mutedBlock">No notes match your search.</div>
+            <div className="mutedBlock"></div>
           )}
         </>
       ) : (
         <ul className="notesList" ref={listRef} tabIndex={0}>
           <li
             key="new-note"
+            ref={(el) => setNoteRowRef(0, el)}
             className={`noteRow noteRowInteractive noteRowNew${
               focusedIndex === 0 ? ' noteRowFocused' : ''
             }`}
             onClick={() => setFocusedIndex(0)}
             onDoubleClick={onNewNote}
           >
-            <div className="noteRowMain">
-              <div className="noteName">+ New Note</div>
-              <div className="noteTimestamp">Enter to create</div>
+            <div className="noteRowContent">
+              <div className="noteRowMain">
+                <div className="noteName">New Note</div>
+                <div className="noteTimestamp">Enter to create</div>
+              </div>
             </div>
           </li>
-          <li className="mutedBlock">No notes found in the workspace root.</li>
+          <li className="mutedBlock"></li>
         </ul>
       )}
 

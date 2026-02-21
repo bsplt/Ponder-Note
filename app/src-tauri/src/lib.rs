@@ -8,7 +8,7 @@ use crate::commands::todos::{list_todos, toggle_todo};
 use crate::commands::workspace::{
     workspace_assign_slot, workspace_create_note, workspace_get_all_tags, workspace_get_state,
     workspace_get_rebuild_log, workspace_list_notes, workspace_list_root_notes, workspace_rebuild,
-    workspace_switch_slot, workspace_update_note_tags,
+    workspace_switch_slot, workspace_unassign_slot, workspace_update_note_tags,
 };
 use crate::services::workspace_service::WorkspaceService;
 use crate::storage::app_config_repo::AppConfigRepo;
@@ -26,6 +26,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             workspace_get_state,
             workspace_assign_slot,
+            workspace_unassign_slot,
             workspace_switch_slot,
             workspace_list_root_notes,
             workspace_list_notes,

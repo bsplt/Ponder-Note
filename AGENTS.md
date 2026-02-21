@@ -7,6 +7,7 @@ Use Nix as the source of truth for tooling, builds, and dependencies.
 - Prefer entering the dev environment via `nix develop` (or `nix develop .#<devShell>`) before running repo commands.
 - Prefer `nix build`, `nix run`, and `nix flake check` over ad-hoc install flows.
 - Avoid installing tooling via Homebrew, npm/pnpm, or `cargo install` outside the Nix environment unless explicitly requested.
+- Run the build script `./build-app.sh` after codings.
 
 ## References
 

@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OKLCH Playground</title>
+  <style>
+    :root {
+      --bg: #f3f3f3;
+      --panel: #ffffff;
+      --border: #d7d7d7;
+      --text: #1e1e1e;
+      --muted: #606060;
+      --button: #ececec;
+      --button-hover: #e3e3e3;
+      --danger: #8f2f2f;
+      --ok: #2e6b3f;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .top-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .converter-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .field > span {
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+    }
+
+    input[type="text"].invalid {
+      border-color: color-mix(in srgb, var(--danger) 58%, #ffffff);
+      background: #fff7f7;
+    }
+
+    input[type="text"][readonly] {
+      background: #f7f7f7;
+      color: #555;
+    }
+
+    .button {
+      border: 1px solid #c8c8c8;
+      background: var(--button);
+      color: #222;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      background: var(--button-hover);
+    }
+
+    .button.danger {
+      border-color: #dcb3b3;
+      color: var(--danger);
+      background: #fff6f6;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .status.ok {
+      border-color: #c9decf;
+      color: var(--ok);
+      background: #f1f8f3;
+    }
+
+    .status.error {
+      border-color: #efc8c8;
+      color: var(--danger);
+      background: #fff4f4;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(280px, 1fr) minmax(260px, 360px);
+      align-items: stretch;
+      background: #fff;
+    }
+
+    .row.colored {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .row.colored .field > span,
+    .row.colored .meta,
+    .row.colored .preview-head {
+      color: inherit;
+      opacity: 0.92;
+    }
+
+    .row.colored .button {
+      color: inherit;
+      border-color: color-mix(in srgb, currentColor 30%, #ffffff);
+      background: color-mix(in srgb, #ffffff 72%, transparent);
+    }
+
+    .row-controls {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mini {
+      padding: 6px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .meta {
+      display: grid;
+      gap: 2px;
+      font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+      font-size: 0.74rem;
+      color: #4f4f4f;
+      line-height: 1.35;
+    }
+
+    .meta .bad {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .preview {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 150px;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .preview-head {
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0.9;
+    }
+
+    .sample {
+      align-self: center;
+      display: grid;
+      gap: 6px;
+    }
+
+    .sample-aa {
+      font-size: 1.5rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sample-body {
+      font-size: 0.9rem;
+    }
+
+    .sample-chip {
+      width: max-content;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    .footer-line {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 860px) {
+      .top-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .converter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .row-actions .button {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel">
+      <h1>OKLCH Playground</h1>
+      <p class="subtitle">Freies Testen mit beliebig vielen Hintergruenden und einer globalen Textfarbe. Autosave laeuft lokal im Browser.</p>
+
+      <div class="top-grid">
+        <label class="field">
+          <span>Textfarbe (`oklch(...)` oder `#RRGGBB`)</span>
+          <input id="text-input" type="text" spellcheck="false" placeholder="oklch(25% 0.08 260)">
+        </label>
+        <button id="add-bg" class="button" type="button">Hintergrund hinzufuegen</button>
+        <button id="reset-all" class="button danger" type="button">Reset</button>
+      </div>
+
+      <div class="converter-grid">
+        <label class="field">
+          <span>HEX zu OKLCH</span>
+          <input id="hex-convert-input" type="text" spellcheck="false" placeholder="#1e2a6d">
+        </label>
+        <label class="field">
+          <span>OKLCH Ergebnis</span>
+          <input id="hex-convert-output" type="text" readonly value="">
+        </label>
+      </div>
+
+      <div id="save-status" class="status" aria-live="polite">Bereit.</div>
+
+      <div id="bg-list" class="list"></div>
+
+      <div class="footer-line">Storage-Key: <code>pondernote.oklchPlayground.v1</code></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "pondernote.oklchPlayground.v1";
+      const AUTOSAVE_DELAY_MS = 150;
+
+      const defaults = {
+        textColorInput: "oklch(25% 0.08 260)",
+        backgrounds: [
+          "oklch(94% 0.03 250)",
+          "oklch(90% 0.05 210)",
+          "oklch(88% 0.04 320)"
+        ]
+      };
+
+      const state = {
+        textColorInput: defaults.textColorInput,
+        backgrounds: defaults.backgrounds.slice(),
+        errors: {
+          text: null,
+          rows: []
+        },
+        saveState: "idle",
+        saveMessage: "Bereit.",
+        saveTimer: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function normalizeHue(deg) {
+        let h = deg % 360;
+        if (h < 0) h += 360;
+        return h;
+      }
+
+      function srgbToLinear(v) {
+        if (v <= 0.04045) return v / 12.92;
+        return Math.pow((v + 0.055) / 1.055, 2.4);
+      }
+
+      function linearToSrgb(v) {
+        if (v <= 0.0031308) return 12.92 * v;
+        return 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+      }
+
+      function hexToSrgb(hex) {
+        const clean = hex.trim().replace(/^#/, "");
+        const int = parseInt(clean, 16);
+        const r = ((int >> 16) & 255) / 255;
+        const g = ((int >> 8) & 255) / 255;
+        const b = (int & 255) / 255;
+        return [r, g, b];
+      }
+
+      function srgbToHex(srgb) {
+        const values = srgb.map((c) => clamp(c, 0, 1));
+        const parts = values.map((c) => Math.round(c * 255).toString(16).padStart(2, "0"));
+        return "#" + parts.join("");
+      }
+
+      function linearSrgbToOklab(linear) {
+        const r = linear[0];
+        const g = linear[1];
+        const b = linear[2];
+
+        const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+        const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+        const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+        const l3 = Math.cbrt(l);
+        const m3 = Math.cbrt(m);
+        const s3 = Math.cbrt(s);
+
+        return {
+          L: 0.2104542553 * l3 + 0.7936177850 * m3 - 0.0040720468 * s3,
+          a: 1.9779984951 * l3 - 2.4285922050 * m3 + 0.4505937099 * s3,
+          b: 0.0259040371 * l3 + 0.7827717662 * m3 - 0.8086757660 * s3
+        };
+      }
+
+      function oklabToLinearSrgb(oklab) {
+        const L = oklab.L;
+        const a = oklab.a;
+        const b = oklab.b;
+
+        const l3 = L + 0.3963377774 * a + 0.2158037573 * b;
+        const m3 = L - 0.1055613458 * a - 0.0638541728 * b;
+        const s3 = L - 0.0894841775 * a - 1.2914855480 * b;
+
+        const l = l3 * l3 * l3;
+        const m = m3 * m3 * m3;
+        const s = s3 * s3 * s3;
+
+        return [
+          4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+          -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+          -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+        ];
+      }
+
+      function oklabToOklch(oklab) {
+        const C = Math.sqrt(oklab.a * oklab.a + oklab.b * oklab.b);
+        const H = normalizeHue(Math.atan2(oklab.b, oklab.a) * (180 / Math.PI));
+        return { L: oklab.L, C: C, H: H };
+      }
+
+      function oklchToOklab(oklch) {
+        const angle = oklch.H * Math.PI / 180;
+        return {
+          L: oklch.L,
+          a: oklch.C * Math.cos(angle),
+          b: oklch.C * Math.sin(angle)
+        };
+      }
+
+      function srgbToOklch(srgb) {
+        const linear = srgb.map(srgbToLinear);
+        return oklabToOklch(linearSrgbToOklab(linear));
+      }
+
+      function isLinearInGamut(linear) {
+        const epsilon = 1e-7;
+        return linear.every((c) => c >= -epsilon && c <= 1 + epsilon);
+      }
+
+      function oklchToSrgbInGamut(oklch) {
+        const target = { L: clamp(oklch.L, 0, 1), C: Math.max(0, oklch.C), H: normalizeHue(oklch.H) };
+        const initialLinear = oklabToLinearSrgb(oklchToOklab(target));
+
+        let final = { ...target };
+        let clipped = false;
+
+        if (!isLinearInGamut(initialLinear)) {
+          clipped = true;
+          let low = 0;
+          let high = target.C;
+          for (let i = 0; i < 22; i += 1) {
+            const mid = (low + high) / 2;
+            const attempt = oklabToLinearSrgb(oklchToOklab({ L: target.L, C: mid, H: target.H }));
+            if (isLinearInGamut(attempt)) {
+              low = mid;
+            } else {
+              high = mid;
+            }
+          }
+          final.C = low;
+        }
+
+        const finalLinear = oklabToLinearSrgb(oklchToOklab(final));
+        const finalSrgb = finalLinear.map((c) => clamp(linearToSrgb(c), 0, 1));
+
+        return {
+          oklch: final,
+          srgb: finalSrgb,
+          hex: srgbToHex(finalSrgb),
+          clipped
+        };
+      }
+
+      function relativeLuminance(srgb) {
+        const [r, g, b] = srgb.map(srgbToLinear);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(srgbA, srgbB) {
+        const l1 = relativeLuminance(srgbA);
+        const l2 = relativeLuminance(srgbB);
+        const hi = Math.max(l1, l2);
+        const lo = Math.min(l1, l2);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      function formatOklch(oklch) {
+        return "oklch(" + (oklch.L * 100).toFixed(2) + "% " + oklch.C.toFixed(4) + " " + normalizeHue(oklch.H).toFixed(2) + ")";
+      }
+
+      function parseColorInput(raw) {
+        const value = String(raw || "").trim();
+        if (!value) return { error: "Leere Farbeingabe." };
+
+        const hexMatch = value.match(/^#?([0-9a-fA-F]{6})$/);
+        if (hexMatch) {
+          const hex = "#" + hexMatch[1].toLowerCase();
+          return { source: "hex", oklch: srgbToOklch(hexToSrgb(hex)), original: hex };
+        }
+
+        if (/^oklch\(/i.test(value)) {
+          const contentMatch = value.match(/^oklch\((.*)\)$/i);
+          if (!contentMatch) return { error: "Ungueltiges oklch-Format." };
+
+          const body = contentMatch[1].split("/")[0].replace(/,/g, " ").trim();
+          const parts = body.split(/\s+/).filter(Boolean);
+          if (parts.length < 3) return { error: "OKLCH erwartet L C H." };
+
+          const Lraw = parts[0];
+          const Craw = parts[1];
+          const Hraw = parts[2];
+
+          const Lnum = parseFloat(Lraw);
+          const Cnum = parseFloat(Craw);
+          const Hnum = parseFloat(Hraw);
+
+          if (!Number.isFinite(Lnum) || !Number.isFinite(Cnum) || !Number.isFinite(Hnum)) {
+            return { error: "OKLCH enthaelt ungueltige Zahlen." };
+          }
+
+          let L = Lraw.endsWith("%") ? Lnum / 100 : Lnum;
+          if (!Lraw.endsWith("%") && L > 1) L = L / 100;
+
+          return {
+            source: "oklch",
+            original: value,
+            oklch: {
+              L: clamp(L, 0, 1),
+              C: Math.max(0, Cnum),
+              H: normalizeHue(Hnum)
+            }
+          };
+        }
+
+        return { error: "Erlaubt: #RRGGBB oder oklch(L C H)." };
+      }
+
+      function convertHexToOklch(raw) {
+        const value = String(raw || "").trim();
+        if (!value) return { error: "HEX fehlt." };
+        const hexMatch = value.match(/^#?([0-9a-fA-F]{6})$/);
+        if (!hexMatch) return { error: "Bitte HEX als #RRGGBB eingeben." };
+        const hex = "#" + hexMatch[1].toLowerCase();
+        const oklch = srgbToOklch(hexToSrgb(hex));
+        return { hex, oklch, formatted: formatOklch(oklch) };
+      }
+
+      function updateHexConverter() {
+        const input = $("hex-convert-input");
+        const output = $("hex-convert-output");
+        const result = convertHexToOklch(input.value);
+        if (result.error) {
+          output.value = result.error;
+          input.classList.toggle("invalid", input.value.trim().length > 0);
+          return;
+        }
+        output.value = result.formatted;
+        input.classList.remove("invalid");
+      }
+
+      function setStatus(kind, message) {
+        state.saveState = kind;
+        state.saveMessage = message;
+        const el = $("save-status");
+        el.textContent = message;
+        el.className = "status" + (kind === "ok" ? " ok" : kind === "error" ? " error" : "");
+      }
+
+      function savePayload() {
+        return {
+          textColorInput: state.textColorInput,
+          backgrounds: state.backgrounds.slice(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function scheduleSave(valid) {
+        if (state.saveTimer) {
+          clearTimeout(state.saveTimer);
+          state.saveTimer = null;
+        }
+
+        if (!valid) {
+          setStatus("error", "Nicht gespeichert: Bitte ungueltige Eingaben korrigieren.");
+          return;
+        }
+
+        state.saveTimer = setTimeout(function () {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savePayload()));
+            setStatus("ok", "Gespeichert (localStorage). " + new Date().toLocaleTimeString("de-DE"));
+          } catch (error) {
+            setStatus("error", "Speichern fehlgeschlagen: " + (error && error.message ? error.message : "unbekannter Fehler"));
+          }
+        }, AUTOSAVE_DELAY_MS);
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return;
+
+          if (typeof parsed.textColorInput === "string") {
+            state.textColorInput = parsed.textColorInput;
+          }
+
+          if (Array.isArray(parsed.backgrounds)) {
+            const cleaned = parsed.backgrounds.filter((v) => typeof v === "string").map((v) => v.trim()).filter(Boolean);
+            if (cleaned.length > 0) {
+              state.backgrounds = cleaned;
+            }
+          }
+        } catch (error) {
+          setStatus("error", "Gespeicherte Daten konnten nicht gelesen werden. Defaults aktiv.");
+        }
+      }
+
+      function ensureMinimumRows() {
+        if (state.backgrounds.length < 1) {
+          state.backgrounds = ["oklch(92% 0.03 250)"];
+        }
+      }
+
+      function moveItem(index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= state.backgrounds.length) return;
+        const copy = state.backgrounds.slice();
+        const tmp = copy[index];
+        copy[index] = copy[target];
+        copy[target] = tmp;
+        state.backgrounds = copy;
+      }
+
+      function getFocusSnapshot() {
+        const active = document.activeElement;
+        if (!active) return null;
+
+        const snapshot = {
+          kind: "",
+          id: "",
+          index: -1,
+          start: null,
+          end: null,
+          direction: "none"
+        };
+
+        if (typeof active.selectionStart === "number" && typeof active.selectionEnd === "number") {
+          snapshot.start = active.selectionStart;
+          snapshot.end = active.selectionEnd;
+          snapshot.direction = active.selectionDirection || "none";
+        }
+
+        if (active.id === "text-input" || active.id === "hex-convert-input") {
+          snapshot.kind = "id";
+          snapshot.id = active.id;
+          return snapshot;
+        }
+
+        if (active.classList && active.classList.contains("bg-input")) {
+          const index = parseInt(active.dataset.index || "", 10);
+          if (Number.isFinite(index) && index >= 0) {
+            snapshot.kind = "bg";
+            snapshot.index = index;
+            return snapshot;
+          }
+        }
+
+        return null;
+      }
+
+      function restoreFocusSnapshot(snapshot) {
+        if (!snapshot) return;
+
+        let target = null;
+        if (snapshot.kind === "id") {
+          target = $(snapshot.id);
+        } else if (snapshot.kind === "bg") {
+          target = document.querySelector('.bg-input[data-index=\"' + String(snapshot.index) + '\"]');
+        }
+
+        if (!target) return;
+
+        try {
+          target.focus({ preventScroll: true });
+        } catch (_error) {
+          target.focus();
+        }
+
+        if (typeof snapshot.start === "number" && typeof target.setSelectionRange === "function") {
+          const length = target.value.length;
+          const start = clamp(snapshot.start, 0, length);
+          const end = clamp(snapshot.end, 0, length);
+          try {
+            target.setSelectionRange(start, end, snapshot.direction);
+          } catch (_error) {
+            target.setSelectionRange(start, end);
+          }
+        }
+      }
+
+      function render() {
+        const focusSnapshot = getFocusSnapshot();
+        ensureMinimumRows();
+
+        const textInputEl = $("text-input");
+        textInputEl.value = state.textColorInput;
+
+        const parsedText = parseColorInput(state.textColorInput);
+        state.errors.text = parsedText.error || null;
+        textInputEl.classList.toggle("invalid", Boolean(state.errors.text));
+
+        const textResolved = parsedText.error ? null : oklchToSrgbInGamut(parsedText.oklch);
+
+        const list = $("bg-list");
+        list.innerHTML = "";
+        state.errors.rows = [];
+
+        for (let i = 0; i < state.backgrounds.length; i += 1) {
+          const rowInput = state.backgrounds[i];
+          const parsedBg = parseColorInput(rowInput);
+          state.errors.rows.push(parsedBg.error || null);
+
+          const row = document.createElement("article");
+          row.className = "row";
+
+          const controls = document.createElement("div");
+          controls.className = "row-controls";
+
+          const field = document.createElement("label");
+          field.className = "field";
+
+          const label = document.createElement("span");
+          label.textContent = "Background " + (i + 1);
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "bg-input";
+          input.dataset.index = String(i);
+          input.value = rowInput;
+          input.placeholder = "oklch(92% 0.03 260)";
+          input.spellcheck = false;
+          input.classList.toggle("invalid", Boolean(parsedBg.error));
+          input.addEventListener("input", function () {
+            state.backgrounds[i] = input.value;
+            render();
+          });
+
+          field.appendChild(label);
+          field.appendChild(input);
+
+          const actions = document.createElement("div");
+          actions.className = "row-actions";
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "button mini";
+          upBtn.textContent = "Up";
+          upBtn.disabled = i === 0;
+          upBtn.addEventListener("click", function () {
+            moveItem(i, -1);
+            render();
+          });
+
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.className = "button mini";
+          downBtn.textContent = "Down";
+          downBtn.disabled = i === state.backgrounds.length - 1;
+          downBtn.addEventListener("click", function () {
+            moveItem(i, 1);
+            render();
+          });
+
+          const duplicateBtn = document.createElement("button");
+          duplicateBtn.type = "button";
+          duplicateBtn.className = "button mini";
+          duplicateBtn.textContent = "Dupl.";
+          duplicateBtn.addEventListener("click", function () {
+            state.backgrounds.splice(i + 1, 0, state.backgrounds[i]);
+            render();
+          });
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "button mini danger";
+          removeBtn.textContent = "Entf.";
+          removeBtn.disabled = state.backgrounds.length <= 1;
+          removeBtn.addEventListener("click", function () {
+            state.backgrounds.splice(i, 1);
+            ensureMinimumRows();
+            render();
+          });
+
+          actions.appendChild(upBtn);
+          actions.appendChild(downBtn);
+          actions.appendChild(duplicateBtn);
+          actions.appendChild(removeBtn);
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+
+          controls.appendChild(field);
+          controls.appendChild(actions);
+          controls.appendChild(meta);
+
+          const preview = document.createElement("div");
+          preview.className = "preview";
+
+          const head = document.createElement("div");
+          head.className = "preview-head";
+          head.textContent = "Preview";
+
+          const sample = document.createElement("div");
+          sample.className = "sample";
+
+          const aa = document.createElement("div");
+          aa.className = "sample-aa";
+          aa.textContent = "Aa";
+
+          const body = document.createElement("div");
+          body.className = "sample-body";
+          body.textContent = "Body text sample";
+
+          const chip = document.createElement("div");
+          chip.className = "sample-chip";
+          chip.textContent = "Button";
+
+          sample.appendChild(aa);
+          sample.appendChild(body);
+          sample.appendChild(chip);
+
+          preview.appendChild(head);
+          preview.appendChild(sample);
+
+          if (parsedBg.error) {
+            row.classList.remove("colored");
+            row.style.background = "#ffffff";
+            row.style.color = "#1e1e1e";
+            meta.innerHTML = '<div class="bad">Ungueltig: ' + parsedBg.error + "</div>";
+            preview.style.background = "#f2f2f2";
+            preview.style.color = "#8a8a8a";
+          } else {
+            const resolvedBg = oklchToSrgbInGamut(parsedBg.oklch);
+            const bgOklch = resolvedBg.oklch;
+
+            row.classList.add("colored");
+            row.style.background = resolvedBg.hex;
+            preview.style.background = resolvedBg.hex;
+
+            if (textResolved) {
+              const ratio = contrastRatio(textResolved.srgb, resolvedBg.srgb);
+              const fail = ratio < 4.5;
+              row.style.color = textResolved.hex;
+              preview.style.color = textResolved.hex;
+              meta.innerHTML =
+                "<div>OKLCH " + formatOklch(bgOklch) + "</div>" +
+                "<div>HEX " + resolvedBg.hex + "</div>" +
+                "<div>Kontrast " + ratio.toFixed(2) + ":1" + (fail ? ' <span class="bad">(unter 4.5)</span>' : "") + "</div>" +
+                (resolvedBg.clipped ? "<div>Hinweis: Chroma fuer Gamut reduziert</div>" : "");
+            } else {
+              row.style.color = "#222";
+              preview.style.color = "#222";
+              meta.innerHTML =
+                "<div>OKLCH " + formatOklch(bgOklch) + "</div>" +
+                "<div>HEX " + resolvedBg.hex + "</div>" +
+                '<div class="bad">Kontrast nicht berechenbar (Textfarbe ungueltig)</div>' +
+                (resolvedBg.clipped ? "<div>Hinweis: Chroma fuer Gamut reduziert</div>" : "");
+            }
+          }
+
+          row.appendChild(controls);
+          row.appendChild(preview);
+          list.appendChild(row);
+        }
+
+        const allValid = !state.errors.text && state.errors.rows.every((error) => !error);
+        updateHexConverter();
+        scheduleSave(allValid);
+
+        if (state.errors.text) {
+          setStatus("error", "Textfarbe ungueltig: " + state.errors.text);
+        }
+
+        restoreFocusSnapshot(focusSnapshot);
+      }
+
+      function wireGlobalEvents() {
+        $("text-input").addEventListener("input", function (event) {
+          state.textColorInput = event.target.value;
+          render();
+        });
+
+        $("hex-convert-input").addEventListener("input", function () {
+          updateHexConverter();
+        });
+
+        $("add-bg").addEventListener("click", function () {
+          state.backgrounds.push("oklch(92% 0.03 250)");
+          render();
+        });
+
+        $("reset-all").addEventListener("click", function () {
+          state.textColorInput = defaults.textColorInput;
+          state.backgrounds = defaults.backgrounds.slice();
+          render();
+        });
+      }
+
+      loadState();
+      wireGlobalEvents();
+      render();
+    })();
+  </script>
+</body>
+</html>

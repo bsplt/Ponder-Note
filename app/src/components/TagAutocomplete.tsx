@@ -85,7 +85,8 @@ export function TagAutocomplete(props: TagAutocompleteProps) {
         <div
           key={tag}
           className={`autocompleteItem${idx === selectedIndex ? ' autocompleteItemSelected' : ''}`}
-          onClick={(e) => {
+          onMouseDown={(e) => {
+            e.preventDefault()
             e.stopPropagation()
             handleSelect(tag)
           }}

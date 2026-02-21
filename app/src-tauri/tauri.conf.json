@@ -13,10 +13,11 @@
     "windows": [
       {
         "title": "Ponder",
-        "width": 800,
-        "height": 600,
-        "backgroundColor": "#0c0f14",
-        "titleBarStyle": "Transparent",
+        "width": 1200,
+        "height": 800,
+        "backgroundColor": "#FFD35C",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "devtools": true
       }
     ],
@@ -26,7 +27,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "app",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
