@@ -11,8 +11,8 @@ Use Nix as the source of truth for tooling, builds, and dependencies.
 
 ## References
 
-- Figma MCP usage and handshake: `FIGMA_MCP.md`
-- MCP examples: `FIGMA_MCP_EXAMPLES.md`
+- Figma MCP usage and handshake: `docs/design/FIGMA_MCP.md`
+- MCP examples: `docs/design/FIGMA_MCP_EXAMPLES.md`
 
 ## UI Implementation
 

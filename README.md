@@ -159,10 +159,22 @@ For each workspace folder:
 ├── app/                 # Tauri app (frontend + Rust backend)
 │   ├── src/             # React UI
 │   └── src-tauri/       # Rust commands, domain logic, storage
+├── docs/
+│   ├── ai/              # Prompt/history docs
+│   ├── design/          # Figma/MCP design references
+│   ├── devlog/          # Planning and phase history
+│   └── tools/           # Internal helper tooling/docs
 ├── flake.nix            # Nix dev shell definition
 └── build-app.sh         # Nix-based debug build helper
 ```
 
-## Notes
+## Internal Docs
 
-- This repo currently has no explicit OSS license file. Add one before broad reuse/distribution.
+- Development log and planning: `docs/devlog/planning/`
+- Design references: `docs/design/`
+- AI context docs: `docs/ai/`
+- Internal helper tools and legacy template docs: `docs/tools/`
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE`.
