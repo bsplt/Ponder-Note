@@ -421,7 +421,7 @@ export function Editor(props: EditorProps) {
               ariaLabel={todo.text}
               tabIndex={0}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
+                if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
                   event.preventDefault()
                   if (!pending) {
                     void handlePreviewTodoToggle(todo, { preserveFocus: true })
