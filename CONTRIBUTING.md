@@ -1,33 +1,10 @@
 # Contributing
 
-## Setup
+## Setup and Build
 
-1. Enter the Nix development shell:
+See the developer guide:
 
-   ```bash
-   nix develop
-   ```
-
-2. Install frontend dependencies:
-
-   ```bash
-   cd app
-   pnpm install
-   ```
-
-## Local validation
-
-1. Run tests:
-
-   ```bash
-   nix develop -c bash -lc "cd app && pnpm test"
-   ```
-
-2. Run the app build script from repository root:
-
-   ```bash
-   ./build-app.sh
-   ```
+- `docs/developer/BUILD_AND_RELEASE.md`
 
 ## Pull requests
 
