@@ -2,6 +2,8 @@
 
 **Ponder is a fast, keyboard-friendly macOS notes app for people who keep notes in Markdown and want todos to stay linked to the original files.**
 
+You keep your own local `.md` files, stay sovereign from subscription services, and choose your own sync method (for example iCloud Drive, Dropbox, or Git).
+
 ![Ponder Overview](docs/screenshots/Overview.webp)
 
 ## Download
@@ -34,7 +36,7 @@
 
 ## Quick Usage
 
-1. Open **Workspaces** and connect a folder.
+1. Open **Workspaces** and connect a folder. This folder is your workspace root where Ponder stores and reads your `.md` note files.
 2. Create or open a note in **Overview**.
 3. Write in Markdown and add tags.
 4. Open **Todos** to process open tasks across all notes.
@@ -53,6 +55,7 @@
 - Your notes stay in your selected local folders.
 - Ponder metadata is stored per workspace in `.ponder/`.
 - Deletions are soft deletes to `deleted/`.
+- Sync is your choice: use any file sync service or Git workflow you prefer.
 
 ## Support
 
