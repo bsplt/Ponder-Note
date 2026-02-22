@@ -1,6 +1,6 @@
 # Ponder
 
-**Ponder is a fast, keyboard-friendly macOS notes app for people who keep notes in Markdown and want todos to stay linked to the original files.**
+**Ponder is a fast, keyboard-friendly macOS notes app for people who keep notes in Markdown and want one aggregated todo view across all notes.**
 
 [![Latest Release](https://img.shields.io/github/v/release/bsplt/Ponder-Note?display_name=tag)](https://github.com/bsplt/Ponder-Note/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -27,23 +27,33 @@ You keep your own local `.md` files, stay sovereign from subscription services, 
 - Keeps your notes as plain `.md` files in your own folders.
 - Lets you switch between up to 9 workspaces instantly.
 - Searches titles and full note content from one overview.
-- Extracts open markdown todos across notes.
-- Toggles todos and writes changes back to the source note.
+- Aggregates open markdown todos from all notes into one focused list.
+- Lets you jump from a todo to its source note and back to the todo list quickly.
+- Toggles todos and writes changes back to the source note, so notes and task view stay in sync.
 
-## Screenshots
+## Why the Todo Workflow Works
 
-![Editor Preview](docs/screenshots/Editor-Preview.webp)
+Ponder is built for back-and-forth work: capture context in notes, execute from one aggregated todo list, jump back into the source note when needed, then continue in the list. You do not lose context and you do not need to manually sync task lists.
 
-![Editor Editing](docs/screenshots/Editor-Editing.webp)
+## Who Ponder Is For
 
-![Todo List](docs/screenshots/Todo-List.webp)
+- People who want Markdown notes as real files on disk.
+- Users who prefer keyboard-driven note and task workflows.
+- Anyone who wants flexible syncing via their own tools (Drive or Git).
+
+## Who Ponder Is Not For
+
+- Teams looking for a hosted, multi-user SaaS workspace.
+- Users who want cloud-only storage managed by the app vendor.
+- People who need built-in collaboration features like live co-editing.
 
 ## Quick Usage
 
 1. Open **Workspaces** and connect a folder. This folder is your workspace root where Ponder stores and reads your `.md` note files.
 2. Create or open a note in **Overview**.
-3. Write in Markdown and add tags.
-4. Open **Todos** to process open tasks across all notes.
+3. Write in Markdown and add tags, including markdown checkboxes for tasks.
+4. Open **Todos** to work from one aggregated list across all notes.
+5. Jump into source notes, edit context, and continue directly in the todo list.
 
 ## Keyboard Essentials
 
@@ -60,6 +70,34 @@ You keep your own local `.md` files, stay sovereign from subscription services, 
 - Ponder metadata is stored per workspace in `.ponder/`.
 - Deletions are soft deletes to `deleted/`.
 - Sync is your choice: use any file sync service or Git workflow you prefer.
+
+## Screenshots
+
+![Ponder Overview](docs/screenshots/Overview.webp)
+
+![Editor Preview](docs/screenshots/Editor-Preview.webp)
+
+![Editor Editing](docs/screenshots/Editor-Editing.webp)
+
+![Todo List](docs/screenshots/Todo-List.webp)
+
+## FAQ and Compatibility
+
+### What platforms are supported?
+
+Ponder is currently distributed as a macOS desktop app via GitHub Releases.
+
+### Where are my notes stored?
+
+In the workspace folder you choose. Ponder reads and writes your `.md` files there directly.
+
+### Can I sync notes with iCloud/Dropbox/Google Drive?
+
+Yes. Because notes are normal local files, you can use any folder-sync provider you prefer.
+
+### Can I sync with Git instead?
+
+Yes. Many users keep their workspace folder in a Git repo and use their own Git workflow.
 
 ## Support
 
