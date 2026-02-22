@@ -76,6 +76,21 @@ Release build:
 ./build-app.sh --release
 ```
 
+## Publishing a GitHub Release
+
+1. Ensure versions are updated to the target release version in:
+   - `app/package.json`
+   - `app/src-tauri/Cargo.toml`
+   - `app/src-tauri/tauri.conf.json`
+2. Create and push a tag (example for version `1.0.0`):
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This triggers `.github/workflows/release.yml`, which builds and attaches macOS artifacts to a GitHub Release.
+
 ## Usage Workflow
 
 1. Open **Workspaces** and assign a folder to a slot (1-9).
