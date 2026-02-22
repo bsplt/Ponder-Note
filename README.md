@@ -1,10 +1,9 @@
+[![Download for macOS](https://img.shields.io/badge/Download-for%20macOS-111827?logo=apple)](https://github.com/bsplt/Ponder-Note/releases/latest/download/Ponder-macOS.zip)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 # Ponder
 
 **Ponder is a fast, keyboard-friendly macOS notes app for people who keep notes in Markdown and want one aggregated todo view across all notes.**
-
-[![Latest Release](https://img.shields.io/github/v/release/bsplt/Ponder-Note?display_name=tag)](https://github.com/bsplt/Ponder-Note/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS-111827)](https://github.com/bsplt/Ponder-Note/releases)
 
 You keep your own local `.md` files, stay sovereign from subscription services, and choose your own sync method (for example iCloud Drive, Dropbox, or Git).
 
