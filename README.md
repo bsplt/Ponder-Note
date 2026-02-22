@@ -1,8 +1,10 @@
-# Ponder Note
+# Ponder
 
-Ponder is a fast, keyboard-friendly desktop app for people who keep their notes in Markdown files and want action items to stay connected to the original notes.
+**Ponder is a fast, keyboard-friendly desktop app for people who keep their notes in Markdown files and want action items to stay connected to the original notes.**
 
 Built for meeting notes, project logs, and personal knowledge workflows where plain files matter.
+
+![Ponder Overview](docs/screenshots/Overview.webp)
 
 ## Why Ponder
 
@@ -37,6 +39,12 @@ Built for meeting notes, project logs, and personal knowledge workflows where pl
 - **Safe deletion**: deleting a note moves it to `deleted/` (no hard delete).
 - **Workspace health + fallback**: detects missing/unreadable folders and supports fallback slot behavior.
 - **Rebuild diagnostics**: writes and displays rebuild logs for note sidecar/index maintenance.
+
+![Editor Preview](docs/screenshots/Editor-Preview.webp)
+
+![Editor](docs/screenshots/Editor-Editing.webp)
+
+![Todo List](docs/screenshots/Todo-List.webp)
 
 ## Quick Start (Nix-first)
 
