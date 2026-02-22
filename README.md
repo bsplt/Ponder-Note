@@ -1,4 +1,4 @@
-[![Download for macOS](https://img.shields.io/badge/Download-for%20macOS-111827?logo=apple)](https://github.com/bsplt/Ponder-Note/releases/latest/download/Ponder-macOS.zip)
+[![Download for macOS](https://img.shields.io/badge/Download-for%20macOS-111827?logo=apple)](https://github.com/bsplt/Ponder-Note/releases/download/v1.0.0/Ponder-macOS-v1.0.0.zip)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 # Ponder
@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/988312f1-f63b-414a-ba5e-a1bb9a8e05a2
 
 ## Download
 
-- Latest release: [GitHub Releases](https://github.com/bsplt/Ponder-Note/releases)
+- Direct download: [MacOS App](https://github.com/bsplt/Ponder-Note/releases/download/v1.0.0/Ponder-macOS-v1.0.0.zip)
 - Platform: macOS desktop app
 
 ## Install (macOS)
