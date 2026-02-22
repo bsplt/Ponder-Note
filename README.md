@@ -62,12 +62,18 @@ cd app
 pnpm test
 ```
 
-### Build a debug app bundle
+### Build app bundle
 
 From repo root:
 
 ```bash
 ./build-app.sh
+```
+
+Release build:
+
+```bash
+./build-app.sh --release
 ```
 
 ## Usage Workflow
