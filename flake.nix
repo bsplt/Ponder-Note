@@ -1,5 +1,5 @@
 {
-  description = "Dev shell for Tauri + Svelte (macOS)";
+  description = "Dev shell for Tauri + React (macOS)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 

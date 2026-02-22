@@ -1,168 +1,114 @@
-# Ponder Note
+# Ponder
 
-Ponder is a fast, keyboard-friendly desktop app for people who keep their notes in Markdown files and want action items to stay connected to the original notes.
+**Ponder is a fast, keyboard-friendly macOS notes app for people who keep notes in Markdown and want one aggregated todo view across all notes.**
 
-Built for meeting notes, project logs, and personal knowledge workflows where plain files matter.
+[![Latest Release](https://img.shields.io/github/v/release/bsplt/Ponder-Note?display_name=tag)](https://github.com/bsplt/Ponder-Note/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS-111827)](https://github.com/bsplt/Ponder-Note/releases)
 
-## Why Ponder
+You keep your own local `.md` files, stay sovereign from subscription services, and choose your own sync method (for example iCloud Drive, Dropbox, or Git).
 
-- Keep notes as plain `.md` files in your own folders.
-- Switch between up to 9 workspace folders instantly.
-- Search note titles and full content from one overview.
-- Extract open todos from all notes and triage them in one screen.
-- Toggle todos once and sync the checkbox back to the source note.
+https://github.com/user-attachments/assets/988312f1-f63b-414a-ba5e-a1bb9a8e05a2
 
-## What You Can Use It For
+## Download
 
-- Meeting protocols with action-item tracking.
-- Team/project notebooks split by workspace (client, product, ops, etc.).
-- Personal planning in Markdown without lock-in to a proprietary note format.
-- "Inbox + execution" flow where notes and todos stay in sync.
+- Latest release: [GitHub Releases](https://github.com/bsplt/Ponder-Note/releases)
+- Platform: macOS desktop app
 
-## Feature Highlights
+## Install (macOS)
 
-- **Markdown-first notes**: notes are root-level `.md` files in your workspace.
-- **Auto title extraction**: note title is derived from the first line (Markdown-aware).
-- **Autosave editor**: with retry logic when save fails.
-- **Tagging system**: add tags as pills, with autocomplete from existing workspace tags.
-- **Powerful search**:
-  - Full-text matching across title + body preview.
-  - Multi-term AND search.
-  - `*` wildcard support (example: `meet*`).
-  - Include/exclude tag filters (`#tag` and `#-tag`).
-- **Todo aggregation**:
-  - Parses Markdown checkboxes (`[ ]`, `- [ ]`, `[x]`).
-  - Skips fenced code blocks and blockquotes.
-  - Groups todos by note tags, ordered by recency.
-- **Safe deletion**: deleting a note moves it to `deleted/` (no hard delete).
-- **Workspace health + fallback**: detects missing/unreadable folders and supports fallback slot behavior.
-- **Rebuild diagnostics**: writes and displays rebuild logs for note sidecar/index maintenance.
+1. Download the latest release asset from the Releases page.
+2. Open the downloaded archive and move `Ponder.app` to your `Applications` folder.
+3. Start Ponder.
+4. If macOS blocks first launch, right-click the app, choose **Open**, then confirm.
 
-## Quick Start (Nix-first)
+## What Ponder Does
 
-### Prerequisites
+- Keeps your notes as plain `.md` files in your own folders.
+- Lets you switch between up to 9 workspaces instantly.
+- Searches titles and full note content from one overview.
+- Aggregates open markdown todos from all notes into one focused list.
+- Lets you jump from a todo to its source note and back to the todo list quickly.
+- Toggles todos and writes changes back to the source note, so notes and task view stay in sync.
 
-- Nix with flakes enabled
-- macOS toolchain (Xcode Command Line Tools)
+## Why the Todo Workflow Works
 
-### Run in dev mode
+Ponder is built for back-and-forth work: capture context in notes, execute from one aggregated todo list, jump back into the source note when needed, then continue in the list. You do not lose context and you do not need to manually sync task lists.
 
-```bash
-nix develop
-cd app
-pnpm install
-pnpm tauri dev
-```
+## Who Ponder Is For
 
-### Run tests
+- People who want Markdown notes as real files on disk.
+- Users who prefer keyboard-driven note and task workflows.
+- Anyone who wants flexible syncing via their own tools (Drive or Git).
 
-```bash
-nix develop
-cd app
-pnpm test
-```
+## Who Ponder Is Not For
 
-### Build a debug app bundle
+- Teams looking for a hosted, multi-user SaaS workspace.
+- Users who want cloud-only storage managed by the app vendor.
+- People who need built-in collaboration features like live co-editing.
 
-From repo root:
+## Quick Usage
 
-```bash
-./build-app.sh
-```
+1. Open **Workspaces** and connect a folder. This folder is your workspace root where Ponder stores and reads your `.md` note files.
+2. Create or open a note in **Overview**.
+3. Write in Markdown and add tags, including markdown checkboxes for tasks.
+4. Open **Todos** to work from one aggregated list across all notes.
+5. Jump into source notes, edit context, and continue directly in the todo list.
 
-## Usage Workflow
+## Keyboard Essentials
 
-1. Open **Workspaces** and assign a folder to a slot (1-9).
-2. In **Overview**, create a note (`New Note`) or open an existing one.
-3. Write in Markdown. Lines starting with `o ` are converted to `[ ]` when exiting edit mode.
-4. Add tags in the editor to power filtering and todo grouping.
-5. Open **Todos** to process open tasks across notes.
+- `o`: Overview
+- `w`: Workspaces
+- `t`: Todos
+- `n`: New note
+- `?` or `h`: Shortcuts help
+- `Esc`: Back/close current input mode
 
-## Keyboard Shortcuts
+## Data and Privacy
 
-Open the in-app shortcuts page with `h`, `?`, or the `?` button in the Overview search bar.
+- Your notes stay in your selected local folders.
+- Ponder metadata is stored per workspace in `.ponder/`.
+- Deletions are soft deletes to `deleted/`.
+- Sync is your choice: use any file sync service or Git workflow you prefer.
 
-### Global (outside editor, when not typing)
+## Screenshots
 
-- `o` -> Overview
-- `w` -> Workspaces
-- `t` -> Todos
-- `n` -> New note
-- `h` -> Shortcuts
-- `?` -> Shortcuts
+![Ponder Overview](docs/screenshots/Overview.webp)
 
-### Overview
+![Editor Preview](docs/screenshots/Editor-Preview.webp)
 
-- `1..9` -> Switch workspace slot
-- `Arrow Up / Arrow Down` -> Move selection
-- `Enter` -> Open selected note / create new note
-- `d` (twice) -> Delete selected note (moves to `deleted/`)
-- `c` -> Toggle compact list
-- `Cmd/Ctrl + f` -> Focus search
-- `Esc` -> Clear search and tag filters
+![Editor Editing](docs/screenshots/Editor-Editing.webp)
 
-### Search input (Overview)
+![Todo List](docs/screenshots/Todo-List.webp)
 
-- `Esc` -> Clear search + filters and blur
-- `Backspace` (empty input) -> Remove last tag pill
-- `Enter` with `#tag` or `#-tag` -> Create include/exclude tag pill
-- `Space` with `#tag` or `#-tag` -> Create include/exclude tag pill
+## FAQ and Compatibility
 
-### Editor
+### What platforms are supported?
 
-- `Esc` -> Exit editor
-- `e` -> Switch from preview to edit mode
-- `o` then `Space` at line start (`o `) -> On exit, replaced with `[ ]` to create a todo
+Ponder is currently distributed as a macOS desktop app via GitHub Releases.
 
-### Editor tag input + autocomplete
+### Where are my notes stored?
 
-- `Enter` or `,` -> Commit tag pill
-- `Backspace` (empty input) -> Remove last tag
-- `Arrow Up / Arrow Down` -> Navigate autocomplete
-- `Tab` or `Enter` -> Accept autocomplete selection
-- `Esc` -> Close autocomplete
+In the workspace folder you choose. Ponder reads and writes your `.md` files there directly.
 
-### Editor preview todo rows
+### Can I sync notes with iCloud/Dropbox/Google Drive?
 
-- `Enter` -> Toggle todo
-- `Arrow Up / Arrow Down` -> Move todo-row focus
+Yes. Because notes are normal local files, you can use any folder-sync provider you prefer.
 
-### Todos
+### Can I sync with Git instead?
 
-- `Arrow Up / Arrow Down` -> Move selection
-- `Space` -> Toggle todo
-- `Enter` -> Open source note
-- `Esc` -> Back to overview
+Yes. Many users keep their workspace folder in a Git repo and use their own Git workflow.
 
-## Workspace/Data Model
+## Support
 
-For each workspace folder:
+- Bug reports and feature requests: [GitHub Issues](https://github.com/bsplt/Ponder-Note/issues)
 
-- Notes live at root as timestamp-based files (for example `1739612345678.md`).
-- Ponder metadata lives in `.ponder/`:
-  - `.ponder/meta/<stem>.json` (title, timestamps, tags, plus preserved extra fields)
-  - `.ponder/rebuild-log.json`
-  - `.ponder/index/version.json`
-- Deleted notes are moved to `deleted/`.
+## Developer Docs
 
-## Tech Stack
+Technical docs for build, CI, and release publishing are in:
 
-- **Desktop shell**: Tauri v2 (Rust backend)
-- **Frontend**: React 19 + TypeScript + Vite
-- **Testing**: Vitest
-- **Tooling**: Nix dev shell, pnpm, Cargo
+- `docs/developer/BUILD_AND_RELEASE.md`
 
-## Project Structure
+## License
 
-```text
-.
-├── app/                 # Tauri app (frontend + Rust backend)
-│   ├── src/             # React UI
-│   └── src-tauri/       # Rust commands, domain logic, storage
-├── flake.nix            # Nix dev shell definition
-└── build-app.sh         # Nix-based debug build helper
-```
-
-## Notes
-
-- This repo currently has no explicit OSS license file. Add one before broad reuse/distribution.
+This project is licensed under the MIT License. See `LICENSE`.
