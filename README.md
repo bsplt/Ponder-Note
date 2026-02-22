@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/988312f1-f63b-414a-ba5e-a1bb9a8e05a2
 1. Download the latest release asset from the Releases page.
 2. Open the downloaded archive and move `Ponder.app` to your `Applications` folder.
 3. Start Ponder.
-4. If macOS blocks first launch, right-click the app, choose **Open**, then confirm.
+4. If macOS blocks first launch, unlock the app in MacOS `Privacy & Security` settings.
 
 ## What Ponder Does
 
