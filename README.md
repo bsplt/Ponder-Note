@@ -8,7 +8,7 @@
 
 You keep your own local `.md` files, stay sovereign from subscription services, and choose your own sync method (for example iCloud Drive, Dropbox, or Git).
 
-![Ponder Overview](docs/screenshots/Overview.webp)
+https://github.com/user-attachments/assets/988312f1-f63b-414a-ba5e-a1bb9a8e05a2
 
 ## Download
 
