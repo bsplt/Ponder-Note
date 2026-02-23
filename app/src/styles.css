@@ -1074,7 +1074,27 @@ body {
 
 .editorMarkdown hr {
   border: none;
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-text);
+}
+
+.editorMarkdown section[data-footnotes],
+.editorMarkdown .footnotes {
+  margin: 0 0 var(--space-8);
+  padding-top: var(--space-8);
+  border-top: var(--border-width) solid var(--color-text);
+  color: var(--color-text);
+  font-size: 0.9em;
+}
+
+.editorMarkdown section[data-footnotes] ol,
+.editorMarkdown .footnotes ol {
+  margin: 0;
+  padding-left: var(--space-13);
+}
+
+.editorMarkdown a[data-footnote-ref],
+.editorMarkdown a[data-footnote-backref] {
+  color: inherit;
 }
 
 .editorMarkdown input[type='checkbox'] {
