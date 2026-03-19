@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { NoteApiError, noteDiscard, noteRead, noteSave } from '../api/notes'
 import { toggleTodo } from '../api/todos'
 import { workspaceActions, useWorkspaceStore } from '../stores/workspaceStore'
@@ -11,6 +12,7 @@ import { Toast } from '../components/Toast'
 import { TodoRow } from '../components/TodoRow'
 import { workspaceUpdateNoteTags, workspaceGetAllTags } from '../api/workspace'
 import { extractMarkdownTodos, normalizePreviewTodoLines, toggleMarkdownTodoInBody, type MarkdownTodo } from '../utils/markdownTodo'
+import { shouldOpenMarkdownLinkExternally } from '../utils/markdownLink'
 import { noteColorSlot } from '../utils/noteColor'
 import { isTypingTarget } from '../utils/keyboard'
 
@@ -391,6 +393,25 @@ export function Editor(props: EditorProps) {
 
   const markdownComponents = useMemo<Components>(
     () => ({
+      a: ({ href, children, onClick, ...props }) => (
+        <a
+          {...props}
+          href={href}
+          onClick={(event) => {
+            onClick?.(event)
+            if (event.defaultPrevented || !href || !shouldOpenMarkdownLinkExternally(href)) {
+              return
+            }
+
+            event.preventDefault()
+            void openUrl(href).catch((error) => {
+              console.error('Failed to open markdown link externally:', error)
+            })
+          }}
+        >
+          {children}
+        </a>
+      ),
       li: ({ node, children, className, ...props }) => {
         const startLine = node?.position?.start?.line
         const todo = typeof startLine === 'number' ? previewTodosByLine.get(startLine - 1) : undefined

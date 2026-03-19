@@ -33,6 +33,12 @@ From repository root:
 ./build-app.sh
 ```
 
+On macOS, the build flow prefers Apple toolchain linkers inside the Nix shell
+to avoid introducing `/nix/store` runtime dependencies. As a safeguard, the
+build script also vendors any remaining external non-system dylibs into the
+generated `.app` bundle and fails the build if absolute library paths still
+point outside the bundle.
+
 Release build:
 
 ```bash
