@@ -92,6 +92,7 @@
   --color-slot-number-bg: oklch(from var(--color-text) l c h / 0.08);
   --color-slot-number-border: oklch(from var(--color-text) l c h / 0.14);
   --color-chip-bg: oklch(from var(--color-text) l c h / 0.10);
+  --color-unchecked-entry-bg: var(--color-chip-bg);
   --color-autocomplete-bg: oklch(0.99 0.01 285);
   --color-autocomplete-border: oklch(from var(--color-text) l c h / 0.14);
   --color-autocomplete-hover: oklch(from var(--color-text) l c h / 0.08);
@@ -231,6 +232,16 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   line-height: var(--line-height-base);
+}
+
+::-moz-selection {
+  background: var(--color-text);
+  color: var(--color-slot-1);
+}
+
+::selection {
+  background: var(--color-text);
+  color: var(--color-slot-1);
 }
 
 /* ── App shell ──────────────────────────────────────────────────────── */
@@ -1069,7 +1080,7 @@ body {
 }
 
 .editorMarkdown th {
-  background: var(--color-surface-strong);
+  background: var(--color-unchecked-entry-bg);
 }
 
 .editorMarkdown hr {
@@ -1451,7 +1462,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-chip-bg);
+  background: var(--color-unchecked-entry-bg);
 }
 
 .todoText {
