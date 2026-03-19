@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.2"
+version = "1.0.3"
 description = "Ponder Note desktop application built with Tauri"
 authors = ["Alexander Lehmann"]
 edition = "2021"
