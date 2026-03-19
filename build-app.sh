@@ -72,6 +72,15 @@ if ((${#TAURI_ARGS[@]} > 0)); then
       mode="$2"
       shift 2
 
+      export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+      export DEVELOPER_DIR="$(xcode-select -p)"
+      export CC="$(xcrun --sdk macosx -f clang)"
+      export CXX="$(xcrun --sdk macosx -f clang++)"
+      export AR="$(xcrun --sdk macosx -f ar)"
+      export RANLIB="$(xcrun --sdk macosx -f ranlib)"
+      export CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER="$CC"
+      export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER="$CC"
+
       cd "$app_dir"
       pnpm install
 
@@ -93,6 +102,15 @@ else
       app_dir="$1"
       mode="$2"
 
+      export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+      export DEVELOPER_DIR="$(xcode-select -p)"
+      export CC="$(xcrun --sdk macosx -f clang)"
+      export CXX="$(xcrun --sdk macosx -f clang++)"
+      export AR="$(xcrun --sdk macosx -f ar)"
+      export RANLIB="$(xcrun --sdk macosx -f ranlib)"
+      export CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER="$CC"
+      export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER="$CC"
+
       cd "$app_dir"
       pnpm install
 
@@ -106,4 +124,14 @@ else
 
       echo "Build artifacts: $out_dir"
     ' bash "$APP_DIR" "$BUILD_MODE"
+fi
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if [[ "$BUILD_MODE" = "release" ]]; then
+    APP_BUNDLE="$APP_DIR/src-tauri/target/release/bundle/macos/Ponder.app"
+  else
+    APP_BUNDLE="$APP_DIR/src-tauri/target/debug/bundle/macos/Ponder.app"
+  fi
+
+  "$ROOT_DIR/scripts/macos-vendor-dylibs.sh" "$APP_BUNDLE"
 fi
